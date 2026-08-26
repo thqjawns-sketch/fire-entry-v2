@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>소방현장 진입·철수 태그 관리앱 <span class="v2Badge">V2</span> V2 - V2.11</title>
+<title>소방현장 진입·철수 태그 관리앱 <span class="v2Badge">V2</span> V2 - V2.12</title>
 
 <script src="https://unpkg.com/html5-qrcode" type="text/javascript">
 document.addEventListener("DOMContentLoaded",function(){v31UpdateTeamPreviewAuto();});
@@ -617,6 +617,39 @@ button:disabled{
 .v28TeamLoc{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .v28TeamTime{margin-left:auto;white-space:nowrap;font-size:12px;color:#526071}
 .v28GroupHead{font-size:14px;font-weight:900;color:#173d67;margin:10px 0 5px;padding:5px 7px;background:#eef5fb;border-radius:7px}
+
+
+/* ===== V2.12 조별 그룹 카드 ===== */
+.v32TeamGroup{
+  border:2px solid #cbd8e6;border-radius:14px;background:#fff;
+  margin:0 0 16px;overflow:hidden;box-shadow:0 2px 7px rgba(0,0,0,.04)
+}
+.v32TeamHead{
+  padding:11px 13px;background:#eaf2fb;border-bottom:1px solid #cbd8e6
+}
+.v32TeamHeadTitle{font-size:16px;font-weight:900;color:#173d67}
+.v32TeamHeadLoc{font-size:13px;font-weight:800;color:#40566f;margin-top:4px}
+.v32MemberRow{padding:10px 12px;border-bottom:1px solid #e4e9ef;cursor:pointer}
+.v32MemberRow:last-child{border-bottom:0}
+.v32MemberMain{display:flex;align-items:flex-start;gap:9px}
+.v32Check{padding-top:1px}
+.v32Check input{width:19px;height:19px}
+.v32MemberText{flex:1;min-width:0}
+.v32NameLine{font-size:14px;color:#087d3d;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.v32Code{font-size:11px;color:#73849a;margin-left:7px}
+.v32LocLine{font-size:13px;font-weight:900;color:#16283c;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.v32TimeLine{font-size:12px;color:#607086;margin-top:5px}
+.v32Status{font-size:12px;font-weight:900;white-space:nowrap;margin-left:auto;padding-top:3px}
+.v32Normal{border-left:5px solid #159447}
+.v32WarnOrange{border-left:5px solid #f59e0b;background:#fff9ed}
+.v32WarnRed{border-left:5px solid #dc2626;background:#fff1f1}
+.v32Danger{border-left:5px solid #991b1b;background:#ffe4e4}
+@media(max-width:520px){
+  .v32TeamHeadTitle{font-size:15px}
+  .v32MemberMain{gap:7px}
+  .v32NameLine,.v32LocLine{font-size:12.5px}
+  .v32Status{font-size:11px}
+}
 
 </style>
 </head>
@@ -4549,73 +4582,88 @@ function v28NextTeamName(){
 
 function drawDashboardInside(list){
   v28DrawTeamStatus(list);
-  const c=document.getElementById("v28ActiveCount"); if(c)c.textContent=(list||[]).length+"명";
+  const c=document.getElementById("v28ActiveCount");
+  if(c)c.textContent=(list||[]).length+"명";
+
   const area=document.getElementById("dashboardInside");
+  if(!area)return;
   area.innerHTML="";
-  if(!list.length){
-    area.innerHTML='<div class="empty">현재 내부 대원이 없습니다.</div>';
+
+  if(!list || !list.length){
+    area.innerHTML='<div class="empty">현재 현장 활동 대원이 없습니다.</div>';
     return;
   }
 
   const meta=v23LoadMeta();
-  const hint=document.createElement("div");
-  hint.className="dashboardHintCompact";
-  hint.textContent="대원을 누르면 상세정보 확인 및 조·진입방면·활동층·세부장소를 수정할 수 있습니다.";
-  area.appendChild(hint);
+  const groups={};
 
-  const roster=document.createElement("div");
-  roster.className="dashboardRoster";
-
-  const metaSort=v23LoadMeta();
-  const sorted=[...list].sort((a,b)=>{
-    const an=v28TeamNo((metaSort[String(a.memberId)]||{}).teamName);
-    const bn=v28TeamNo((metaSort[String(b.memberId)]||{}).teamName);
-    return an-bn;
-  });
-  let lastTeam="";
-  sorted.forEach(member=>{
-    const tm=(metaSort[String(member.memberId)]||{}).teamName||"조 미지정";
-    if(tm!==lastTeam){
-      lastTeam=tm;
-      const gh=document.createElement("div");
-      gh.className="v28GroupHead"; gh.textContent="👥 "+tm;
-      area.appendChild(gh);
-    }
-
+  list.forEach(member=>{
     const vm=meta[String(member.memberId)]||{};
-    const display=getMemberDisplay(member.memberId,member.memberName);
-    const parts=String(display||"").split(" / ");
-    const name=parts[0]||member.memberName||"-";
-    const rank=parts[1]||"-";
-    const dept=parts.slice(2).join(" / ")||"-";
-    const floor=vm.activityFloor||"미지정";
-    const team=vm.teamName||"미지정";
-    const dir=vm.entryDirection||"미지정";
-    const detail=vm.detailLocation||"세부장소 미지정";
-
-    const row=document.createElement("div");
-    row.className="dashMemberCompact";
-    row.onclick=()=>openDashboardMemberDetail(member.memberId,member.memberName);
-
-    row.innerHTML=
-      '<div class="dashTopLine">'+
-        '<span class="liveDot"></span>'+
-        '<span class="dashNameDept">'+escapeHtml(name)+' '+escapeHtml(rank)+' / '+escapeHtml(dept)+'</span>'+
-        '<span class="dashTime">진입 '+escapeHtml(member.entryTime||"-")+'</span>'+
-      '</div>'+
-      '<div class="dashLocationLine">'+
-        '<span class="dashLocText">'+escapeHtml(team)+' · '+escapeHtml(dir)+' / </span>'+
-        '<span class="floorMini '+v23FloorClass(floor)+'">'+escapeHtml(floor)+'</span>'+
-        '<span class="dashLocText"> / '+escapeHtml(detail)+'</span>'+
-        '<span class="dashTime">'+Number(member.currentMinutes)+'분 / '+Number(member.entryCount)+'회차</span>'+
-        '<span class="dashChevron">›</span>'+
-      '</div>';
-
-    roster.appendChild(row);
+    const team=vm.teamName||"조 미지정";
+    (groups[team]||(groups[team]=[])).push({member,vm});
   });
-  area.appendChild(roster);
-}
 
+  const keys=Object.keys(groups).sort((a,b)=>{
+    if(a==="조 미지정")return 1;
+    if(b==="조 미지정")return -1;
+    return v28TeamNo(a)-v28TeamNo(b);
+  });
+
+  keys.forEach(team=>{
+    const rows=groups[team];
+    const activityNo=Math.max(...rows.map(x=>Number(x.vm.teamActivityNo)||1));
+    const dirs=[...new Set(rows.map(x=>x.vm.entryDirection||"미지정"))];
+    const floors=[...new Set(rows.map(x=>x.vm.activityFloor||"미지정"))];
+    const details=[...new Set(rows.map(x=>x.vm.detailLocation||"세부장소 미지정"))];
+
+    const box=document.createElement("div");
+    box.className="v32TeamGroup";
+
+    const head=document.createElement("div");
+    head.className="v32TeamHead";
+    const teamTitle=team==="조 미지정" ? "👤 조 미지정 대원" : "👥 "+team+" · "+rows.length+"명 · "+activityNo+"차 활동";
+    head.innerHTML='<div class="v32TeamHeadTitle">'+escapeHtml(teamTitle)+'</div>'+
+      '<div class="v32TeamHeadLoc">'+
+      escapeHtml(dirs.length===1?dirs[0]:"방면 혼재")+' · '+
+      escapeHtml(floors.length===1?floors[0]:"활동층 혼재")+' · '+
+      escapeHtml(details.length===1?details[0]:"세부장소 혼재")+
+      '</div>';
+    box.appendChild(head);
+
+    rows.sort((a,b)=>(Number(b.member.currentMinutes)||0)-(Number(a.member.currentMinutes)||0));
+
+    rows.forEach(({member,vm})=>{
+      const row=document.createElement("div");
+      const mins=Number(member.currentMinutes)||0;
+      row.className="v32MemberRow "+(mins>=31?"v32Danger":mins>=26?"v32WarnRed":mins>=21?"v32WarnOrange":"v32Normal");
+
+      const rank=member.rank||"";
+      const dept=member.dept||member.department||"";
+      const code=member.manageNo||member.memberNo||member.memberId||"";
+      const dir=vm.entryDirection||"미지정";
+      const floor=vm.activityFloor||"미지정";
+      const detail=vm.detailLocation||"세부장소 미지정";
+      const status=mins>=31?"⚠ 즉시확인":mins>=26?"🔴 경고":mins>=21?"🟠 주의":"🟢 정상";
+
+      row.innerHTML=
+        '<div class="v32MemberMain">'+
+          '<label class="v32Check" onclick="event.stopPropagation()"><input type="checkbox" class="insideCheck" value="'+escapeHtml(String(member.memberId))+'"></label>'+
+          '<div class="v32MemberText">'+
+            '<div class="v32NameLine"><b>'+escapeHtml(member.name||"")+' '+escapeHtml(rank)+'</b> / '+escapeHtml(dept)+
+            (code?'<span class="v32Code">'+escapeHtml(String(code))+'</span>':'')+'</div>'+
+            '<div class="v32LocLine">'+escapeHtml(team)+' · '+escapeHtml(dir)+' / '+escapeHtml(floor)+' / '+escapeHtml(detail)+'</div>'+
+            '<div class="v32TimeLine">진입 '+escapeHtml(member.entryTime||member.entryAt||"-")+' · 현재 '+mins+'분 · '+escapeHtml(String(member.entryCount||member.round||"-"))+'회차</div>'+
+          '</div>'+
+          '<div class="v32Status">'+status+'</div>'+
+        '</div>';
+
+      row.addEventListener("click",()=>openMemberDetail(member.memberId));
+      box.appendChild(row);
+    });
+
+    area.appendChild(box);
+  });
+}
 function findDashboardInsideMember(memberId){
   return (window.__dashboardInsideMembers||[]).find(m=>String(m.memberId)===String(memberId));
 }
