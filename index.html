@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>소방현장 진입·철수 태그 관리앱 <span class="v2Badge">V2</span> V2 - V2.19 조구분 안정판</title>
+<title>소방현장 진입·철수 태그 관리앱 <span class="v2Badge">V2</span> V2 - V2.20 조위치·전체선택</title>
 
 <script src="https://unpkg.com/html5-qrcode" type="text/javascript">
 document.addEventListener("DOMContentLoaded",function(){v31UpdateTeamPreviewAuto();});
@@ -691,6 +691,32 @@ button:disabled{
 .teamC6{--team:#607c18}
 .teamC7{--team:#6d42d8}
 .teamC8{--team:#08758d}
+
+
+/* ===== V2.20 조 헤더 위치 + 조 전체선택 ===== */
+.teamDividerV19{
+  display:flex!important;
+  align-items:center!important;
+  flex-wrap:nowrap!important;
+}
+.teamLocationV20{
+  flex:1;min-width:0;
+  font-size:12px;font-weight:900;color:#27384c;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  padding-left:5px;
+}
+.teamSelectV20{
+  flex:0 0 auto;
+  display:flex;align-items:center;gap:4px;
+  font-size:12px;font-weight:900;color:#173d67;
+  white-space:nowrap;cursor:pointer;
+}
+.teamSelectV20 input{width:17px;height:17px;margin:0}
+@media(max-width:560px){
+  .teamDividerV19{gap:6px!important;padding:7px 7px!important}
+  .teamBadgeV19{min-width:42px;padding:6px 7px;font-size:13px}
+  .teamMetaV19,.teamLocationV20,.teamSelectV20{font-size:10.5px}
+}
 
 </style>
 </head>
@@ -3504,12 +3530,49 @@ function v19TeamColorClass(team){
   const n=v19TeamNumber(team);
   return n===999999 ? "teamC0" : "teamC"+(((n-1)%8)+1);
 }
-function v19AddTeamDivider(target,team,activityNo,count){
+function v20TeamLocation(members,team){
+  const vals=(members||[]).filter(m=>v19TeamInfo(m).team===team).map(m=>{
+    const vm=v23LoadMeta()[String(m.memberId)]||{};
+    return {
+      dir:vm.entryDirection||"미지정",
+      floor:vm.activityFloor||"미지정",
+      detail:vm.detailLocation||"세부장소 미지정"
+    };
+  });
+  if(!vals.length)return "위치 미지정";
+  const one=(key,mixed)=>{
+    const u=[...new Set(vals.map(v=>v[key]))];
+    return u.length===1?u[0]:mixed;
+  };
+  return one("dir","방면 혼재")+" / "+one("floor","활동층 혼재")+" / "+one("detail","세부장소 혼재");
+}
+function v19AddTeamDivider(target,team,activityNo,count,locationText){
   const d=document.createElement("div");
   d.className="teamDividerV19 "+v19TeamColorClass(team);
+  d.dataset.team=team;
   d.innerHTML=
     '<span class="teamBadgeV19">'+escapeHtml(team)+'</span>'+
-    '<span class="teamMetaV19">'+Number(activityNo||1)+'차 활동 · '+Number(count||0)+'명</span>';
+    '<span class="teamMetaV19">'+Number(activityNo||1)+'차 활동 · '+Number(count||0)+'명</span>'+
+    '<span class="teamLocationV20">'+escapeHtml(locationText||"위치 미지정")+'</span>'+
+    '<label class="teamSelectV20" onclick="event.stopPropagation()">'+
+      '<input type="checkbox" class="teamSelectCheckV20"> 전체선택'+
+    '</label>';
+  const chk=d.querySelector(".teamSelectCheckV20");
+  chk.addEventListener("change",function(){
+    const root=target;
+    let active=false;
+    [...root.children].forEach(el=>{
+      if(el===d){ active=true; return; }
+      if(active && el.classList && el.classList.contains("teamDividerV19")) active=false;
+      if(active){
+        const c=el.querySelector && el.querySelector("input.insideCheck");
+        if(c){
+          c.checked=this.checked;
+          c.dispatchEvent(new Event("change",{bubbles:true}));
+        }
+      }
+    });
+  });
   target.appendChild(d);
 }
 
@@ -3659,7 +3722,7 @@ async function loadInsideMembers(){
         const v19Info=v19TeamInfo(member);
         if(v19Info.team!==v19LastTeam){
           v19LastTeam=v19Info.team;
-          v19AddTeamDivider(list,v19Info.team,v19Info.activityNo,v19Counts[v19Info.team]);
+          v19AddTeamDivider(list,v19Info.team,v19Info.activityNo,v19Counts[v19Info.team],v20TeamLocation(v19Members,v19Info.team));
         }
 
         const row =
@@ -4695,7 +4758,7 @@ function drawDashboardInside(list){
 
     if(info.team!==lastTeam){
       lastTeam=info.team;
-      v19AddTeamDivider(area,info.team,info.activityNo,counts[info.team]);
+      v19AddTeamDivider(area,info.team,info.activityNo,counts[info.team],v20TeamLocation(sorted,info.team));
     }
 
     const row=document.createElement("div");
