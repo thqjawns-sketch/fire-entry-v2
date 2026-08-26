@@ -402,6 +402,13 @@ button:disabled{
 /* ===== V2 조 편성 / 활동구역 ===== */
 .v2Badge{display:inline-block;background:#fff;color:#173d67;border-radius:999px;padding:3px 9px;font-size:12px;margin-left:6px}
 .teamSetup{border:2px solid #173d67;background:#f7fbff}
+.teamSetup .teamBody{display:none;margin-top:10px}
+.teamSetup.open .teamBody{display:block}
+.teamSetup.locked{border-color:#cbd5e1;background:#f8fafc}
+.teamToggle{width:100%;padding:13px;border:0;border-radius:10px;background:#64748b;color:#fff;font-weight:bold;font-size:15px}
+.teamToggle.ready{background:#173d67}
+.teamToggle:disabled{opacity:.65;cursor:not-allowed}
+.teamHint{font-size:12px;color:#64748b;margin-top:7px;line-height:1.5}
 .teamMemberList{display:grid;gap:8px;margin:10px 0}
 .teamMember{display:flex;align-items:center;gap:10px;padding:11px;border:1px solid #d9e2ec;border-radius:10px;background:#fff}
 .teamMember input{width:22px;height:22px;flex:0 0 auto}
@@ -613,8 +620,11 @@ PPE 점검 대기
 </div>
 
 <!-- V2 조 편성 -->
-<div class="card teamSetup">
+<div class="card teamSetup locked" id="teamSetupCard">
 <h3>👥 V2 조 편성 · 투입위치</h3>
+<button type="button" id="teamToggleButton" class="teamToggle" onclick="toggleTeamSetup()" disabled>🔒 PPE 안전점검 완료 후 조 편성 가능</button>
+<div class="teamHint" id="teamHint">QR로 투입대원을 등록하고 PPE 3개 항목을 모두 확인하면 조 편성 버튼이 활성화됩니다.</div>
+<div class="teamBody" id="teamBody">
 <div class="info">안전점검이 끝난 대원 중 <b>같이 진입할 대원만 선택</b>하세요. 2명·4명 등 현장 상황에 맞게 편성할 수 있습니다.</div>
 
 <label>조 명칭</label>
@@ -657,6 +667,7 @@ PPE 점검 대기
 
 <div id="entryProgress" class="progressText"></div>
 
+</div><!-- teamBody -->
 </div>
 
 
@@ -1750,6 +1761,7 @@ function renderQueue(){
   const v2EntryButton = document.getElementById("batchEntryButton");
   if(v2EntryButton){ v2EntryButton.innerText = "🔴 조 투입 승인"; }
   renderTeamMembers();
+  updateTeamSetupState();
 
 
   if(
@@ -1847,6 +1859,35 @@ function renderQueue(){
 /* =====================================================
 V2 조 편성 / 투입위치
 ===================================================== */
+function isPPEComplete(){
+  return ["ppe1","ppe2","ppe3"].every(id=>{const el=document.getElementById(id);return el&&el.checked;});
+}
+function updateTeamSetupState(){
+  const card=document.getElementById('teamSetupCard');
+  const btn=document.getElementById('teamToggleButton');
+  const hint=document.getElementById('teamHint');
+  if(!card||!btn) return;
+  const ready=entryQueue.length>0 && isPPEComplete();
+  btn.disabled=!ready;
+  btn.classList.toggle('ready',ready);
+  card.classList.toggle('locked',!ready);
+  if(ready){
+    btn.textContent=card.classList.contains('open')?'▲ 조 편성 · 투입위치 닫기':'👥 조 편성하기';
+    if(hint) hint.textContent='안전점검 완료 대원 중 실제 함께 진입할 대원을 선택하세요.';
+  }else{
+    card.classList.remove('open');
+    btn.textContent='🔒 PPE 안전점검 완료 후 조 편성 가능';
+    if(hint) hint.textContent=entryQueue.length===0?'먼저 QR 또는 검색으로 투입대원을 등록하세요.':'PPE 3개 항목을 모두 확인하면 조 편성이 활성화됩니다.';
+  }
+}
+function toggleTeamSetup(){
+  if(!isPPEComplete()||entryQueue.length===0) return;
+  const card=document.getElementById('teamSetupCard');
+  if(!card) return;
+  card.classList.toggle('open');
+  updateTeamSetupState();
+  if(card.classList.contains('open')) renderTeamMembers();
+}
 function renderTeamMembers(){
   const area=document.getElementById("teamMemberList");
   if(!area) return;
@@ -2435,7 +2476,7 @@ function checkPPE(){
   ){
 
     status.innerText =
-      "✅ PPE 점검완료 · 일괄 투입 가능";
+      "✅ PPE 점검완료 · 조 편성 가능";
 
     status.style.background =
       "#e6f4ea";
@@ -2456,6 +2497,7 @@ function checkPPE(){
 
   }
 
+  updateTeamSetupState();
 }
 
 
@@ -2496,6 +2538,8 @@ function resetPPE(){
   status.style.color =
     "#333";
 
+
+  updateTeamSetupState();
 }
 
 
