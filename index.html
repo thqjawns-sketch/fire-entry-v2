@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>소방현장 진입·철수 태그 관리앱 <span class="v2Badge">V2</span> V2 - V2.22 현장현황 1차완성</title>
+<title>소방현장 진입·철수 태그 관리앱 <span class="v2Badge">V2</span> V2 - V2.23 현장현황·철수화면 분리</title>
 
 <script src="https://unpkg.com/html5-qrcode" type="text/javascript">
 document.addEventListener("DOMContentLoaded",function(){v31UpdateTeamPreviewAuto();});
@@ -778,6 +778,8 @@ button:disabled{
   .staySummaryGridV22 .staySummaryRow{font-size:10.5px}
 }
 
+/* ===== V2.23 2번째창/3번째창 완전 분리 ===== */
+#exitedPageV23{display:none;max-width:700px;margin:0 auto;padding-bottom:28px}
 </style>
 </head>
 
@@ -1169,11 +1171,6 @@ PPE 점검 대기
 >
 ✅ 31분 이상 즉시 확인 대상 0명
 </div>
-
-<div class="safetyNotice">
-※ 실제 철수 판단은 공기호흡기 잔압·경보 및 현장상황을 우선함
-</div>
-
 <button
   id="dashboardRefreshBtn"
   class="refresh"
@@ -1208,12 +1205,6 @@ PPE 점검 대기
 </div>
 
 
-<div class="card exitedPageV22" id="exitedHistoryCard">
-<div class="sectionTitle">철수 완료 대원</div>
-<button type="button" class="back" onclick="closeExitedPage()">⬅ 현장 활동 현황으로 돌아가기</button>
-<div id="dashboardExited"></div>
-</div>
-
 <button
   class="back"
   onclick="closeDashboard()"
@@ -1225,6 +1216,21 @@ PPE 점검 대기
 
 </div>
 
+<!-- 3번째 창 : 철수 대원 확인 -->
+<div id="exitedPageV23">
+  <div class="dashboardHeader">
+    <div class="dashboardTitle">👨‍🚒 철수 대원</div>
+    <div id="exitedPageSiteName" class="siteName">-</div>
+  </div>
+  <div class="stationLogo">
+    <img src="wanju-logo.png" alt="완주소방서 WANJU FIRE STATION">
+  </div>
+  <div class="card">
+    <div class="sectionTitle">철수 완료 대원</div>
+    <div id="dashboardExited"></div>
+  </div>
+  <button type="button" class="back" onclick="closeExitedPage()">⬅ 현장 활동 현황으로 돌아가기</button>
+</div>
 
 <script>
 
@@ -3700,9 +3706,7 @@ async function loadInsideMembers(){
       refreshButton.disabled =
         false;
 
-      refreshButton.innerHTML =
-        '<span class="refreshMainV22">🔄 현황 새로고침</span>'+
-        '<span id="dashboardAutoRefreshInfo" class="refreshSubV22">60초 자동갱신 · 마지막 갱신 --:--:--</span>';
+      // 성공 시 갱신된 시간 표시를 그대로 유지한다.
 
     }
 
@@ -3885,9 +3889,7 @@ async function loadInsideMembers(){
       refreshButton.disabled =
         false;
 
-      refreshButton.innerHTML =
-        '<span class="refreshMainV22">🔄 현황 새로고침</span>'+
-        '<span id="dashboardAutoRefreshInfo" class="refreshSubV22">60초 자동갱신 · 마지막 갱신 --:--:--</span>';
+      // 성공 시 갱신된 시간 표시를 그대로 유지한다.
 
     }
 
@@ -4438,9 +4440,7 @@ async function loadDashboard(
       refreshButton.disabled =
         false;
 
-      refreshButton.innerHTML =
-        '<span class="refreshMainV22">🔄 현황 새로고침</span>'+
-        '<span id="dashboardAutoRefreshInfo" class="refreshSubV22">60초 자동갱신 · 마지막 갱신 --:--:--</span>';
+      // 성공 시 갱신된 시간 표시를 그대로 유지한다.
 
     }
 
@@ -4617,10 +4617,10 @@ async function loadDashboard(
     );
 
 
-    drawDashboardExited(
-      dashboard.exitedMembers ||
-      []
-    );
+    // 2번째 창에는 철수대원 명단을 표시하지 않는다.
+    // 3번째 창을 열 때만 렌더링하기 위해 데이터만 보관한다.
+    window.__dashboardExitedMembers =
+      dashboard.exitedMembers || [];
 
 
     // 자동갱신 안내에 마지막 갱신시각 표시
@@ -4645,7 +4645,8 @@ async function loadDashboard(
           {
             hour:"2-digit",
             minute:"2-digit",
-            second:"2-digit"
+            second:"2-digit",
+            hour12:false
           }
         );
 
@@ -4682,9 +4683,7 @@ async function loadDashboard(
       refreshButton.disabled =
         false;
 
-      refreshButton.innerHTML =
-        '<span class="refreshMainV22">🔄 현황 새로고침</span>'+
-        '<span id="dashboardAutoRefreshInfo" class="refreshSubV22">60초 자동갱신 · 마지막 갱신 --:--:--</span>';
+      // 성공 시 갱신된 시간 표시를 그대로 유지한다.
 
     }
 
@@ -4952,24 +4951,32 @@ function saveDashboardMemberLocation(memberId){
 ===================================================== */
 
 function openExitedPage(){
-  const page=document.getElementById("dashboardPage");
-  const card=document.getElementById("exitedHistoryCard");
-  if(!page || !card)return;
-  page.classList.add("showExitedOnlyV22");
-  card.classList.add("show");
+  const dashboardPage=document.getElementById("dashboardPage");
+  const exitedPage=document.getElementById("exitedPageV23");
+  if(!dashboardPage || !exitedPage)return;
+
+  const siteName=document.getElementById("dashboardSiteName");
+  const exitSiteName=document.getElementById("exitedPageSiteName");
+  if(exitSiteName && siteName) exitSiteName.textContent=siteName.textContent;
+
+  dashboardPage.style.display="none";
+  exitedPage.style.display="block";
+
+  // 철수대원은 3번째 창을 클릭해 들어왔을 때만 화면에 생성한다.
+  drawDashboardExited(window.__dashboardExitedMembers || []);
   window.scrollTo({top:0,behavior:"smooth"});
 }
+
 function closeExitedPage(){
-  const page=document.getElementById("dashboardPage");
-  const card=document.getElementById("exitedHistoryCard");
-  if(page)page.classList.remove("showExitedOnlyV22");
-  if(card)card.classList.remove("show");
+  const dashboardPage=document.getElementById("dashboardPage");
+  const exitedPage=document.getElementById("exitedPageV23");
+  if(exitedPage) exitedPage.style.display="none";
+  if(dashboardPage) dashboardPage.style.display="block";
   window.scrollTo({top:0,behavior:"smooth"});
 }
+
 function toggleExitedHistory(){
-  const card=document.getElementById("exitedHistoryCard");
-  if(card && card.classList.contains("show")) closeExitedPage();
-  else openExitedPage();
+  openExitedPage();
 }
 
 function drawDashboardExited(
