@@ -434,6 +434,20 @@ button:disabled{
 .locationEditBtn{margin-top:7px;padding:7px 10px;border:1px solid #94a3b8;border-radius:8px;background:#fff;font-weight:700;cursor:pointer}
 .v23Summary{margin:10px 0;padding:10px;border-radius:10px;background:#f1f5f9;font-size:13px;font-weight:700}
 
+
+/* ===== V2.4 첫 화면 단순화 ===== */
+.v24ActionBox{margin:12px 0;padding:12px;border:1px solid #d9e2ec;border-radius:14px;background:#fff}
+.v24ActionTitle{font-weight:800;font-size:16px;margin-bottom:8px}
+.v24ActionGrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.v24MainBtn{min-height:48px;border:0;border-radius:11px;font-weight:800;font-size:15px;cursor:pointer}
+.v24Fast{background:#c62828;color:#fff}
+.v24Team{background:#173d67;color:#fff}
+.v24MainBtn:disabled{opacity:.45;cursor:not-allowed}
+.v24Help{margin-top:8px;font-size:12px;line-height:1.5;color:#64748b}
+.v24Collapsed{display:none!important}
+.v24StatusEdit{margin-top:7px;padding:8px 10px;border:1px solid #94a3b8;border-radius:8px;background:#fff;font-weight:700;cursor:pointer}
+@media(max-width:430px){.v24ActionGrid{grid-template-columns:1fr}}
+
 </style>
 </head>
 
@@ -629,12 +643,6 @@ PASS · 무전기 정상상태 확인
 <div id="ppeStatus" class="status">
 PPE 점검 대기
 </div>
-<button type="button" id="quickEntryButton" class="quickEntryBtn" onclick="quickEntryMembers()" disabled>
-⚡ PPE 완료 대원 즉시 투입
-</button>
-<div class="v2Sub">조 편성·투입위치 입력 없이도 바로 투입할 수 있습니다. 위치정보는 현장현황에서 나중에 추가할 수 있습니다.</div>
-
-
 <div class="v2Sub">PPE 확인 후 아래에서 실제 함께 투입할 대원을 선택해 조를 편성합니다.</div>
 </div>
 
@@ -714,7 +722,7 @@ PPE 점검 대기
 🔄 현황 새로고침
 </button>
 
-<div id="v23InsideSummary" class="v23Summary">활동 중 조·위치 요약은 현장현황을 불러오면 표시됩니다.</div>
+<div id="v23InsideSummary" class="v23Summary">활동 중 조·위치 요약은 현장현황을 불러오면 표시됩니다.</div><div class="v24Help">즉시투입 대원도 여기에서 조 편성/변경 · 진입방면 · 활동층 · 세부위치를 추가하거나 수정할 수 있습니다.</div>
 <div id="insideList"></div>
 
 <button
@@ -1929,6 +1937,7 @@ function chooseExtraFloor(btn){
   updateTeamPreview();
 }
 function editMemberLocation(memberId, memberName){
+  // V2.4: 즉시투입 후에도 현장현황에서 조 편성/변경 및 활동위치를 사후 입력 가능
   const meta=v23LoadMeta(), key=String(memberId), old=meta[key]||{};
   const team=prompt("조 명칭 (없으면 비워두세요)",old.teamName||"");
   if(team===null)return;
@@ -1970,6 +1979,7 @@ function updateTeamSetupState(){
   const ready=entryQueue.length>0 && isPPEComplete();
   const qbtn=document.getElementById('quickEntryButton');
   if(qbtn) qbtn.disabled=!ready;
+  updateV24ActionButtons();
   btn.disabled=!ready;
   btn.classList.toggle('ready',ready);
   card.classList.toggle('locked',!ready);
@@ -2600,8 +2610,9 @@ function checkPPE(){
 
   }
 
-  const qbtn=document.getElementById("quickEntryButton");
+  const qbtn=document.getElementById("v24FastEntry");
   if(qbtn) qbtn.disabled=!complete || entryQueue.length===0;
+  updateV24ActionButtons();
   updateTeamSetupState();
 }
 
@@ -2653,6 +2664,23 @@ function resetPPE(){
 ===================================================== */
 
 
+
+function toggleV24TeamSetup(){
+  const card=document.getElementById("v24TeamSetupCard");
+  if(!card)return;
+  card.classList.toggle("v24Collapsed");
+  if(!card.classList.contains("v24Collapsed")){
+    setTimeout(()=>card.scrollIntoView({behavior:"smooth",block:"start"}),50);
+  }
+}
+function updateV24ActionButtons(){
+  const ready=entryQueue.length>0 && isPPEComplete();
+  const a=document.getElementById("v24FastEntry");
+  const b=document.getElementById("v24TeamEntry");
+  if(a)a.disabled=!ready;
+  if(b)b.disabled=!ready;
+}
+
 async function quickEntryMembers(){
   if(entrySubmitting)return;
   const site=(document.getElementById("site")||{}).value||"";
@@ -2684,7 +2712,7 @@ async function quickEntryMembers(){
       await loadInsideMembers();
     }
   }catch(e){console.error(e);alert("즉시 투입 기록 오류");}
-  finally{entrySubmitting=false;if(qbtn){qbtn.innerText="⚡ PPE 완료 대원 즉시 투입";qbtn.disabled=!(entryQueue.length>0&&isPPEComplete());}}
+  finally{entrySubmitting=false;if(qbtn){qbtn.innerText="⚡ 즉시 투입";qbtn.disabled=!(entryQueue.length>0&&isPPEComplete());} updateV24ActionButtons();}
 }
 
 async function batchEntryMembers(){
@@ -2989,6 +3017,7 @@ async function batchEntryMembers(){
         renderTeamMembers();
       }
 
+      const v24card=document.getElementById("v24TeamSetupCard"); if(v24card)v24card.classList.add("v24Collapsed");
       await loadInsideMembers();
 
     }
@@ -3309,7 +3338,7 @@ async function loadInsideMembers(){
             const floor=vm.activityFloor||'';
             const floorBadge=floor ? '<span class="floorBadge '+v23FloorClass(floor)+'">'+escapeHtml(floor)+'</span>' : '<span class="floorBadge floor-neutral">활동층 미지정</span>';
             return '<div class="locationLine">'+team+escapeHtml(vm.entryDirection||'진입방면 미지정')+' '+floorBadge+(vm.detailLocation?' · '+escapeHtml(vm.detailLocation):'')+'</div>'+
-              '<button type="button" class="locationEditBtn" onclick="editMemberLocation(\''+escapeAttr(member.memberId)+'\',\''+escapeAttr(member.memberName)+'\')">📍 조·활동위치 수정</button>';
+              '<button type="button" class="locationEditBtn" onclick="editMemberLocation(\''+escapeAttr(member.memberId)+'\',\''+escapeAttr(member.memberName)+'\')">📍 조·활동위치 관리</button>';
           })() +
 
           '<div class="time">' +
