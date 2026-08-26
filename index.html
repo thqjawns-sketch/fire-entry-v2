@@ -436,17 +436,30 @@ button:disabled{
 
 
 /* ===== V2.4 첫 화면 단순화 ===== */
-.v24ActionBox{margin:12px 0;padding:12px;border:1px solid #d9e2ec;border-radius:14px;background:#fff}
-.v24ActionTitle{font-weight:800;font-size:16px;margin-bottom:8px}
-.v24ActionGrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.v24MainBtn{min-height:48px;border:0;border-radius:11px;font-weight:800;font-size:15px;cursor:pointer}
-.v24Fast{background:#c62828;color:#fff}
-.v24Team{background:#173d67;color:#fff}
-.v24MainBtn:disabled{opacity:.45;cursor:not-allowed}
-.v24Help{margin-top:8px;font-size:12px;line-height:1.5;color:#64748b}
-.v24Collapsed{display:none!important}
-.v24StatusEdit{margin-top:7px;padding:8px 10px;border:1px solid #94a3b8;border-radius:8px;background:#fff;font-weight:700;cursor:pointer}
-@media(max-width:430px){.v24ActionGrid{grid-template-columns:1fr}}
+.entryModeBox{
+  margin-top:12px;
+  padding:12px;
+  border:1px solid #d7e0ea;
+  border-radius:12px;
+  background:#fff;
+}
+.entryModeTitle{font-size:15px;font-weight:800;margin-bottom:9px}
+.entryModeGrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.entryModeBtn{
+  width:100%;min-height:48px;border:0;border-radius:10px;
+  color:#fff;font-size:15px;font-weight:800;cursor:pointer;
+}
+.entryModeBtn.fast{background:#c62828}
+.entryModeBtn.team{background:#173d67}
+.entryModeBtn:disabled{opacity:.45;cursor:not-allowed}
+.entryModeHelp{font-size:12px;color:#64748b;line-height:1.5;margin-top:8px}
+#teamSetupCard{display:none}
+#teamSetupCard.modeOpen{display:block}
+.statusManageHint{
+  margin:8px 0 12px;padding:10px;border-radius:9px;
+  background:#eef5fb;color:#334155;font-size:12px;line-height:1.55;
+}
+@media(max-width:480px){.entryModeGrid{grid-template-columns:1fr}}
 
 </style>
 </head>
@@ -643,16 +656,29 @@ PASS · 무전기 정상상태 확인
 <div id="ppeStatus" class="status">
 PPE 점검 대기
 </div>
-<div class="v2Sub">PPE 확인 후 아래에서 실제 함께 투입할 대원을 선택해 조를 편성합니다.</div>
+<div class="entryModeBox">
+  <div class="entryModeTitle">🚒 투입 방식 선택</div>
+  <div class="entryModeGrid">
+    <button type="button" id="quickEntryButton" class="entryModeBtn fast" onclick="quickEntryMembers()" disabled>
+      ⚡ 즉시 투입
+    </button>
+    <button type="button" id="teamModeButton" class="entryModeBtn team" onclick="openTeamSetup()" disabled>
+      👥 조 편성 후 투입
+    </button>
+  </div>
+  <div class="entryModeHelp">
+    PPE 완료 후 선택합니다. 급한 현장은 바로 투입하고, 필요한 경우에만 조 편성·투입위치를 입력합니다.
+  </div>
+</div>
 </div>
 
 <!-- V2 조 편성 -->
-<div class="card teamSetup locked" id="teamSetupCard">
-<h3>👥 V2 조 편성 · 투입위치</h3>
-<button type="button" id="teamToggleButton" class="teamToggle" onclick="toggleTeamSetup()" disabled>🔒 PPE 안전점검 완료 후 조 편성 가능</button>
-<div class="teamHint" id="teamHint">QR로 투입대원을 등록하고 PPE 3개 항목을 모두 확인하면 조 편성 버튼이 활성화됩니다.</div>
-<div class="teamBody" id="teamBody">
+<div class="card teamSetup" id="teamSetupCard">
+<h3>👥 조 편성 · 투입위치</h3>
+<div class="teamHint" id="teamHint">같이 진입할 대원을 선택하고 투입위치를 지정하세요.</div>
+<div class="teamBody" id="teamBody" style="display:block">
 <div class="info">안전점검이 끝난 대원 중 <b>같이 진입할 대원만 선택</b>하세요. 2명·4명 등 현장 상황에 맞게 편성할 수 있습니다.</div>
+<button type="button" class="locationEditBtn" onclick="closeTeamSetup()" style="width:100%;margin-bottom:10px">▲ 조 편성 화면 닫기</button>
 
 <label>조 명칭</label>
 <select id="teamName" onchange="updateTeamPreview()">
@@ -722,7 +748,11 @@ PPE 점검 대기
 🔄 현황 새로고침
 </button>
 
-<div id="v23InsideSummary" class="v23Summary">활동 중 조·위치 요약은 현장현황을 불러오면 표시됩니다.</div><div class="v24Help">즉시투입 대원도 여기에서 조 편성/변경 · 진입방면 · 활동층 · 세부위치를 추가하거나 수정할 수 있습니다.</div>
+<div id="v23InsideSummary" class="v23Summary">활동 중 조·위치 요약은 현장현황을 불러오면 표시됩니다.</div>
+<div class="statusManageHint">
+  투입 후 조 편성·변경, 진입방면, 활동층, 세부위치는 이 <b>현장현황</b>에서 수정할 수 있습니다.
+  즉시투입한 대원도 나중에 조와 위치를 지정할 수 있습니다.
+</div>
 <div id="insideList"></div>
 
 <button
@@ -1937,7 +1967,6 @@ function chooseExtraFloor(btn){
   updateTeamPreview();
 }
 function editMemberLocation(memberId, memberName){
-  // V2.4: 즉시투입 후에도 현장현황에서 조 편성/변경 및 활동위치를 사후 입력 가능
   const meta=v23LoadMeta(), key=String(memberId), old=meta[key]||{};
   const team=prompt("조 명칭 (없으면 비워두세요)",old.teamName||"");
   if(team===null)return;
@@ -1972,34 +2001,46 @@ function isPPEComplete(){
   return ["ppe1","ppe2","ppe3"].every(id=>{const el=document.getElementById(id);return el&&el.checked;});
 }
 function updateTeamSetupState(){
-  const card=document.getElementById('teamSetupCard');
-  const btn=document.getElementById('teamToggleButton');
-  const hint=document.getElementById('teamHint');
-  if(!card||!btn) return;
   const ready=entryQueue.length>0 && isPPEComplete();
-  const qbtn=document.getElementById('quickEntryButton');
-  if(qbtn) qbtn.disabled=!ready;
-  updateV24ActionButtons();
-  btn.disabled=!ready;
-  btn.classList.toggle('ready',ready);
-  card.classList.toggle('locked',!ready);
-  if(ready){
-    btn.textContent=card.classList.contains('open')?'▲ 조 편성 · 투입위치 닫기':'👥 조 편성하기';
-    if(hint) hint.textContent='안전점검 완료 대원 중 실제 함께 진입할 대원을 선택하세요.';
-  }else{
-    card.classList.remove('open');
-    btn.textContent='🔒 PPE 안전점검 완료 후 조 편성 가능';
-    if(hint) hint.textContent=entryQueue.length===0?'먼저 QR 또는 검색으로 투입대원을 등록하세요.':'PPE 3개 항목을 모두 확인하면 조 편성이 활성화됩니다.';
+  const quick=document.getElementById("quickEntryButton");
+  const team=document.getElementById("teamModeButton");
+  const card=document.getElementById("teamSetupCard");
+
+  if(quick) quick.disabled=!ready;
+  if(team) team.disabled=!ready;
+
+  if(!ready && card){
+    card.classList.remove("modeOpen");
   }
 }
-function toggleTeamSetup(){
-  if(!isPPEComplete()||entryQueue.length===0) return;
-  const card=document.getElementById('teamSetupCard');
-  if(!card) return;
-  card.classList.toggle('open');
-  updateTeamSetupState();
-  if(card.classList.contains('open')) renderTeamMembers();
+
+function openTeamSetup(){
+  if(entryQueue.length===0){
+    alert("먼저 QR 또는 검색으로 투입대원을 등록하세요.");
+    return;
+  }
+  if(!isPPEComplete()){
+    alert("PPE 3개 항목을 모두 확인하세요.");
+    return;
+  }
+  const card=document.getElementById("teamSetupCard");
+  if(!card)return;
+  card.classList.add("modeOpen");
+  renderTeamMembers();
+  setTimeout(()=>card.scrollIntoView({behavior:"smooth",block:"start"}),50);
 }
+
+function closeTeamSetup(){
+  const card=document.getElementById("teamSetupCard");
+  if(card) card.classList.remove("modeOpen");
+}
+
+function toggleTeamSetup(){
+  const card=document.getElementById("teamSetupCard");
+  if(card && card.classList.contains("modeOpen")) closeTeamSetup();
+  else openTeamSetup();
+}
+
 function renderTeamMembers(){
   const area=document.getElementById("teamMemberList");
   if(!area) return;
@@ -2589,7 +2630,7 @@ function checkPPE(){
   ){
 
     status.innerText =
-      "✅ PPE 점검완료 · 조 편성 가능";
+      "✅ PPE 점검완료 · 투입 가능";
 
     status.style.background =
       "#e6f4ea";
@@ -2610,9 +2651,8 @@ function checkPPE(){
 
   }
 
-  const qbtn=document.getElementById("v24FastEntry");
+  const qbtn=document.getElementById("quickEntryButton");
   if(qbtn) qbtn.disabled=!complete || entryQueue.length===0;
-  updateV24ActionButtons();
   updateTeamSetupState();
 }
 
@@ -2664,23 +2704,6 @@ function resetPPE(){
 ===================================================== */
 
 
-
-function toggleV24TeamSetup(){
-  const card=document.getElementById("v24TeamSetupCard");
-  if(!card)return;
-  card.classList.toggle("v24Collapsed");
-  if(!card.classList.contains("v24Collapsed")){
-    setTimeout(()=>card.scrollIntoView({behavior:"smooth",block:"start"}),50);
-  }
-}
-function updateV24ActionButtons(){
-  const ready=entryQueue.length>0 && isPPEComplete();
-  const a=document.getElementById("v24FastEntry");
-  const b=document.getElementById("v24TeamEntry");
-  if(a)a.disabled=!ready;
-  if(b)b.disabled=!ready;
-}
-
 async function quickEntryMembers(){
   if(entrySubmitting)return;
   const site=(document.getElementById("site")||{}).value||"";
@@ -2693,7 +2716,7 @@ async function quickEntryMembers(){
 
   entrySubmitting=true;
   const qbtn=document.getElementById("quickEntryButton");
-  if(qbtn){qbtn.disabled=true;qbtn.innerText="⏳ 즉시 투입 처리중...";}
+  if(qbtn){qbtn.disabled=true;qbtn.innerText="⏳ 투입 처리중...";}
   const members=[...entryQueue];
   const form=new URLSearchParams();
   form.append("action","batchEntry"); form.append("site",site); form.append("officer",officer);
@@ -2712,7 +2735,7 @@ async function quickEntryMembers(){
       await loadInsideMembers();
     }
   }catch(e){console.error(e);alert("즉시 투입 기록 오류");}
-  finally{entrySubmitting=false;if(qbtn){qbtn.innerText="⚡ 즉시 투입";qbtn.disabled=!(entryQueue.length>0&&isPPEComplete());} updateV24ActionButtons();}
+  finally{entrySubmitting=false;if(qbtn){qbtn.innerText="⚡ 즉시 투입";qbtn.disabled=!(entryQueue.length>0&&isPPEComplete());} updateTeamSetupState();}
 }
 
 async function batchEntryMembers(){
@@ -3017,7 +3040,7 @@ async function batchEntryMembers(){
         renderTeamMembers();
       }
 
-      const v24card=document.getElementById("v24TeamSetupCard"); if(v24card)v24card.classList.add("v24Collapsed");
+      closeTeamSetup();
       await loadInsideMembers();
 
     }
