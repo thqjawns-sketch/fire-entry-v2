@@ -420,6 +420,20 @@ button:disabled{
 .teamPreview{padding:12px;background:#eef5fb;border-radius:10px;line-height:1.7;margin-top:10px;font-weight:bold}
 .teamError{color:#b42318;font-size:13px;margin-top:8px}
 @media(max-width:480px){.v2ChoiceGrid{grid-template-columns:repeat(2,1fr)}}
+
+/* ===== V2.3 ===== */
+.quickEntryBtn{width:100%;margin-top:10px;padding:14px;border:0;border-radius:12px;background:#c62828;color:#fff;font-weight:800;font-size:16px;cursor:pointer}
+.quickEntryBtn:disabled{opacity:.45;cursor:not-allowed}
+.extraFloorBox{display:none;margin-top:8px;padding:10px;border:1px dashed #b7c6d8;border-radius:10px;background:#f8fafc}
+.extraFloorBox.show{display:block}
+.floorBadge{display:inline-block;margin-left:5px;padding:3px 7px;border-radius:999px;font-size:12px;font-weight:800}
+.floor-fire{background:#fee2e2;color:#991b1b}.floor-above{background:#ffedd5;color:#9a3412}
+.floor-yellow{background:#fef9c3;color:#854d0e}.floor-green{background:#dcfce7;color:#166534}
+.floor-neutral{background:#e5e7eb;color:#374151}
+.locationLine{margin-top:5px;font-size:13px;font-weight:700;color:#334155}
+.locationEditBtn{margin-top:7px;padding:7px 10px;border:1px solid #94a3b8;border-radius:8px;background:#fff;font-weight:700;cursor:pointer}
+.v23Summary{margin:10px 0;padding:10px;border-radius:10px;background:#f1f5f9;font-size:13px;font-weight:700}
+
 </style>
 </head>
 
@@ -615,6 +629,11 @@ PASS · 무전기 정상상태 확인
 <div id="ppeStatus" class="status">
 PPE 점검 대기
 </div>
+<button type="button" id="quickEntryButton" class="quickEntryBtn" onclick="quickEntryMembers()" disabled>
+⚡ PPE 완료 대원 즉시 투입
+</button>
+<div class="v2Sub">조 편성·투입위치 입력 없이도 바로 투입할 수 있습니다. 위치정보는 현장현황에서 나중에 추가할 수 있습니다.</div>
+
 
 <div class="v2Sub">PPE 확인 후 아래에서 실제 함께 투입할 대원을 선택해 조를 편성합니다.</div>
 </div>
@@ -648,7 +667,16 @@ PPE 점검 대기
 <button type="button" class="v2Choice" data-value="화점층" onclick="chooseV2(this,'activityFloor')">🔥 화점층</button>
 <button type="button" class="v2Choice" data-value="직상층" onclick="chooseV2(this,'activityFloor')">⬆ 직상층</button>
 <button type="button" class="v2Choice" data-value="직하층" onclick="chooseV2(this,'activityFloor')">⬇ 직하층</button>
-<button type="button" class="v2Choice" data-value="기타" onclick="chooseV2(this,'activityFloor')">기타</button>
+<button type="button" class="v2Choice" data-value="기타" onclick="toggleExtraFloors(this)">기타</button>
+</div>
+<div id="extraFloorBox" class="extraFloorBox">
+  <div class="v2Sub"><b>기타 활동층 선택</b></div>
+  <div class="v2ChoiceGrid">
+    <button type="button" class="v2Choice" data-value="상층부" onclick="chooseExtraFloor(this)">⬆⬆ 상층부</button>
+    <button type="button" class="v2Choice" data-value="하층부" onclick="chooseExtraFloor(this)">⬇⬇ 하층부</button>
+    <button type="button" class="v2Choice" data-value="지하층" onclick="chooseExtraFloor(this)">지하층</button>
+    <button type="button" class="v2Choice" data-value="옥상" onclick="chooseExtraFloor(this)">옥상</button>
+  </div>
 </div>
 
 <label>세부 위치 <span class="v2Sub">(선택)</span></label>
@@ -686,6 +714,7 @@ PPE 점검 대기
 🔄 현황 새로고침
 </button>
 
+<div id="v23InsideSummary" class="v23Summary">활동 중 조·위치 요약은 현장현황을 불러오면 표시됩니다.</div>
 <div id="insideList"></div>
 
 <button
@@ -1856,6 +1885,77 @@ function renderQueue(){
 }
 
 
+
+/* ===== V2.3 위치 메타데이터(브라우저 저장) ===== */
+function v23SiteKey(){
+  const s=(document.getElementById("site")||{}).value||"";
+  return "fire-entry-v23-meta-"+s;
+}
+function v23LoadMeta(){
+  try{return JSON.parse(localStorage.getItem(v23SiteKey())||"{}");}catch(e){return {};}
+}
+function v23SaveMeta(meta){
+  try{localStorage.setItem(v23SiteKey(),JSON.stringify(meta));}catch(e){}
+}
+function v23SetMemberMeta(id, patch){
+  const meta=v23LoadMeta(), key=String(id);
+  meta[key]=Object.assign({},meta[key]||{},patch||{});
+  v23SaveMeta(meta);
+}
+function v23FloorClass(f){
+  if(f==="화점층")return "floor-fire";
+  if(f==="직상층")return "floor-above";
+  if(f==="직하층"||f==="상층부")return "floor-yellow";
+  if(f==="하층부")return "floor-green";
+  return "floor-neutral";
+}
+function v23LocationText(m){
+  const p=[m.entryDirection||"진입방면 미지정",m.activityFloor||"활동층 미지정",m.detailLocation||""].filter(Boolean);
+  return p.join(" · ");
+}
+function toggleExtraFloors(btn){
+  document.querySelectorAll("#activityFloorChoices .v2Choice").forEach(b=>b.classList.remove("active"));
+  btn.classList.add("active");
+  activityFloor="";
+  const box=document.getElementById("extraFloorBox");
+  if(box) box.classList.toggle("show");
+  updateTeamPreview();
+}
+function chooseExtraFloor(btn){
+  const box=document.getElementById("extraFloorBox");
+  if(box) box.querySelectorAll(".v2Choice").forEach(b=>b.classList.remove("active"));
+  btn.classList.add("active");
+  activityFloor=btn.dataset.value||"";
+  updateTeamPreview();
+}
+function editMemberLocation(memberId, memberName){
+  const meta=v23LoadMeta(), key=String(memberId), old=meta[key]||{};
+  const team=prompt("조 명칭 (없으면 비워두세요)",old.teamName||"");
+  if(team===null)return;
+  const dir=prompt("진입방면 (A방면/B방면/C방면/D방면, 미지정 가능)",old.entryDirection||"");
+  if(dir===null)return;
+  const floor=prompt("활동층 (화점층/직상층/직하층/상층부/하층부/지하층/옥상)",old.activityFloor||"");
+  if(floor===null)return;
+  const detail=prompt("세부위치 (선택)",old.detailLocation||"");
+  if(detail===null)return;
+  const history=Array.isArray(old.history)?old.history:[];
+  history.push({time:new Date().toLocaleTimeString("ko-KR",{hour:"2-digit",minute:"2-digit"}),activityFloor:floor.trim(),detailLocation:detail.trim()});
+  v23SetMemberMeta(key,{teamName:team.trim(),entryDirection:dir.trim(),activityFloor:floor.trim(),detailLocation:detail.trim(),history:history});
+  loadInsideMembers();
+}
+function updateV23Summary(members){
+  const el=document.getElementById("v23InsideSummary"); if(!el)return;
+  const meta=v23LoadMeta(), teams=new Set(), floors={};
+  (members||[]).forEach(m=>{
+    const x=meta[String(m.memberId)]||{};
+    if(x.teamName)teams.add(x.teamName);
+    const f=x.activityFloor||"미지정";
+    floors[f]=(floors[f]||0)+1;
+  });
+  const parts=Object.keys(floors).map(f=>f+" "+floors[f]+"명");
+  el.textContent="활동 중 "+teams.size+"개조 / "+(members||[]).length+"명"+(parts.length?" · "+parts.join(" · "):"");
+}
+
 /* =====================================================
 V2 조 편성 / 투입위치
 ===================================================== */
@@ -1868,6 +1968,8 @@ function updateTeamSetupState(){
   const hint=document.getElementById('teamHint');
   if(!card||!btn) return;
   const ready=entryQueue.length>0 && isPPEComplete();
+  const qbtn=document.getElementById('quickEntryButton');
+  if(qbtn) qbtn.disabled=!ready;
   btn.disabled=!ready;
   btn.classList.toggle('ready',ready);
   card.classList.toggle('locked',!ready);
@@ -1921,7 +2023,8 @@ function updateTeamPreview(){
 }
 function resetV2Team(){
   selectedTeamMemberIds.clear(); entryDirection=''; activityFloor='';
-  document.querySelectorAll('#entryDirectionChoices .v2Choice,#activityFloorChoices .v2Choice').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('#entryDirectionChoices .v2Choice,#activityFloorChoices .v2Choice,#extraFloorBox .v2Choice').forEach(b=>b.classList.remove('active'));
+  const ex=document.getElementById('extraFloorBox'); if(ex)ex.classList.remove('show');
   const d=document.getElementById('detailLocation'); if(d)d.value='';
   renderTeamMembers();
 }
@@ -2497,6 +2600,8 @@ function checkPPE(){
 
   }
 
+  const qbtn=document.getElementById("quickEntryButton");
+  if(qbtn) qbtn.disabled=!complete || entryQueue.length===0;
   updateTeamSetupState();
 }
 
@@ -2546,6 +2651,41 @@ function resetPPE(){
 /* =====================================================
 일괄 진입
 ===================================================== */
+
+
+async function quickEntryMembers(){
+  if(entrySubmitting)return;
+  const site=(document.getElementById("site")||{}).value||"";
+  const officer=((document.getElementById("officer")||{}).value||"").trim();
+  if(!site){alert("화재현장을 선택하세요.");return;}
+  if(!officer){alert("안전점검관 성명을 입력하세요.");return;}
+  if(entryQueue.length===0){alert("투입대기 명단에 대원을 추가하세요.");return;}
+  if(!isPPEComplete()){alert("PPE 3개 항목을 모두 확인하세요.");return;}
+  if(!confirm("PPE 완료 대원 "+entryQueue.length+"명을 조·위치정보 없이 즉시 투입하시겠습니까?"))return;
+
+  entrySubmitting=true;
+  const qbtn=document.getElementById("quickEntryButton");
+  if(qbtn){qbtn.disabled=true;qbtn.innerText="⏳ 즉시 투입 처리중...";}
+  const members=[...entryQueue];
+  const form=new URLSearchParams();
+  form.append("action","batchEntry"); form.append("site",site); form.append("officer",officer);
+  form.append("teamName",""); form.append("entryDirection",""); form.append("activityFloor",""); form.append("detailLocation","");
+  form.append("members",JSON.stringify(members.map(m=>({id:m.id,name:m.name}))));
+  try{
+    const response=await fetch(API,{method:"POST",body:form});
+    const data=await response.json();
+    alert(data.message||"처리 완료");
+    if(data.successCount>0){
+      const successIds=new Set((data.succeeded||[]).map(x=>String(x.id)));
+      members.forEach(m=>{if(successIds.size===0||successIds.has(String(m.id)))v23SetMemberMeta(m.id,{teamName:"",entryDirection:"",activityFloor:"",detailLocation:"",history:[]});});
+      entryQueue=entryQueue.filter(m=>!successIds.has(String(m.id)));
+      renderQueue();
+      if(entryQueue.length===0) resetPPE(); else { checkPPE(); renderTeamMembers(); }
+      await loadInsideMembers();
+    }
+  }catch(e){console.error(e);alert("즉시 투입 기록 오류");}
+  finally{entrySubmitting=false;if(qbtn){qbtn.innerText="⚡ PPE 완료 대원 즉시 투입";qbtn.disabled=!(entryQueue.length>0&&isPPEComplete());}}
+}
 
 async function batchEntryMembers(){
 
@@ -2822,9 +2962,32 @@ async function batchEntryMembers(){
         );
 
 
+      selectedTeamMembers.forEach(member=>{
+        if(successIds.has(String(member.id))){
+          v23SetMemberMeta(member.id,{
+            teamName:teamName,
+            entryDirection:entryDirection,
+            activityFloor:activityFloor,
+            detailLocation:detailLocation,
+            history:[{time:new Date().toLocaleTimeString("ko-KR",{hour:"2-digit",minute:"2-digit"}),activityFloor:activityFloor,detailLocation:detailLocation}]
+          });
+        }
+      });
+
       renderQueue();
 
-      resetPPE();
+      // V2.3: 남은 대원은 PPE 완료 상태를 유지하여 다음 조를 바로 편성
+      if(entryQueue.length===0){
+        resetPPE();
+      }else{
+        selectedTeamMemberIds.clear();
+        entryDirection=""; activityFloor="";
+        document.querySelectorAll('#entryDirectionChoices .v2Choice,#activityFloorChoices .v2Choice,#extraFloorBox .v2Choice').forEach(b=>b.classList.remove('active'));
+        const ex=document.getElementById('extraFloorBox'); if(ex) ex.classList.remove('show');
+        const dl=document.getElementById('detailLocation'); if(dl) dl.value='';
+        checkPPE();
+        renderTeamMembers();
+      }
 
       await loadInsideMembers();
 
@@ -3140,6 +3303,15 @@ async function loadInsideMembers(){
           ) +
           '</div>' +
 
+          (function(){
+            const vm=v23LoadMeta()[String(member.memberId)]||{};
+            const team=vm.teamName ? escapeHtml(vm.teamName)+' · ' : '';
+            const floor=vm.activityFloor||'';
+            const floorBadge=floor ? '<span class="floorBadge '+v23FloorClass(floor)+'">'+escapeHtml(floor)+'</span>' : '<span class="floorBadge floor-neutral">활동층 미지정</span>';
+            return '<div class="locationLine">'+team+escapeHtml(vm.entryDirection||'진입방면 미지정')+' '+floorBadge+(vm.detailLocation?' · '+escapeHtml(vm.detailLocation):'')+'</div>'+
+              '<button type="button" class="locationEditBtn" onclick="editMemberLocation(\''+escapeAttr(member.memberId)+'\',\''+escapeAttr(member.memberName)+'\')">📍 조·활동위치 수정</button>';
+          })() +
+
           '<div class="time">' +
 
           '진입 ' +
@@ -3180,6 +3352,8 @@ async function loadInsideMembers(){
       }
     );
 
+
+    updateV23Summary(data.members);
 
     selectAllState =
       false;
