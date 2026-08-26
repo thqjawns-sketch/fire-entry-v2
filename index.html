@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>소방현장 진입·철수 태그 관리앱 <span class="v2Badge">V2</span> V2 - V2.23 현장현황·철수화면 분리</title>
+<title>소방현장 진입·철수 태그 관리앱 <span class="v2Badge">V2</span> V2 - V2.24 안정화 기준판</title>
 
 <script src="https://unpkg.com/html5-qrcode" type="text/javascript">
 document.addEventListener("DOMContentLoaded",function(){v31UpdateTeamPreviewAuto();});
@@ -770,9 +770,6 @@ button:disabled{
 #dashboardRefreshBtn{display:flex!important;flex-direction:column;align-items:center;justify-content:center;gap:4px}
 .refreshMainV22{font-size:18px;font-weight:900;line-height:1.2}
 .refreshSubV22{font-size:11px;font-weight:700;opacity:.9;line-height:1.2}
-#dashboardPage.showExitedOnlyV22 > .dashboardWrap > *{display:none!important}
-#dashboardPage.showExitedOnlyV22 > .dashboardWrap > #exitedHistoryCard{display:block!important}
-.exitedPageV22{margin-top:0}
 @media(max-width:560px){
   .staySummaryGridV22{column-gap:8px}
   .staySummaryGridV22 .staySummaryRow{font-size:10.5px}
@@ -3656,8 +3653,11 @@ async function loadInsideMembers(){
     refreshButton.disabled =
       true;
 
-    refreshButton.innerText =
-      "⏳ 처리중...";
+    const refreshMain =
+      refreshButton.querySelector(".refreshMainV22");
+    if(refreshMain){
+      refreshMain.textContent = "⏳ 처리중...";
+    }
 
   }
 
@@ -3706,7 +3706,11 @@ async function loadInsideMembers(){
       refreshButton.disabled =
         false;
 
-      // 성공 시 갱신된 시간 표시를 그대로 유지한다.
+      const refreshMain =
+        refreshButton.querySelector(".refreshMainV22");
+      if(refreshMain){
+        refreshMain.textContent = "🔄 현황 새로고침";
+      }
 
     }
 
@@ -3889,7 +3893,11 @@ async function loadInsideMembers(){
       refreshButton.disabled =
         false;
 
-      // 성공 시 갱신된 시간 표시를 그대로 유지한다.
+      const refreshMain =
+        refreshButton.querySelector(".refreshMainV22");
+      if(refreshMain){
+        refreshMain.textContent = "🔄 현황 새로고침";
+      }
 
     }
 
@@ -4411,8 +4419,11 @@ async function loadDashboard(
     refreshButton.disabled =
       true;
 
-    refreshButton.innerText =
-      "⏳ 처리중...";
+    const refreshMain =
+      refreshButton.querySelector(".refreshMainV22");
+    if(refreshMain){
+      refreshMain.textContent = "⏳ 처리중...";
+    }
 
   }
 
@@ -4440,7 +4451,11 @@ async function loadDashboard(
       refreshButton.disabled =
         false;
 
-      // 성공 시 갱신된 시간 표시를 그대로 유지한다.
+      const refreshMain =
+        refreshButton.querySelector(".refreshMainV22");
+      if(refreshMain){
+        refreshMain.textContent = "🔄 현황 새로고침";
+      }
 
     }
 
@@ -4683,7 +4698,11 @@ async function loadDashboard(
       refreshButton.disabled =
         false;
 
-      // 성공 시 갱신된 시간 표시를 그대로 유지한다.
+      const refreshMain =
+        refreshButton.querySelector(".refreshMainV22");
+      if(refreshMain){
+        refreshMain.textContent = "🔄 현황 새로고침";
+      }
 
     }
 
@@ -4973,10 +4992,6 @@ function closeExitedPage(){
   if(exitedPage) exitedPage.style.display="none";
   if(dashboardPage) dashboardPage.style.display="block";
   window.scrollTo({top:0,behavior:"smooth"});
-}
-
-function toggleExitedHistory(){
-  openExitedPage();
 }
 
 function drawDashboardExited(
