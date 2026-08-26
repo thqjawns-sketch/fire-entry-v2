@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>소방현장 진입·철수 태그 관리앱 <span class="v2Badge">V2</span> V2 - V2.21 첫화면 완성판</title>
+<title>소방현장 진입·철수 태그 관리앱 <span class="v2Badge">V2</span> V2 - V2.22 현장현황 1차완성</title>
 
 <script src="https://unpkg.com/html5-qrcode" type="text/javascript">
 document.addEventListener("DOMContentLoaded",function(){v31UpdateTeamPreviewAuto();});
@@ -747,6 +747,37 @@ button:disabled{
   line-height:1.45;
 }
 
+
+/* ===== V2.22 현장 활동 현황 압축/철수대원 분리 ===== */
+.compactSummaryBox{display:flex;flex-direction:column;align-items:center;justify-content:center}
+.summaryLabel{font-size:16px}
+.summaryValueLine{display:flex;align-items:baseline;justify-content:center;gap:3px;margin-top:6px}
+.summaryValueLine .summaryNumber{margin:0;line-height:1}
+.summaryUnit{font-size:14px;font-weight:700}
+.staySummaryGridV22{
+  max-width:none!important;
+  display:grid!important;
+  grid-template-columns:1fr 1fr;
+  column-gap:14px;
+  row-gap:2px;
+}
+.staySummaryGridV22 .staySummaryRow{min-width:0;white-space:nowrap;font-size:12px}
+.exitedInlineBtn{
+  margin-top:8px!important;width:auto!important;padding:6px 10px!important;
+  border:1px solid #2471e8!important;border-radius:8px!important;
+  background:#fff!important;color:#1764cf!important;font-size:11px!important;font-weight:900!important;
+}
+#dashboardRefreshBtn{display:flex!important;flex-direction:column;align-items:center;justify-content:center;gap:4px}
+.refreshMainV22{font-size:18px;font-weight:900;line-height:1.2}
+.refreshSubV22{font-size:11px;font-weight:700;opacity:.9;line-height:1.2}
+#dashboardPage.showExitedOnlyV22 > .dashboardWrap > *{display:none!important}
+#dashboardPage.showExitedOnlyV22 > .dashboardWrap > #exitedHistoryCard{display:block!important}
+.exitedPageV22{margin-top:0}
+@media(max-width:560px){
+  .staySummaryGridV22{column-gap:8px}
+  .staySummaryGridV22 .staySummaryRow{font-size:10.5px}
+}
+
 </style>
 </head>
 
@@ -1051,10 +1082,6 @@ PPE 점검 대기
 🟢 선택 대원 일괄 철수처리
 </button>
 
-<div class="safetyNotice">
-※ 실제 철수 판단은 공기호흡기 잔압·경보 및 현장상황을 우선함
-</div>
-
 </div>
 
 </div>
@@ -1085,10 +1112,9 @@ PPE 점검 대기
 
 <div class="summaryGrid">
 
-<div class="summaryBox">
-현재 내부
-<div id="dashInside" class="summaryNumber red">0</div>
-명
+<div class="summaryBox compactSummaryBox">
+<div class="summaryLabel">현재 내부</div>
+<div class="summaryValueLine"><span id="dashInside" class="summaryNumber red">0</span><span class="summaryUnit">명</span></div>
 </div>
 
 <div class="summaryBox">
@@ -1097,10 +1123,10 @@ PPE 점검 대기
 명
 </div>
 
-<div class="summaryBox">
-철수 완료
-<div id="dashExited" class="summaryNumber green">0</div>
-명
+<div class="summaryBox compactSummaryBox exitedSummaryBox">
+<div class="summaryLabel">철수 완료</div>
+<div class="summaryValueLine"><span id="dashExited" class="summaryNumber green">0</span><span class="summaryUnit">명</span></div>
+<button type="button" class="exitedInlineBtn" onclick="openExitedPage()">철수대원 확인 ›</button>
 </div>
 
 <div class="summaryBox">
@@ -1109,7 +1135,7 @@ PPE 점검 대기
 현재 내부 체류시간
 </div>
 
-<div class="staySummaryRows">
+<div class="staySummaryRows staySummaryGridV22">
 
 <div class="staySummaryRow">
 <span>🟢 0~20분</span>
@@ -1124,6 +1150,11 @@ PPE 점검 대기
 <div class="staySummaryRow">
 <span>🔴 26~30분</span>
 <span id="stayRedCount" class="red">0명</span>
+</div>
+
+<div class="staySummaryRow">
+<span>🔴 31분 이상</span>
+<span id="stayCriticalCount" class="red">0명</span>
 </div>
 
 </div>
@@ -1148,15 +1179,9 @@ PPE 점검 대기
   class="refresh"
   onclick="loadDashboard(false)"
 >
-🔄 현황 새로고침
+<span class="refreshMainV22">🔄 현황 새로고침</span>
+<span id="dashboardAutoRefreshInfo" class="refreshSubV22">60초 자동갱신 · 마지막 갱신 --:--:--</span>
 </button>
-
-<div
-  id="dashboardAutoRefreshInfo"
-  class="autoRefreshInfo"
->
-⏱ 현장 활동 현황은 60초마다 자동갱신됩니다.
-</div>
 
 <button
   class="back"
@@ -1183,15 +1208,9 @@ PPE 점검 대기
 </div>
 
 
-<div class="card">
-<button type="button" class="exitedToggleBtn" onclick="toggleExitedHistory()">
-  철수 완료 대원 보기
-</button>
-</div>
-
-<div class="card" id="exitedHistoryCard">
+<div class="card exitedPageV22" id="exitedHistoryCard">
 <div class="sectionTitle">철수 완료 대원</div>
-<button type="button" class="back" onclick="toggleExitedHistory()">⬅ 현장 활동 현황으로 돌아가기</button>
+<button type="button" class="back" onclick="closeExitedPage()">⬅ 현장 활동 현황으로 돌아가기</button>
 <div id="dashboardExited"></div>
 </div>
 
@@ -3681,8 +3700,9 @@ async function loadInsideMembers(){
       refreshButton.disabled =
         false;
 
-      refreshButton.innerText =
-        "🔄 현황 새로고침";
+      refreshButton.innerHTML =
+        '<span class="refreshMainV22">🔄 현황 새로고침</span>'+
+        '<span id="dashboardAutoRefreshInfo" class="refreshSubV22">60초 자동갱신 · 마지막 갱신 --:--:--</span>';
 
     }
 
@@ -3865,8 +3885,9 @@ async function loadInsideMembers(){
       refreshButton.disabled =
         false;
 
-      refreshButton.innerText =
-        "🔄 현황 새로고침";
+      refreshButton.innerHTML =
+        '<span class="refreshMainV22">🔄 현황 새로고침</span>'+
+        '<span id="dashboardAutoRefreshInfo" class="refreshSubV22">60초 자동갱신 · 마지막 갱신 --:--:--</span>';
 
     }
 
@@ -4417,8 +4438,9 @@ async function loadDashboard(
       refreshButton.disabled =
         false;
 
-      refreshButton.innerText =
-        "🔄 현황 새로고침";
+      refreshButton.innerHTML =
+        '<span class="refreshMainV22">🔄 현황 새로고침</span>'+
+        '<span id="dashboardAutoRefreshInfo" class="refreshSubV22">60초 자동갱신 · 마지막 갱신 --:--:--</span>';
 
     }
 
@@ -4576,6 +4598,11 @@ async function loadDashboard(
       red +
       "명";
 
+    const stayCriticalCount =
+      document.getElementById("stayCriticalCount");
+    if(stayCriticalCount){
+      stayCriticalCount.innerText = critical + "명";
+    }
 
     updateCriticalSummary(
       critical
@@ -4612,7 +4639,7 @@ async function loadDashboard(
 
 
       autoInfo.innerText =
-        "⏱ 60초 자동갱신 중 · 마지막 갱신 " +
+        "60초 자동갱신 · 마지막 갱신 " +
         now.toLocaleTimeString(
           "ko-KR",
           {
@@ -4655,8 +4682,9 @@ async function loadDashboard(
       refreshButton.disabled =
         false;
 
-      refreshButton.innerText =
-        "🔄 현황 새로고침";
+      refreshButton.innerHTML =
+        '<span class="refreshMainV22">🔄 현황 새로고침</span>'+
+        '<span id="dashboardAutoRefreshInfo" class="refreshSubV22">60초 자동갱신 · 마지막 갱신 --:--:--</span>';
 
     }
 
@@ -4923,13 +4951,25 @@ function saveDashboardMemberLocation(memberId){
 철수 대원 표시
 ===================================================== */
 
+function openExitedPage(){
+  const page=document.getElementById("dashboardPage");
+  const card=document.getElementById("exitedHistoryCard");
+  if(!page || !card)return;
+  page.classList.add("showExitedOnlyV22");
+  card.classList.add("show");
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+function closeExitedPage(){
+  const page=document.getElementById("dashboardPage");
+  const card=document.getElementById("exitedHistoryCard");
+  if(page)page.classList.remove("showExitedOnlyV22");
+  if(card)card.classList.remove("show");
+  window.scrollTo({top:0,behavior:"smooth"});
+}
 function toggleExitedHistory(){
   const card=document.getElementById("exitedHistoryCard");
-  if(!card)return;
-  card.classList.toggle("show");
-  if(card.classList.contains("show")){
-    setTimeout(()=>card.scrollIntoView({behavior:"smooth",block:"start"}),40);
-  }
+  if(card && card.classList.contains("show")) closeExitedPage();
+  else openExitedPage();
 }
 
 function drawDashboardExited(
