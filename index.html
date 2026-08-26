@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>소방현장 진입·철수 태그 관리앱 <span class="v2Badge">V2</span> V2 - V2.15</title>
+<title>소방현장 진입·철수 태그 관리앱 <span class="v2Badge">V2</span> V2 - V2.16</title>
 
 <script src="https://unpkg.com/html5-qrcode" type="text/javascript">
 document.addEventListener("DOMContentLoaded",function(){v31UpdateTeamPreviewAuto();});
@@ -766,6 +766,93 @@ button:disabled{
 #insideList .v34Rail,
 #dashboardInside .v34Rail{
   min-height:150px;
+}
+
+
+/* ===== V2.16 조별 카드 최종 재설계 ===== */
+.v16TeamCard{
+  --team:#64748b;
+  display:grid;
+  grid-template-columns:72px minmax(0,1fr);
+  border:2px solid var(--team);
+  border-radius:13px;
+  overflow:hidden;
+  background:#fff;
+  margin:0 0 24px;
+  box-shadow:0 2px 7px rgba(0,0,0,.04);
+}
+.v16Rail{
+  background:var(--team);color:#fff;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:8px;padding:12px 4px;min-width:0;text-align:center;
+}
+.v16TeamLabel{font-size:22px;line-height:1.1;white-space:nowrap}
+.v16Rail span{font-size:12px;font-weight:900;white-space:nowrap}
+.v16Main{min-width:0;padding:10px}
+.v16Top{
+  min-width:0;display:flex;align-items:center;gap:8px;
+  padding:1px 1px 9px;border-bottom:1px solid #e4e9ef;
+}
+.v16Loc{
+  flex:1;min-width:0;font-size:13px;color:#17283c;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.v16Loc b{font-weight:1000}.v16Loc i{font-style:normal;color:#a6b0bc;margin:0 5px}
+.v16Detail{
+  flex:0 0 auto;width:auto!important;min-width:78px!important;
+  margin:0!important;padding:6px 8px!important;
+  border:1px solid var(--team)!important;border-radius:8px!important;
+  background:#fff!important;color:var(--team)!important;
+  font-size:12px!important;font-weight:900!important;line-height:1.2!important;
+}
+.v16Members{min-width:0}
+.v16Member{
+  min-width:0;display:grid;
+  grid-template-columns:22px minmax(150px,1fr) minmax(155px,auto) 82px;
+  align-items:center;gap:8px;padding:10px 3px;
+  border-bottom:1px solid #e7ebf0;cursor:pointer;
+}
+.v16Member:last-child{border-bottom:0}
+.v16Check input{width:18px;height:18px;margin:0}
+.v16Person{min-width:0}
+.v16Name{
+  min-width:0;font-size:13px;font-weight:1000;color:#087b3d;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.v16Name span{color:#17283c;font-weight:800}
+.v16Code{font-size:11px;color:#718096;margin-top:3px;white-space:nowrap}
+.v16Timing{display:flex;gap:9px;font-size:11.5px;font-weight:800;color:#314258;white-space:nowrap}
+.v16Status{
+  justify-self:end;border-radius:12px;padding:5px 7px;
+  font-size:11px;font-weight:1000;white-space:nowrap;
+}
+.v16Status.normal{background:#e8f7ec;color:#087d3d}
+.v16Status.orange{background:#fff3d9;color:#b76500}
+.v16Status.red{background:#ffe7e7;color:#c51e1e}
+.v16Status.danger{background:#ffd8d8;color:#991b1b;animation:blink 1s infinite}
+.v16Color0{--team:#64748b}.v16Color1{--team:#1d6fe8}.v16Color2{--team:#f28705}
+.v16Color3{--team:#8b46d8}.v16Color4{--team:#0f9588}.v16Color5{--team:#d64c72}
+.v16Color6{--team:#607c18}.v16Color7{--team:#6d42d8}.v16Color8{--team:#08758d}
+
+/* 이전 조 카드 스타일이 V2.16을 침범하지 않도록 차단 */
+#insideList .v16TeamCard,#dashboardInside .v16TeamCard{margin-bottom:24px!important}
+#insideList .v16TeamCard:last-child,#dashboardInside .v16TeamCard:last-child{margin-bottom:6px!important}
+
+@media(max-width:560px){
+  .v16TeamCard{grid-template-columns:60px minmax(0,1fr);margin-bottom:18px}
+  .v16TeamLabel{font-size:18px}
+  .v16Main{padding:8px}
+  .v16Loc{font-size:11.5px}
+  .v16Detail{min-width:68px!important;font-size:10.5px!important;padding:5px 6px!important}
+  .v16Member{
+    grid-template-columns:20px minmax(110px,1fr) 72px;
+    gap:6px;padding:9px 2px;
+  }
+  .v16Name{font-size:12px}
+  .v16Code{font-size:10px}
+  .v16Timing{display:block;font-size:10.5px}
+  .v16Timing span{display:block;white-space:nowrap}
+  .v16Status{grid-column:3;font-size:10px;padding:4px 5px}
 }
 
 </style>
@@ -4708,19 +4795,19 @@ function v34RenderGroupedMembers(list,targetId){
 
   const members=list||[];
   const meta=v23LoadMeta();
-  const c=document.getElementById("v28ActiveCount");
-  if(c)c.textContent=members.length+"명";
-
   const groups={};
+
   members.forEach(member=>{
     const vm=meta[String(member.memberId)]||{};
     const team=vm.teamName||"조 미지정";
     (groups[team]||(groups[team]=[])).push({member,vm});
   });
 
-  const named=Object.keys(groups).filter(k=>k!=="조 미지정").sort((a,b)=>v28TeamNo(a)-v28TeamNo(b));
-  const ordered=[...named];
-  if(groups["조 미지정"])ordered.push("조 미지정");
+  const ordered=Object.keys(groups).sort((a,b)=>{
+    if(a==="조 미지정")return 1;
+    if(b==="조 미지정")return -1;
+    return v28TeamNo(a)-v28TeamNo(b);
+  });
 
   if(!ordered.length){
     area.innerHTML='<div class="empty">현재 현장 활동 대원이 없습니다.</div>';
@@ -4729,81 +4816,71 @@ function v34RenderGroupedMembers(list,targetId){
 
   ordered.forEach(team=>{
     const rows=groups[team];
-    const isUnassigned=team==="조 미지정";
-    const teamNo=isUnassigned?0:v28TeamNo(team);
-    const colorIndex=isUnassigned?0:((teamNo-1)%8)+1;
+    const unassigned=team==="조 미지정";
+    const no=unassigned?0:v28TeamNo(team);
+    const ci=unassigned?0:((no-1)%8)+1;
     const activityNo=Math.max(...rows.map(x=>Number(x.vm.teamActivityNo)||1));
     const dirs=[...new Set(rows.map(x=>x.vm.entryDirection||"미지정"))];
     const floors=[...new Set(rows.map(x=>x.vm.activityFloor||"미지정"))];
     const details=[...new Set(rows.map(x=>x.vm.detailLocation||"세부장소 미지정"))];
-    const entryTimes=rows.map(x=>x.member.entryTime||x.member.entryAt||"-");
-    const maxMin=Math.max(...rows.map(x=>Number(x.member.currentMinutes)||0));
 
     const card=document.createElement("div");
-    card.className="v34TeamCard v34Color"+colorIndex;
+    card.className="v16TeamCard v16Color"+ci;
 
     const rail=document.createElement("div");
-    rail.className="v34Rail";
-    rail.innerHTML=isUnassigned
-      ? '<div class="v34TeamNo small">조<br>미지정</div><div class="v34People">👥 '+rows.length+'명</div>'
-      : '<div class="v34TeamNo">'+escapeHtml(team)+'</div><div class="v34Round">'+activityNo+'차 활동</div><div class="v34People">👥 '+rows.length+'명</div>';
+    rail.className="v16Rail";
+    rail.innerHTML=unassigned
+      ? '<b class="v16TeamLabel">미지정</b><span>'+rows.length+'명</span>'
+      : '<b class="v16TeamLabel">'+escapeHtml(team)+'</b><span>'+activityNo+'차</span><span>'+rows.length+'명</span>';
     card.appendChild(rail);
 
-    const body=document.createElement("div");
-    body.className="v34Body";
+    const main=document.createElement("div");
+    main.className="v16Main";
 
-    const header=document.createElement("div");
-    header.className="v34Header";
-    header.innerHTML=
-      '<div class="v34HeaderText">'+
-        '<div class="v34Location">📍 '+escapeHtml(dirs.length===1?dirs[0]:"방면 혼재")+
-        ' <span>│</span> '+escapeHtml(floors.length===1?floors[0]:"활동층 혼재")+
-        ' <span>│</span> 🏷 '+escapeHtml(details.length===1?details[0]:"세부장소 혼재")+'</div>'+
-        '<div class="v34GroupTime">진입 '+escapeHtml(entryTimes[0])+' <span>│</span> 활동시간 '+maxMin+'분</div>'+
+    const top=document.createElement("div");
+    top.className="v16Top";
+    top.innerHTML=
+      '<div class="v16Loc">'+
+        '<b>'+escapeHtml(dirs.length===1?dirs[0]:"방면 혼재")+'</b>'+
+        '<i>│</i><b>'+escapeHtml(floors.length===1?floors[0]:"활동층 혼재")+'</b>'+
+        '<i>│</i><span>'+escapeHtml(details.length===1?details[0]:"세부장소 혼재")+'</span>'+
       '</div>'+
-      '<button type="button" class="v34DetailBtn">상세보기 ›</button>';
-    body.appendChild(header);
+      '<button type="button" class="v16Detail">상세보기 ›</button>';
+    main.appendChild(top);
 
-    const memberBox=document.createElement("div");
-    memberBox.className="v34MemberBox";
+    const memberWrap=document.createElement("div");
+    memberWrap.className="v16Members";
 
-    rows.sort((a,b)=>(Number(b.member.currentMinutes)||0)-(Number(a.member.currentMinutes)||0));
-    rows.forEach(({member,vm})=>{
+    rows.forEach(({member})=>{
       const mins=Number(member.currentMinutes)||0;
       const rank=member.rank||"";
       const dept=member.dept||member.department||"";
       const code=member.manageNo||member.memberNo||member.memberId||"";
-      const status=mins>=31?"⚠ 즉시확인":mins>=26?"🔴 경고":mins>=21?"🟠 주의":"● 정상";
-      const statusClass=mins>=31?"danger":mins>=26?"red":mins>=21?"orange":"normal";
+      const st=mins>=31?["⚠ 즉시확인","danger"]:mins>=26?["🔴 경고","red"]:mins>=21?["🟠 주의","orange"]:["● 정상","normal"];
 
       const row=document.createElement("div");
-      row.className="v34Member";
+      row.className="v16Member";
       row.innerHTML=
-        '<label class="v34Select" onclick="event.stopPropagation()"><input type="checkbox" class="insideCheck" value="'+escapeHtml(String(member.memberId))+'"></label>'+
-        '<div class="v34Avatar">👤</div>'+
-        '<div class="v34Identity">'+
-          '<div class="v34Name">'+escapeHtml(member.name||"")+' '+escapeHtml(rank)+'</div>'+
-          '<div class="v34Dept">'+escapeHtml(dept)+(code?'　│　'+escapeHtml(String(code)):'')+'</div>'+
+        '<label class="v16Check" onclick="event.stopPropagation()"><input type="checkbox" class="insideCheck" value="'+escapeHtml(String(member.memberId))+'"></label>'+
+        '<div class="v16Person">'+
+          '<div class="v16Name">'+escapeHtml(member.name||"")+' '+escapeHtml(rank)+' <span>/ '+escapeHtml(dept)+'</span></div>'+
+          '<div class="v16Code">'+escapeHtml(String(code))+'</div>'+
         '</div>'+
-        '<div class="v34Entry">진입 '+escapeHtml(member.entryTime||member.entryAt||"-")+'</div>'+
-        '<div class="v34Stay">체류 '+mins+'분</div>'+
-        '<div class="v34Status '+statusClass+'">'+status+'</div>';
+        '<div class="v16Timing"><span>진입 '+escapeHtml(member.entryTime||member.entryAt||"-")+'</span><span>체류 '+mins+'분</span></div>'+
+        '<div class="v16Status '+st[1]+'">'+st[0]+'</div>';
       row.addEventListener("click",()=>openMemberDetail(member.memberId));
-      memberBox.appendChild(row);
+      memberWrap.appendChild(row);
     });
 
-    body.appendChild(memberBox);
-    card.appendChild(body);
-
-    header.querySelector(".v34DetailBtn").addEventListener("click",(ev)=>{
+    main.appendChild(memberWrap);
+    card.appendChild(main);
+    top.querySelector(".v16Detail").addEventListener("click",ev=>{
       ev.stopPropagation();
       if(rows.length)openMemberDetail(rows[0].member.memberId);
     });
-
     area.appendChild(card);
   });
 }
-
 function drawDashboardInside(list){
   v34RenderGroupedMembers(list,"dashboardInside");
 }
