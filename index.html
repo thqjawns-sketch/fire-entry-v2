@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>소방현장 진입·철수 태그 관리앱 <span class="v2Badge">V2</span> V2 - V2.20 조위치·전체선택</title>
+<title>소방현장 진입·철수 태그 관리앱 <span class="v2Badge">V2</span> V2 - V2.21 첫화면 완성판</title>
 
 <script src="https://unpkg.com/html5-qrcode" type="text/javascript">
 document.addEventListener("DOMContentLoaded",function(){v31UpdateTeamPreviewAuto();});
@@ -718,6 +718,35 @@ button:disabled{
   .teamMetaV19,.teamLocationV20,.teamSelectV20{font-size:10.5px}
 }
 
+
+/* ===== V2.21 첫 화면 마무리 ===== */
+
+/* 현재 현장 내부의 '활동 중 n개조 / n명 · 층별 n명' 요약줄 완전 제거 */
+#insideSummary,
+#insideActivitySummary,
+#activeSummary,
+#v28InsideSummary,
+.insideSummary,
+.insideActivitySummary,
+.activeSummary,
+.v28InsideSummary,
+#insideCountSummary,
+.insideCountSummary{
+  display:none!important;
+  height:0!important;
+  min-height:0!important;
+  margin:0!important;
+  padding:0!important;
+  border:0!important;
+  overflow:hidden!important;
+}
+
+/* 첫 화면 안내문은 한 줄 중심으로 간결하게 */
+.v21CompactGuide{
+  white-space:normal;
+  line-height:1.45;
+}
+
 </style>
 </head>
 
@@ -784,9 +813,7 @@ button:disabled{
 <div id="reader"></div>
 
 <div class="info">
-QR을 여러 명 연속으로 스캔하거나<br>
-이름·초성·관리번호로 검색하여<br>
-투입대기 명단에 추가하세요.
+QR 스캔 또는 검색으로 투입대원을 추가하세요.
 </div>
 
 <label>이름 / 초성 / 관리번호 검색</label>
@@ -924,7 +951,7 @@ PPE 점검 대기
     </button>
   </div>
   <div class="entryModeHelp">
-    PPE 완료 후 선택합니다. 급한 현장은 바로 투입하고, 필요한 경우에만 조 편성·투입위치를 입력합니다.
+    PPE 완료 후 바로 투입하거나, 필요 시 조·위치를 지정하세요.
   </div>
 </div>
 </div>
