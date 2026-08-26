@@ -3,9 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>소방현장 진입·철수 태그 관리앱 <span class="v2Badge">V2</span> V2 - V2.8</title>
+<title>소방현장 진입·철수 태그 관리앱 <span class="v2Badge">V2</span> V2 - V2.9</title>
 
-<script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+<script src="https://unpkg.com/html5-qrcode" type="text/javascript">
+document.addEventListener("DOMContentLoaded",function(){
+  v29SetTeamSelect(v29NextTeamNumber);
+});
+
+</script>
 
 <style>
 body{
@@ -835,9 +840,7 @@ PPE 점검 대기
 <button type="button" class="locationEditBtn" onclick="closeTeamSetup()" style="width:100%;margin-bottom:10px">▲ 조 편성 화면 닫기</button>
 
 <label>조 명칭</label>
-<select id="teamName" onchange="updateTeamPreview()">
-<option value="1조">1조</option><option value="2조">2조</option><option value="3조">3조</option><option value="4조">4조</option><option value="5조">5조</option>
-</select>
+<select id="teamName" onchange="updateTeamPreview()"></select>
 
 <label>조 대원 선택 <span id="teamSelectedCount">0명</span></label>
 <div id="teamMemberList" class="teamMemberList"><div class="empty">투입대기 대원을 먼저 등록하세요.</div></div>
@@ -2184,6 +2187,9 @@ function openTeamSetup(){
   const card=document.getElementById("teamSetupCard");
   if(!card)return;
   card.classList.add("modeOpen");
+  if(!(document.getElementById("teamName")||{}).value){
+    v29SetTeamSelect(v29NextTeamNumber);
+  }
   renderTeamMembers();
   setTimeout(()=>card.scrollIntoView({behavior:"smooth",block:"start"}),50);
 }
@@ -2221,6 +2227,29 @@ function chooseV2(btn,type){
   if(type==='activityFloor') activityFloor=btn.dataset.value||'';
   updateTeamPreview();
 }
+
+let v29NextTeamNumber = 1;
+
+function v29SetTeamSelect(number){
+  const sel=document.getElementById("teamName");
+  if(!sel)return;
+  const n=Math.max(1,Number(number)||1);
+  // 이전 조도 필요하면 다시 선택할 수 있고, 다음 조는 자동 선택
+  let out="";
+  for(let i=1;i<=n;i++){
+    out+='<option value="'+i+'조" '+(i===n?'selected':'')+'>'+i+'조</option>';
+  }
+  sel.innerHTML=out;
+  updateTeamPreview();
+}
+
+function v29AdvanceTeamAfterSuccess(teamName){
+  const m=String(teamName||"").match(/^(\d+)조$/);
+  const used=m?Number(m[1]):v29NextTeamNumber;
+  v29NextTeamNumber=Math.max(v29NextTeamNumber,used+1);
+  v29SetTeamSelect(v29NextTeamNumber);
+}
+
 function getSelectedTeamMembers(){ return entryQueue.filter(m=>selectedTeamMemberIds.has(String(m.id))); }
 function updateTeamPreview(){
   const count=document.getElementById('teamSelectedCount'); const preview=document.getElementById('teamPreview'); if(!preview) return;
@@ -3184,6 +3213,9 @@ async function batchEntryMembers(){
       });
 
       renderQueue();
+
+      // V2.9: 조 투입 성공 시 다음 조 번호로 자동 증가
+      v29AdvanceTeamAfterSuccess(teamName);
 
       // V2.3: 남은 대원은 PPE 완료 상태를 유지하여 다음 조를 바로 편성
       if(entryQueue.length===0){
