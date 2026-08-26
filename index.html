@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>소방현장 진입·철수 태그 관리앱 <span class="v2Badge">V2</span> V2 - V2.7</title>
+<title>소방현장 진입·철수 태그 관리앱 <span class="v2Badge">V2</span> V2 - V2.8</title>
 
 <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 
@@ -604,6 +604,17 @@ button:disabled{
   #insideList .insideCompactBottom{font-size:11.5px}
 }
 
+
+/* ===== V2.8 ===== */
+.v28Title{font-size:16px;font-weight:900;margin:14px 0 8px;color:#173d67}
+.v28TeamTitle{font-size:16px;font-weight:900;margin:12px 0 8px;color:#173d67}
+.v28TeamList{display:grid;gap:7px}
+.v28TeamRow{display:flex;align-items:center;gap:7px;padding:9px 10px;border:1px solid #dbe3ec;border-radius:9px;background:#fff;font-size:13px;font-weight:800}
+.v28TeamName{font-weight:900;color:#173d67;white-space:nowrap}
+.v28TeamLoc{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.v28TeamTime{margin-left:auto;white-space:nowrap;font-size:12px;color:#526071}
+.v28GroupHead{font-size:14px;font-weight:900;color:#173d67;margin:10px 0 5px;padding:5px 7px;background:#eef5fb;border-radius:7px}
+
 </style>
 </head>
 
@@ -1035,19 +1046,23 @@ PPE 점검 대기
 📋 현장 활동 대원
 </div>
 
+
+<div id="teamStatusV28"></div>
+<div class="v28Title">👨‍🚒 현장 활동대원 <span id="v28ActiveCount"></span></div>
 <div id="dashboardInside"></div>
+
 
 </div>
 
 
 <div class="card">
 <button type="button" class="exitedToggleBtn" onclick="toggleExitedHistory()">
-  🟢 철수대원 · 활동이력 보기
+  철수 완료 대원 보기
 </button>
 </div>
 
 <div class="card" id="exitedHistoryCard">
-<div class="sectionTitle">🟢 철수대원 · 활동이력</div>
+<div class="sectionTitle">철수 완료 대원</div>
 <button type="button" class="back" onclick="toggleExitedHistory()">⬅ 현장 활동 현황으로 돌아가기</button>
 <div id="dashboardExited"></div>
 </div>
@@ -4404,7 +4419,49 @@ function updateCriticalSummary(
 현장 내부 대원 표시
 ===================================================== */
 
+
+function v28TeamNo(name){
+  const m=String(name||"").match(/^(\d+)조$/);
+  return m?Number(m[1]):999999;
+}
+function v28DrawTeamStatus(list){
+  const area=document.getElementById("teamStatusV28");
+  if(!area)return;
+  const meta=v23LoadMeta(), groups={};
+  (list||[]).forEach(m=>{
+    const vm=meta[String(m.memberId)]||{};
+    const k=vm.teamName||"조 미지정";
+    (groups[k]||(groups[k]=[])).push({m,vm});
+  });
+  let out='<div class="v28TeamTitle">👥 조별 현황</div><div class="v28TeamList">';
+  const keys=Object.keys(groups).sort((a,b)=>v28TeamNo(a)-v28TeamNo(b));
+  if(!keys.length) out+='<div class="empty">활동 중인 조가 없습니다.</div>';
+  keys.forEach(k=>{
+    const g=groups[k];
+    const dirs=[...new Set(g.map(x=>x.vm.entryDirection||"미지정"))];
+    const floors=[...new Set(g.map(x=>x.vm.activityFloor||"미지정"))];
+    const details=[...new Set(g.map(x=>x.vm.detailLocation||"세부장소 미지정"))];
+    const dispersed=dirs.length>1||floors.length>1||details.length>1;
+    const maxMin=Math.max(...g.map(x=>Number(x.m.currentMinutes)||0));
+    out+='<div class="v28TeamRow"><span class="v28TeamName">'+escapeHtml(k)+' · '+g.length+'명</span>'+
+      '<span class="v28TeamLoc">'+(dispersed?'⚠ 활동위치 분산':escapeHtml(dirs[0])+' / '+escapeHtml(floors[0])+' / '+escapeHtml(details[0]))+'</span>'+
+      '<span class="v28TeamTime">⏱ '+maxMin+'분</span></div>';
+  });
+  area.innerHTML=out+'</div>';
+}
+function v28NextTeamName(){
+  const meta=v23LoadMeta();
+  let max=0;
+  Object.values(meta).forEach(v=>{
+    const n=v28TeamNo(v&&v.teamName);
+    if(n<999999)max=Math.max(max,n);
+  });
+  return (max+1)+"조";
+}
+
 function drawDashboardInside(list){
+  v28DrawTeamStatus(list);
+  const c=document.getElementById("v28ActiveCount"); if(c)c.textContent=(list||[]).length+"명";
   const area=document.getElementById("dashboardInside");
   area.innerHTML="";
   if(!list.length){
@@ -4421,7 +4478,22 @@ function drawDashboardInside(list){
   const roster=document.createElement("div");
   roster.className="dashboardRoster";
 
-  list.forEach(member=>{
+  const metaSort=v23LoadMeta();
+  const sorted=[...list].sort((a,b)=>{
+    const an=v28TeamNo((metaSort[String(a.memberId)]||{}).teamName);
+    const bn=v28TeamNo((metaSort[String(b.memberId)]||{}).teamName);
+    return an-bn;
+  });
+  let lastTeam="";
+  sorted.forEach(member=>{
+    const tm=(metaSort[String(member.memberId)]||{}).teamName||"조 미지정";
+    if(tm!==lastTeam){
+      lastTeam=tm;
+      const gh=document.createElement("div");
+      gh.className="v28GroupHead"; gh.textContent="👥 "+tm;
+      area.appendChild(gh);
+    }
+
     const vm=meta[String(member.memberId)]||{};
     const display=getMemberDisplay(member.memberId,member.memberName);
     const parts=String(display||"").split(" / ");
@@ -4493,7 +4565,7 @@ function openDashboardMemberDetail(memberId,memberName){
       '</div>'+
       '<div class="sheetActions">'+
         '<button class="sheetEdit" onclick="closeDashboardMemberDetail();editDashboardMemberLocation(\''+escapeAttr(memberId)+'\',\''+escapeAttr(memberName)+'\')">✏️ 위치정보 수정</button>'+
-        '<button class="sheetExit" onclick="closeDashboardMemberDetail()">↪ 철수 처리는 기존 철수 기능 이용</button>'+
+        '<button class="sheetExit" onclick="closeDashboardMemberDetail()"></button>'+
       '</div>'+
     '</div>';
   overlay.classList.add("show");
@@ -4522,7 +4594,7 @@ function editDashboardMemberLocation(memberId,memberName){
       '<div class="sheetMemberTitle">🟢 '+escapeHtml(getMemberDisplay(memberId,memberName))+'</div>'+
       '<div class="locationEditForm">'+
         '<label>조 편성<select id="editTeam"><option value="">미지정</option>'+
-          ["1조","2조","3조","4조","5조"].map(v=>'<option '+(old.teamName===v?'selected':'')+'>'+v+'</option>').join("")+
+          Array.from({length:Math.max(1,v28TeamNo(v28NextTeamName()))},(_,i)=>(i+1)+"조").map(v=>'<option '+(old.teamName===v?'selected':'')+'>'+v+'</option>').join("")+
         '</select></label>'+
         '<label>진입방면<select id="editDirection"><option value="">미지정</option>'+
           ["A방면","B방면","C방면","D방면"].map(v=>'<option '+(old.entryDirection===v?'selected':'')+'>'+v+'</option>').join("")+
