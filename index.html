@@ -3,12 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>소방현장 진입·철수 태그 관리앱 <span class="v2Badge">V2</span> V2 - V2.9</title>
+<title>소방현장 진입·철수 태그 관리앱 <span class="v2Badge">V2</span> V2 - V2.11</title>
 
 <script src="https://unpkg.com/html5-qrcode" type="text/javascript">
-document.addEventListener("DOMContentLoaded",function(){
-  v29SetTeamSelect(v29NextTeamNumber);
-});
+document.addEventListener("DOMContentLoaded",function(){v31UpdateTeamPreviewAuto();});
 
 </script>
 
@@ -840,7 +838,7 @@ PPE 점검 대기
 <button type="button" class="locationEditBtn" onclick="closeTeamSetup()" style="width:100%;margin-bottom:10px">▲ 조 편성 화면 닫기</button>
 
 <label>조 명칭</label>
-<select id="teamName" onchange="updateTeamPreview()"></select>
+<select id="teamName" disabled><option value="">대원 선택 후 자동 결정</option></select><div id="nextTeamHint" class="hint" style="margin-top:5px">같은 대원 구성은 기존 조 · 새로운 구성은 새 조로 자동 편성</div>
 
 <label>조 대원 선택 <span id="teamSelectedCount">0명</span></label>
 <div id="teamMemberList" class="teamMemberList"><div class="empty">투입대기 대원을 먼저 등록하세요.</div></div>
@@ -2187,10 +2185,8 @@ function openTeamSetup(){
   const card=document.getElementById("teamSetupCard");
   if(!card)return;
   card.classList.add("modeOpen");
-  if(!(document.getElementById("teamName")||{}).value){
-    v29SetTeamSelect(v29NextTeamNumber);
-  }
   renderTeamMembers();
+  v31UpdateTeamPreviewAuto();
   setTimeout(()=>card.scrollIntoView({behavior:"smooth",block:"start"}),50);
 }
 
@@ -2228,30 +2224,70 @@ function chooseV2(btn,type){
   updateTeamPreview();
 }
 
-let v29NextTeamNumber = 1;
 
-function v29SetTeamSelect(number){
-  const sel=document.getElementById("teamName");
-  if(!sel)return;
-  const n=Math.max(1,Number(number)||1);
-  // 이전 조도 필요하면 다시 선택할 수 있고, 다음 조는 자동 선택
-  let out="";
-  for(let i=1;i<=n;i++){
-    out+='<option value="'+i+'조" '+(i===n?'selected':'')+'>'+i+'조</option>';
+/* ===== V2.11 조 = 대원구성 / 활동차수 = 재진입 ===== */
+function v31TeamRegistryKey(){
+  const site=(document.getElementById("site")||{}).value||"default";
+  return "fireAppTeamRegistry:"+site;
+}
+function v31LoadTeams(){
+  try{return JSON.parse(localStorage.getItem(v31TeamRegistryKey())||"[]");}
+  catch(e){return [];}
+}
+function v31SaveTeams(arr){
+  localStorage.setItem(v31TeamRegistryKey(),JSON.stringify(arr||[]));
+}
+function v31MemberSignature(members){
+  return (members||[]).map(m=>String(m.id)).sort().join("|");
+}
+function v31FindTeamByMembers(members){
+  const sig=v31MemberSignature(members);
+  return v31LoadTeams().find(t=>t.signature===sig)||null;
+}
+function v31NextNewTeamNo(){
+  const teams=v31LoadTeams();
+  return teams.reduce((mx,t)=>Math.max(mx,Number(t.number)||0),0)+1;
+}
+function v31ResolveTeam(members){
+  const found=v31FindTeamByMembers(members);
+  if(found)return {teamName:found.number+"조",activityNo:(Number(found.activityCount)||0)+1,isNew:false,record:found};
+  const n=v31NextNewTeamNo();
+  return {teamName:n+"조",activityNo:1,isNew:true,record:{number:n,signature:v31MemberSignature(members),memberIds:(members||[]).map(m=>String(m.id)),activityCount:0}};
+}
+function v31CommitTeam(members){
+  const resolved=v31ResolveTeam(members);
+  const teams=v31LoadTeams();
+  let rec=teams.find(t=>t.signature===resolved.record.signature);
+  if(!rec){
+    rec=resolved.record;
+    teams.push(rec);
   }
-  sel.innerHTML=out;
-  updateTeamPreview();
+  rec.activityCount=(Number(rec.activityCount)||0)+1;
+  rec.memberIds=(members||[]).map(m=>String(m.id));
+  v31SaveTeams(teams);
+  return {teamName:rec.number+"조",activityNo:rec.activityCount};
 }
-
-function v29AdvanceTeamAfterSuccess(teamName){
-  const m=String(teamName||"").match(/^(\d+)조$/);
-  const used=m?Number(m[1]):v29NextTeamNumber;
-  v29NextTeamNumber=Math.max(v29NextTeamNumber,used+1);
-  v29SetTeamSelect(v29NextTeamNumber);
+function v31UpdateTeamPreviewAuto(){
+  const selected=getSelectedTeamMembers();
+  const sel=document.getElementById("teamName");
+  const hint=document.getElementById("nextTeamHint");
+  if(!selected.length){
+    if(sel){sel.innerHTML='<option value="">대원 선택 후 자동 결정</option>';}
+    if(hint)hint.textContent="같은 대원 구성은 기존 조 · 새로운 구성은 새 조로 자동 편성";
+    return;
+  }
+  const r=v31ResolveTeam(selected);
+  if(sel){
+    sel.innerHTML='<option value="'+r.teamName+'" selected>'+r.teamName+'</option>';
+    sel.value=r.teamName;
+  }
+  if(hint)hint.textContent=r.isNew
+    ? "새로운 대원 구성 → "+r.teamName+" · 1차 활동"
+    : "기존 대원 구성 확인 → "+r.teamName+" · "+r.activityNo+"차 활동";
 }
-
 function getSelectedTeamMembers(){ return entryQueue.filter(m=>selectedTeamMemberIds.has(String(m.id))); }
 function updateTeamPreview(){
+  v31UpdateTeamPreviewAuto();
   const count=document.getElementById('teamSelectedCount'); const preview=document.getElementById('teamPreview'); if(!preview) return;
   const selected=getSelectedTeamMembers(); if(count) count.textContent=selected.length+'명';
   const team=(document.getElementById('teamName')||{}).value||'1조'; const detail=(document.getElementById('detailLocation')||{}).value||'';
@@ -3022,7 +3058,9 @@ async function batchEntryMembers(){
 
 
   const selectedTeamMembers = getSelectedTeamMembers();
-  const teamName = document.getElementById("teamName").value;
+  const resolvedTeam = v31ResolveTeam(selectedTeamMembers);
+  const teamName = resolvedTeam.teamName;
+  const activityNo = resolvedTeam.activityNo;
   const detailLocation = document.getElementById("detailLocation").value.trim();
 
   if(selectedTeamMembers.length < 2){ alert("조 편성을 위해 투입 대원을 2명 이상 선택하세요."); return; }
@@ -3031,7 +3069,7 @@ async function batchEntryMembers(){
 
   if(
     !confirm(
-      teamName + " " + selectedTeamMembers.length + "명을 투입하시겠습니까?\n" +
+      teamName + " · " + activityNo + "차 활동 · " + selectedTeamMembers.length + "명을 투입하시겠습니까?\n" +
       entryDirection + " → " + activityFloor + (detailLocation ? " → " + detailLocation : "")
     )
   ){
@@ -3204,6 +3242,7 @@ async function batchEntryMembers(){
         if(successIds.has(String(member.id))){
           v23SetMemberMeta(member.id,{
             teamName:teamName,
+            teamActivityNo:activityNo,
             entryDirection:entryDirection,
             activityFloor:activityFloor,
             detailLocation:detailLocation,
@@ -3214,8 +3253,23 @@ async function batchEntryMembers(){
 
       renderQueue();
 
-      // V2.9: 조 투입 성공 시 다음 조 번호로 자동 증가
-      v29AdvanceTeamAfterSuccess(teamName);
+      // V2.11: 성공한 경우에만 조 활동차수를 확정
+      const committedTeam=v31CommitTeam(selectedTeamMembers);
+
+      // 성공 대원의 조/활동차수 메타데이터 갱신
+      selectedTeamMembers.forEach(member=>{
+        if(successIds.has(String(member.id))){
+          const oldMeta=v23LoadMeta()[String(member.id)]||{};
+          v23SetMemberMeta(member.id,{
+            teamName:committedTeam.teamName,
+            teamActivityNo:committedTeam.activityNo,
+            entryDirection:entryDirection,
+            activityFloor:activityFloor,
+            detailLocation:detailLocation,
+            history:Array.isArray(oldMeta.history)?oldMeta.history:[]
+          });
+        }
+      });
 
       // V2.3: 남은 대원은 PPE 완료 상태를 유지하여 다음 조를 바로 편성
       if(entryQueue.length===0){
@@ -3228,6 +3282,7 @@ async function batchEntryMembers(){
         const dl=document.getElementById('detailLocation'); if(dl) dl.value='';
         checkPPE();
         renderTeamMembers();
+        v31UpdateTeamPreviewAuto();
       }
 
       closeTeamSetup();
@@ -3550,7 +3605,7 @@ async function loadInsideMembers(){
             const dir=vm.entryDirection||'미지정';
             const detail=vm.detailLocation||'세부장소 미지정';
             return '<div class="insideCompactLocation">'+
-              '<span class="insideLocText">'+escapeHtml(team)+' · '+escapeHtml(dir)+' / </span>'+
+              '<span class="insideLocText">'+escapeHtml(team)+(vm.teamActivityNo?' · '+Number(vm.teamActivityNo)+'차':'')+' · '+escapeHtml(dir)+' / </span>'+
               '<span class="floorMini '+v23FloorClass(floor)+'">'+escapeHtml(floor)+'</span>'+
               '<span class="insideLocText"> / '+escapeHtml(detail)+'</span>'+
               '</div>';
@@ -4475,7 +4530,8 @@ function v28DrawTeamStatus(list){
     const details=[...new Set(g.map(x=>x.vm.detailLocation||"세부장소 미지정"))];
     const dispersed=dirs.length>1||floors.length>1||details.length>1;
     const maxMin=Math.max(...g.map(x=>Number(x.m.currentMinutes)||0));
-    out+='<div class="v28TeamRow"><span class="v28TeamName">'+escapeHtml(k)+' · '+g.length+'명</span>'+
+    const actNo=Math.max(...g.map(x=>Number(x.vm.teamActivityNo)||1));
+    out+='<div class="v28TeamRow"><span class="v28TeamName">'+escapeHtml(k)+' · '+actNo+'차 활동 · '+g.length+'명</span>'+
       '<span class="v28TeamLoc">'+(dispersed?'⚠ 활동위치 분산':escapeHtml(dirs[0])+' / '+escapeHtml(floors[0])+' / '+escapeHtml(details[0]))+'</span>'+
       '<span class="v28TeamTime">⏱ '+maxMin+'분</span></div>';
   });
