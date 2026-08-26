@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>소방현장 진입·철수 태그 관리앱 <span class="v2Badge">V2</span> V2 - V2.17 안정판</title>
+<title>소방현장 진입·철수 태그 관리앱 <span class="v2Badge">V2</span> V2 - V2.18 안정형 조구분</title>
 
 <script src="https://unpkg.com/html5-qrcode" type="text/javascript">
 document.addEventListener("DOMContentLoaded",function(){v31UpdateTeamPreviewAuto();});
@@ -652,38 +652,39 @@ button:disabled{
 }
 
 
-/* ===== V2.17 안정판: 기존 대원 출력 유지 + 조 구분만 강화 =====
-   중요: 이름/계급/부서/관리번호/위치/시간을 만드는 JS는 수정하지 않음 */
-.v17-team-marker{
-  display:flex;
-  align-items:center;
-  gap:8px;
-  margin:22px 0 8px;
-  padding:8px 10px;
-  border-radius:10px;
-  font-weight:900;
-  background:#eef4fb;
-  border-left:7px solid var(--team-color,#64748b);
+/* ===== V2.18 안정형 조 구분: 기존 대원카드는 그대로 ===== */
+.v18-team-wrap{
+  --team:#64748b;
+  position:relative;
+  margin:18px 0 28px;
+  padding:12px 10px 10px 76px;
+  border:2px solid var(--team);
+  border-radius:14px;
+  background:#fff;
 }
-.v17-team-badge{
-  min-width:48px;
-  padding:7px 9px;
-  border-radius:8px;
-  text-align:center;
+.v18-team-rail{
+  position:absolute;
+  left:0;top:0;bottom:0;width:64px;
+  background:var(--team);
   color:#fff;
-  background:var(--team-color,#64748b);
-  white-space:nowrap;
+  border-radius:11px 0 0 11px;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  gap:7px;text-align:center;
 }
-.v17-team-info{font-size:13px;color:#26384c}
-.v17-c1{--team-color:#2563eb}
-.v17-c2{--team-color:#f28705}
-.v17-c3{--team-color:#8b46d8}
-.v17-c4{--team-color:#0f9588}
-.v17-c5{--team-color:#d64c72}
-.v17-c6{--team-color:#607c18}
-.v17-c7{--team-color:#6d42d8}
-.v17-c8{--team-color:#08758d}
-.v17-c0{--team-color:#64748b}
+.v18-team-rail b{font-size:21px;line-height:1.05;white-space:nowrap}
+.v18-team-rail span{font-size:11px;font-weight:900;white-space:nowrap}
+.v18-team-wrap > .v18-original-card{margin:0 0 8px!important}
+.v18-team-wrap > .v18-original-card:last-child{margin-bottom:0!important}
+.v18-c0{--team:#64748b}.v18-c1{--team:#2563eb}.v18-c2{--team:#f28705}
+.v18-c3{--team:#8b46d8}.v18-c4{--team:#0f9588}.v18-c5{--team:#d64c72}
+.v18-c6{--team:#607c18}.v18-c7{--team:#6d42d8}.v18-c8{--team:#08758d}
+@media(max-width:560px){
+  .v18-team-wrap{padding-left:62px;margin-bottom:22px}
+  .v18-team-rail{width:52px}
+  .v18-team-rail b{font-size:17px}
+  .v18-team-rail span{font-size:10px}
+}
 
 </style>
 </head>
@@ -5099,50 +5100,97 @@ function sanitizeId(
 
 
 <script>
-/* V2.17: 조 구분 표시만 추가. 기존 대원 카드 HTML은 그대로 둔다. */
-function v17DecorateTeamGroups(containerId){
-  const root=document.getElementById(containerId);
-  if(!root)return;
+/* V2.18
+   기존 카드 내용을 절대 다시 만들지 않는다.
+   화면에 이미 그려진 대원카드를 읽어서 같은 조끼리 바깥에서 감싸기만 한다.
+*/
+(function(){
+  function teamFromText(txt){
+    const m=String(txt||"").match(/(?:^|\s)(\d+)조(?:\s|·|$)/);
+    if(m)return m[1]+"조";
+    if(String(txt||"").includes("조 미지정"))return "조 미지정";
+    return null;
+  }
+  function teamNo(team){
+    const m=String(team||"").match(/(\d+)/);
+    return m?parseInt(m[1],10):0;
+  }
+  function unwrap(root){
+    root.querySelectorAll(".v18-team-wrap").forEach(w=>{
+      const p=w.parentNode;
+      [...w.children].forEach(ch=>{
+        if(ch.classList.contains("v18-team-rail"))return;
+        ch.classList.remove("v18-original-card");
+        p.insertBefore(ch,w);
+      });
+      w.remove();
+    });
+  }
+  function decorate(rootId){
+    const root=document.getElementById(rootId);
+    if(!root)return;
 
-  root.querySelectorAll(".v17-team-marker").forEach(x=>x.remove());
+    unwrap(root);
 
-  // 기존 대원 카드 중 조 정보가 보이는 행을 찾는다.
-  const rows=[...root.children].filter(el=>{
-    if(!el || !el.textContent)return false;
-    return /(^|\s)(\d+조|조 미지정)(\s|·|$)/.test(el.textContent);
+    // direct children only: preserves all existing click/checkbox/detail behavior
+    const children=[...root.children];
+    const cards=children.filter(el=>{
+      if(!el || !el.textContent)return false;
+      const t=el.textContent;
+      return teamFromText(t)!==null &&
+             (el.querySelector('input[type="checkbox"]') || /진입/.test(t));
+    });
+    if(!cards.length)return;
+
+    let currentTeam=null, wrap=null, count=0;
+    cards.forEach(card=>{
+      const team=teamFromText(card.textContent);
+      if(!team)return;
+
+      if(team!==currentTeam){
+        currentTeam=team;
+        count=0;
+        const n=teamNo(team);
+        const ci=n?((n-1)%8)+1:0;
+        wrap=document.createElement("div");
+        wrap.className="v18-team-wrap v18-c"+ci;
+        card.parentNode.insertBefore(wrap,card);
+
+        const rail=document.createElement("div");
+        rail.className="v18-team-rail";
+        rail.innerHTML='<b>'+team+'</b><span class="v18-count"></span>';
+        wrap.appendChild(rail);
+      }
+      count++;
+      card.classList.add("v18-original-card");
+      wrap.appendChild(card);
+      const countEl=wrap.querySelector(".v18-count");
+      if(countEl)countEl.textContent=count+"명";
+    });
+  }
+
+  let timer=null;
+  function refresh(){
+    clearTimeout(timer);
+    timer=setTimeout(()=>{
+      decorate("insideList");
+      decorate("dashboardInside");
+    },80);
+  }
+
+  document.addEventListener("DOMContentLoaded",()=>{
+    refresh();
+    ["insideList","dashboardInside"].forEach(id=>{
+      const el=document.getElementById(id);
+      if(el){
+        new MutationObserver(refresh).observe(el,{childList:true});
+      }
+    });
   });
 
-  let lastTeam=null;
-  rows.forEach(row=>{
-    const text=row.textContent||"";
-    const m=text.match(/(\d+)조|조 미지정/);
-    const team=m ? (m[1]?m[1]+"조":"조 미지정") : "조 미지정";
-
-    if(team!==lastTeam){
-      const n=team==="조 미지정"?0:(parseInt(team,10)||0);
-      const color=n===0?0:((n-1)%8)+1;
-      const marker=document.createElement("div");
-      marker.className="v17-team-marker v17-c"+color;
-      marker.innerHTML=
-        '<span class="v17-team-badge">'+team+'</span>'+
-        '<span class="v17-team-info">이 조의 활동 대원</span>';
-      row.parentNode.insertBefore(marker,row);
-      lastTeam=team;
-    }
-  });
-}
-
-function v17RefreshGroupDecorations(){
-  // 첫 화면과 현장활동현황 양쪽 모두, 존재하는 경우에만 장식한다.
-  v17DecorateTeamGroups("insideList");
-  v17DecorateTeamGroups("dashboardInside");
-}
-
-// 기존 렌더링이 끝난 뒤 장식만 다시 붙인다.
-document.addEventListener("DOMContentLoaded",()=>{
-  setTimeout(v17RefreshGroupDecorations,400);
-});
-setInterval(v17RefreshGroupDecorations,1000);
+  // existing app refreshes dynamically; this is only a decoration refresh.
+  setInterval(refresh,1500);
+})();
 </script>
 
 </body>
