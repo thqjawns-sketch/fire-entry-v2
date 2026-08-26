@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>소방현장 진입·철수 태그 관리앱 <span class="v2Badge">V2</span> V2 - V2.14</title>
+<title>소방현장 진입·철수 태그 관리앱 <span class="v2Badge">V2</span> V2 - V2.15</title>
 
 <script src="https://unpkg.com/html5-qrcode" type="text/javascript">
 document.addEventListener("DOMContentLoaded",function(){v31UpdateTeamPreviewAuto();});
@@ -751,6 +751,21 @@ button:disabled{
   .v34Stay{font-size:11px}
   .v34Status{grid-column:4;font-size:10px;padding:5px 6px}
   .v34Location{font-size:12px}.v34DetailBtn{padding:7px 8px;font-size:11px}
+}
+
+
+/* V2.15 조별 구분 최종 강화 */
+#insideList .v34TeamCard,
+#dashboardInside .v34TeamCard{
+  margin-bottom:28px!important;
+}
+#insideList .v34TeamCard:last-child,
+#dashboardInside .v34TeamCard:last-child{
+  margin-bottom:8px!important;
+}
+#insideList .v34Rail,
+#dashboardInside .v34Rail{
+  min-height:150px;
 }
 
 </style>
@@ -3760,6 +3775,10 @@ async function loadInsideMembers(){
 
       }
     );
+
+    // V2.15: 첫 화면 「현재 현장 내부」도 현장활동현황과 완전히 동일한 조별 카드로 렌더링
+    v34RenderFirstInside(data.members);
+
 
 
     updateV23Summary(data.members);
