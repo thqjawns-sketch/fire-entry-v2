@@ -461,6 +461,36 @@ button:disabled{
 }
 @media(max-width:480px){.entryModeGrid{grid-template-columns:1fr}}
 
+
+/* ===== V2.5 현장현황 중심 관리 ===== */
+.memberIdentityGrid,.dashIdentityGrid{
+  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin:7px 0;
+}
+.identityCell,.locationCell{
+  padding:8px 7px;border-radius:8px;background:#f8fafc;border:1px solid #e2e8f0;
+  font-size:13px;font-weight:800;line-height:1.3;text-align:center;word-break:keep-all;
+}
+.locationGrid{
+  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin:7px 0 9px;
+}
+.locationCell.direction{background:#eef5fb}
+.locationCell.floor{background:#fff7e6}
+.locationCell.detail{background:#f4f0ff}
+.dashboardManageBtn{
+  width:100%;padding:10px;border:1px solid #173d67;border-radius:9px;
+  background:#fff;color:#173d67;font-weight:800;cursor:pointer;margin:4px 0 8px;
+}
+.exitedToggleBtn{
+  width:100%;padding:13px;border:1px solid #15803d;border-radius:10px;
+  background:#fff;color:#15803d;font-weight:800;font-size:15px;cursor:pointer;
+}
+#exitedHistoryCard{display:none}
+#exitedHistoryCard.show{display:block}
+@media(max-width:430px){
+ .memberIdentityGrid,.dashIdentityGrid,.locationGrid{grid-template-columns:1fr 1fr 1fr}
+ .identityCell,.locationCell{font-size:12px;padding:7px 4px}
+}
+
 </style>
 </head>
 
@@ -749,10 +779,6 @@ PPE 점검 대기
 </button>
 
 <div id="v23InsideSummary" class="v23Summary">활동 중 조·위치 요약은 현장현황을 불러오면 표시됩니다.</div>
-<div class="statusManageHint">
-  투입 후 조 편성·변경, 진입방면, 활동층, 세부위치는 이 <b>현장현황</b>에서 수정할 수 있습니다.
-  즉시투입한 대원도 나중에 조와 위치를 지정할 수 있습니다.
-</div>
 <div id="insideList"></div>
 
 <button
@@ -820,7 +846,7 @@ PPE 점검 대기
 </div>
 
 <div class="summaryBox">
-현재 철수
+철수 완료
 <div id="dashExited" class="summaryNumber green">0</div>
 명
 </div>
@@ -902,13 +928,15 @@ PPE 점검 대기
 
 
 <div class="card">
-
-<div class="sectionTitle">
-🟢 철수 대원 / 활동이력
+<button type="button" class="exitedToggleBtn" onclick="toggleExitedHistory()">
+  🟢 철수대원 · 활동이력 보기
+</button>
 </div>
 
+<div class="card" id="exitedHistoryCard">
+<div class="sectionTitle">🟢 철수대원 · 활동이력</div>
+<button type="button" class="back" onclick="toggleExitedHistory()">⬅ 현장 활동 현황으로 돌아가기</button>
 <div id="dashboardExited"></div>
-
 </div>
 
 <button
@@ -3360,8 +3388,12 @@ async function loadInsideMembers(){
             const team=vm.teamName ? escapeHtml(vm.teamName)+' · ' : '';
             const floor=vm.activityFloor||'';
             const floorBadge=floor ? '<span class="floorBadge '+v23FloorClass(floor)+'">'+escapeHtml(floor)+'</span>' : '<span class="floorBadge floor-neutral">활동층 미지정</span>';
-            return '<div class="locationLine">'+team+escapeHtml(vm.entryDirection||'진입방면 미지정')+' '+floorBadge+(vm.detailLocation?' · '+escapeHtml(vm.detailLocation):'')+'</div>'+
-              '<button type="button" class="locationEditBtn" onclick="editMemberLocation(\''+escapeAttr(member.memberId)+'\',\''+escapeAttr(member.memberName)+'\')">📍 조·활동위치 관리</button>';
+            return '<div class="locationGrid">'+
+              '<div class="locationCell direction">'+escapeHtml(vm.entryDirection||'진입방면 미지정')+'</div>'+
+              '<div class="locationCell floor">'+floorBadge+'</div>'+
+              '<div class="locationCell detail">'+escapeHtml(vm.detailLocation||'세부장소 미지정')+'</div>'+
+              '</div>'+
+              (team?'<div class="locationLine">'+team.replace(' · ','')+'</div>':'');
           })() +
 
           '<div class="time">' +
@@ -4282,154 +4314,98 @@ function updateCriticalSummary(
 현장 내부 대원 표시
 ===================================================== */
 
-function drawDashboardInside(
-  list
-){
-
-  const area =
-    document.getElementById(
-      "dashboardInside"
-    );
-
-
-  area.innerHTML =
-    "";
-
-
-  if(
-    !list.length
-  ){
-
-    area.innerHTML =
-      '<div class="empty">현재 내부 대원이 없습니다.</div>';
-
+function drawDashboardInside(list){
+  const area=document.getElementById("dashboardInside");
+  area.innerHTML="";
+  if(!list.length){
+    area.innerHTML='<div class="empty">현재 내부 대원이 없습니다.</div>';
     return;
-
   }
 
+  const meta=v23LoadMeta();
 
-  list.forEach(
-    member => {
+  list.forEach(member=>{
+    const stay=getStayStatus(member.currentMinutes);
+    const div=document.createElement("div");
+    div.className="commandMember "+stay.className;
 
-      const stay =
-        getStayStatus(
-          member.currentMinutes
-        );
+    const display=getMemberDisplay(member.memberId,member.memberName);
+    const parts=String(display||"").split(" / ");
+    const name=parts[0]||member.memberName||"-";
+    const rank=parts[1]||"-";
+    const dept=parts.slice(2).join(" / ")||"-";
+    const vm=meta[String(member.memberId)]||{};
+    const floor=vm.activityFloor||"활동층 미지정";
+    const historyId="history_"+sanitizeId(member.memberId)+"_inside";
 
+    div.innerHTML=
+      '<div class="dashIdentityGrid">'+
+        '<div class="identityCell">'+escapeHtml(name)+'</div>'+
+        '<div class="identityCell">'+escapeHtml(rank)+'</div>'+
+        '<div class="identityCell">'+escapeHtml(dept)+'</div>'+
+      '</div>'+
+      '<div class="locationGrid">'+
+        '<div class="locationCell direction">'+escapeHtml(vm.entryDirection||"진입방면 미지정")+'</div>'+
+        '<div class="locationCell floor"><span class="floorBadge '+v23FloorClass(floor)+'">'+escapeHtml(floor)+'</span></div>'+
+        '<div class="locationCell detail">'+escapeHtml(vm.detailLocation||"세부장소 미지정")+'</div>'+
+      '</div>'+
+      (vm.teamName?'<div class="locationLine"><b>'+escapeHtml(vm.teamName)+'</b></div>':'')+
+      '<button type="button" class="dashboardManageBtn" onclick="editDashboardMemberLocation(\''+
+        escapeAttr(member.memberId)+'\',\''+escapeAttr(member.memberName)+'\')">📍 조 · 진입방면 · 활동층 · 세부장소 수정</button>'+
+      '<div class="commandInfo">'+
+        '현재 체류 : <b>'+Number(member.currentMinutes)+'분</b> · '+
+        '진입 '+Number(member.entryCount)+'회 · '+
+        '누적 <b>'+Number(member.totalMinutes)+'분</b>'+
+      '</div>'+
+      '<div class="stayBadge '+stay.className+'">'+stay.icon+' '+stay.text+'</div>'+
+      '<button class="detailBtn" onclick="toggleHistory(\''+historyId+'\')">📋 진입·철수 이력 보기</button>'+
+      '<div id="'+historyId+'" class="history">'+makeHistoryHTML(member.records)+'</div>';
 
-      const div =
-        document.createElement(
-          "div"
-        );
-
-
-      div.className =
-        "commandMember " +
-        stay.className;
-
-
-      const historyId =
-        "history_" +
-        sanitizeId(
-          member.memberId
-        ) +
-        "_inside";
-
-
-      div.innerHTML =
-
-        '<div class="commandName">' +
-
-        stay.icon +
-        ' ' +
-
-        escapeHtml(
-          getMemberDisplay(
-            member.memberId,
-            member.memberName
-          )
-        ) +
-
-        '</div>' +
-
-        '<div class="memberId">' +
-        escapeHtml(
-          member.memberId
-        ) +
-        '</div>' +
-
-        '<div class="commandInfo">' +
-
-        '현재 상태 : <b>현장 내부</b><br>' +
-
-        '현재 체류 : <b>' +
-        Number(
-          member.currentMinutes
-        ) +
-        '분</b><br>' +
-
-        '진입 횟수 : ' +
-        Number(
-          member.entryCount
-        ) +
-        '회<br>' +
-
-        '이전 활동 : ' +
-        Number(
-          member.completedMinutes
-        ) +
-        '분<br>' +
-
-        '누적 활동 : <b>' +
-        Number(
-          member.totalMinutes
-        ) +
-        '분</b>' +
-
-        '</div>' +
-
-        '<div class="stayBadge ' +
-        stay.className +
-        '">' +
-
-        stay.icon +
-        ' ' +
-        stay.text +
-
-        '</div>' +
-
-        '<button class="detailBtn" onclick="toggleHistory(\'' +
-        historyId +
-        '\')">' +
-
-        '📋 진입·철수 이력 보기' +
-
-        '</button>' +
-
-        '<div id="' +
-        historyId +
-        '" class="history">' +
-
-        makeHistoryHTML(
-          member.records
-        ) +
-
-        '</div>';
-
-
-      area.appendChild(
-        div
-      );
-
-    }
-  );
-
+    area.appendChild(div);
+  });
 }
 
+function editDashboardMemberLocation(memberId,memberName){
+  const meta=v23LoadMeta(), key=String(memberId), old=meta[key]||{};
+  const team=prompt("조 명칭 (없으면 비워두세요)",old.teamName||"");
+  if(team===null)return;
+  const dir=prompt("진입방면 (A방면/B방면/C방면/D방면)",old.entryDirection||"");
+  if(dir===null)return;
+  const floor=prompt("활동층 (화점층/직상층/직하층/상층부/하층부/지하층/옥상)",old.activityFloor||"");
+  if(floor===null)return;
+  const detail=prompt("세부장소 (예: 기계실 / 1203호 / 계단실)",old.detailLocation||"");
+  if(detail===null)return;
+
+  const history=Array.isArray(old.history)?old.history:[];
+  history.push({
+    time:new Date().toLocaleTimeString("ko-KR",{hour:"2-digit",minute:"2-digit"}),
+    teamName:team.trim(),
+    entryDirection:dir.trim(),
+    activityFloor:floor.trim(),
+    detailLocation:detail.trim()
+  });
+  v23SetMemberMeta(key,{
+    teamName:team.trim(),
+    entryDirection:dir.trim(),
+    activityFloor:floor.trim(),
+    detailLocation:detail.trim(),
+    history:history
+  });
+  loadDashboard(false);
+}
 
 /* =====================================================
 철수 대원 표시
 ===================================================== */
+
+function toggleExitedHistory(){
+  const card=document.getElementById("exitedHistoryCard");
+  if(!card)return;
+  card.classList.toggle("show");
+  if(card.classList.contains("show")){
+    setTimeout(()=>card.scrollIntoView({behavior:"smooth",block:"start"}),40);
+  }
+}
 
 function drawDashboardExited(
   list
