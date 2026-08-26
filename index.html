@@ -491,6 +491,66 @@ button:disabled{
  .identityCell,.locationCell{font-size:12px;padding:7px 4px}
 }
 
+
+/* ===== V2.6 현장 활동 현황 - 현장용 압축 UI ===== */
+.dashMemberCompact{
+  padding:11px 12px;border-bottom:1px solid #dfe5ec;background:#fff;cursor:pointer;
+}
+.dashMemberCompact:last-child{border-bottom:none}
+.dashTopLine,.dashLocationLine{
+  display:flex;align-items:center;min-width:0;gap:6px;
+}
+.dashTopLine{font-size:15px;font-weight:900;color:#111827}
+.dashLocationLine{margin-top:5px;font-size:14px;font-weight:800;color:#263445}
+.dashNameDept,.dashLocText{
+  min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.dashTime{
+  margin-left:auto;flex:0 0 auto;text-align:right;font-size:12px;color:#526071;font-weight:700;
+}
+.liveDot{
+  width:10px;height:10px;border-radius:50%;background:#22a95b;display:inline-block;flex:0 0 auto;
+  box-shadow:0 0 0 2px #e7f7ed;
+}
+.floorMini{
+  display:inline-block;padding:2px 6px;border-radius:6px;border:1px solid #aeb9c6;
+  background:#f7f9fb;font-size:12px;font-weight:900;white-space:nowrap;
+}
+.floorMini.floor-fire{color:#d82020;border-color:#ef6a6a;background:#fff2f2}
+.floorMini.floor-above{color:#d66b00;border-color:#f0a44b;background:#fff8ec}
+.floorMini.floor-yellow{color:#9b7200;border-color:#e2bd43;background:#fffbea}
+.floorMini.floor-green{color:#16834b;border-color:#63bd8a;background:#effbf4}
+.floorMini.floor-basement{color:#1665c1;border-color:#6ca6e8;background:#eff6ff}
+.floorMini.floor-roof{color:#6d3dc1;border-color:#a98ae0;background:#f7f1ff}
+.dashboardHintCompact{
+  padding:9px 10px;margin-bottom:8px;border-radius:8px;background:#edf5ff;color:#36526e;
+  font-size:12px;line-height:1.45;
+}
+.dashboardRoster{border:1px solid #dfe5ec;border-radius:10px;overflow:hidden;background:#fff}
+.dashboardDetailOverlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:9998;display:none;
+  align-items:flex-end;justify-content:center;
+}
+.dashboardDetailOverlay.show{display:flex}
+.dashboardDetailSheet{
+  width:min(600px,100%);max-height:88vh;overflow:auto;background:#fff;border-radius:18px 18px 0 0;
+  padding:18px 16px 22px;box-shadow:0 -8px 28px rgba(0,0,0,.18)
+}
+.sheetHeader{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.sheetHeader b{font-size:19px}
+.sheetClose{border:0;background:#eef2f6;border-radius:8px;padding:7px 11px;font-weight:900;cursor:pointer}
+.sheetMemberTitle{font-size:17px;font-weight:900;margin-bottom:6px}
+.sheetLocation{font-size:15px;font-weight:800;padding:10px;background:#f6f8fb;border-radius:9px;margin-bottom:12px}
+.sheetInfo{font-size:14px;line-height:1.8;color:#334155;margin-bottom:12px}
+.sheetActions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.sheetActions button{padding:12px 8px;border-radius:9px;font-weight:900;cursor:pointer;background:#fff}
+.sheetEdit{border:1px solid #2d6fc0;color:#1e5fae}
+.sheetExit{border:1px solid #e04747;color:#d22b2b}
+@media(max-width:430px){
+  .dashTopLine{font-size:14px}.dashLocationLine{font-size:13px}
+  .dashMemberCompact{padding:10px 9px}
+}
+
 </style>
 </head>
 
@@ -4323,46 +4383,94 @@ function drawDashboardInside(list){
   }
 
   const meta=v23LoadMeta();
+  const hint=document.createElement("div");
+  hint.className="dashboardHintCompact";
+  hint.textContent="대원을 누르면 상세정보 확인 및 조·진입방면·활동층·세부장소를 수정할 수 있습니다.";
+  area.appendChild(hint);
+
+  const roster=document.createElement("div");
+  roster.className="dashboardRoster";
 
   list.forEach(member=>{
-    const stay=getStayStatus(member.currentMinutes);
-    const div=document.createElement("div");
-    div.className="commandMember "+stay.className;
-
+    const vm=meta[String(member.memberId)]||{};
     const display=getMemberDisplay(member.memberId,member.memberName);
     const parts=String(display||"").split(" / ");
     const name=parts[0]||member.memberName||"-";
     const rank=parts[1]||"-";
     const dept=parts.slice(2).join(" / ")||"-";
-    const vm=meta[String(member.memberId)]||{};
-    const floor=vm.activityFloor||"활동층 미지정";
-    const historyId="history_"+sanitizeId(member.memberId)+"_inside";
+    const floor=vm.activityFloor||"미지정";
+    const team=vm.teamName||"미지정";
+    const dir=vm.entryDirection||"미지정";
+    const detail=vm.detailLocation||"세부장소 미지정";
 
-    div.innerHTML=
-      '<div class="dashIdentityGrid">'+
-        '<div class="identityCell">'+escapeHtml(name)+'</div>'+
-        '<div class="identityCell">'+escapeHtml(rank)+'</div>'+
-        '<div class="identityCell">'+escapeHtml(dept)+'</div>'+
-      '</div>'+
-      '<div class="locationGrid">'+
-        '<div class="locationCell direction">'+escapeHtml(vm.entryDirection||"진입방면 미지정")+'</div>'+
-        '<div class="locationCell floor"><span class="floorBadge '+v23FloorClass(floor)+'">'+escapeHtml(floor)+'</span></div>'+
-        '<div class="locationCell detail">'+escapeHtml(vm.detailLocation||"세부장소 미지정")+'</div>'+
-      '</div>'+
-      (vm.teamName?'<div class="locationLine"><b>'+escapeHtml(vm.teamName)+'</b></div>':'')+
-      '<button type="button" class="dashboardManageBtn" onclick="editDashboardMemberLocation(\''+
-        escapeAttr(member.memberId)+'\',\''+escapeAttr(member.memberName)+'\')">📍 조 · 진입방면 · 활동층 · 세부장소 수정</button>'+
-      '<div class="commandInfo">'+
-        '현재 체류 : <b>'+Number(member.currentMinutes)+'분</b> · '+
-        '진입 '+Number(member.entryCount)+'회 · '+
-        '누적 <b>'+Number(member.totalMinutes)+'분</b>'+
-      '</div>'+
-      '<div class="stayBadge '+stay.className+'">'+stay.icon+' '+stay.text+'</div>'+
-      '<button class="detailBtn" onclick="toggleHistory(\''+historyId+'\')">📋 진입·철수 이력 보기</button>'+
-      '<div id="'+historyId+'" class="history">'+makeHistoryHTML(member.records)+'</div>';
+    const row=document.createElement("div");
+    row.className="dashMemberCompact";
+    row.onclick=()=>openDashboardMemberDetail(member.memberId,member.memberName);
 
-    area.appendChild(div);
+    row.innerHTML=
+      '<div class="dashTopLine">'+
+        '<span class="liveDot"></span>'+
+        '<span class="dashNameDept">'+escapeHtml(name)+' '+escapeHtml(rank)+' / '+escapeHtml(dept)+'</span>'+
+        '<span class="dashTime">진입 '+escapeHtml(member.entryTime||"-")+'</span>'+
+      '</div>'+
+      '<div class="dashLocationLine">'+
+        '<span class="dashLocText">'+escapeHtml(team)+' · '+escapeHtml(dir)+' / </span>'+
+        '<span class="floorMini '+v23FloorClass(floor)+'">'+escapeHtml(floor)+'</span>'+
+        '<span class="dashLocText"> / '+escapeHtml(detail)+'</span>'+
+        '<span class="dashTime">'+Number(member.currentMinutes)+'분 / '+Number(member.entryCount)+'회차</span>'+
+      '</div>';
+
+    roster.appendChild(row);
   });
+  area.appendChild(roster);
+}
+
+function findDashboardInsideMember(memberId){
+  return (window.__dashboardInsideMembers||[]).find(m=>String(m.memberId)===String(memberId));
+}
+
+function openDashboardMemberDetail(memberId,memberName){
+  const member=findDashboardInsideMember(memberId);
+  if(!member)return;
+  const meta=v23LoadMeta(), vm=meta[String(memberId)]||{};
+  const display=getMemberDisplay(memberId,memberName);
+  const parts=String(display||"").split(" / ");
+  const name=parts[0]||memberName||"-";
+  const rank=parts[1]||"-";
+  const dept=parts.slice(2).join(" / ")||"-";
+  const floor=vm.activityFloor||"미지정";
+
+  let overlay=document.getElementById("dashboardDetailOverlay");
+  if(!overlay){
+    overlay=document.createElement("div");
+    overlay.id="dashboardDetailOverlay";
+    overlay.className="dashboardDetailOverlay";
+    overlay.onclick=e=>{if(e.target===overlay)closeDashboardMemberDetail();};
+    document.body.appendChild(overlay);
+  }
+  overlay.innerHTML=
+    '<div class="dashboardDetailSheet">'+
+      '<div class="sheetHeader"><b>대원 상세정보</b><button class="sheetClose" onclick="closeDashboardMemberDetail()">✕</button></div>'+
+      '<div class="sheetMemberTitle">🟢 '+escapeHtml(name)+' '+escapeHtml(rank)+' / '+escapeHtml(dept)+'</div>'+
+      '<div class="sheetLocation">'+escapeHtml(vm.teamName||"미지정")+' · '+escapeHtml(vm.entryDirection||"미지정")+
+        ' / <span class="floorMini '+v23FloorClass(floor)+'">'+escapeHtml(floor)+'</span> / '+escapeHtml(vm.detailLocation||"세부장소 미지정")+'</div>'+
+      '<div class="sheetInfo">'+
+        '진입시각 : <b>'+escapeHtml(member.entryTime||"-")+'</b><br>'+
+        '현재 체류 : <b>'+Number(member.currentMinutes)+'분</b><br>'+
+        '활동차수 : <b>'+Number(member.entryCount)+'회차</b><br>'+
+        '누적 활동시간 : <b>'+Number(member.totalMinutes)+'분</b>'+
+      '</div>'+
+      '<div class="sheetActions">'+
+        '<button class="sheetEdit" onclick="closeDashboardMemberDetail();editDashboardMemberLocation(\''+escapeAttr(memberId)+'\',\''+escapeAttr(memberName)+'\')">✏️ 위치정보 수정</button>'+
+        '<button class="sheetExit" onclick="closeDashboardMemberDetail()">↪ 철수 처리는 기존 철수 기능 이용</button>'+
+      '</div>'+
+    '</div>';
+  overlay.classList.add("show");
+}
+
+function closeDashboardMemberDetail(){
+  const overlay=document.getElementById("dashboardDetailOverlay");
+  if(overlay)overlay.classList.remove("show");
 }
 
 function editDashboardMemberLocation(memberId,memberName){
@@ -4379,17 +4487,11 @@ function editDashboardMemberLocation(memberId,memberName){
   const history=Array.isArray(old.history)?old.history:[];
   history.push({
     time:new Date().toLocaleTimeString("ko-KR",{hour:"2-digit",minute:"2-digit"}),
-    teamName:team.trim(),
-    entryDirection:dir.trim(),
-    activityFloor:floor.trim(),
-    detailLocation:detail.trim()
+    teamName:team.trim(),entryDirection:dir.trim(),activityFloor:floor.trim(),detailLocation:detail.trim()
   });
   v23SetMemberMeta(key,{
-    teamName:team.trim(),
-    entryDirection:dir.trim(),
-    activityFloor:floor.trim(),
-    detailLocation:detail.trim(),
-    history:history
+    teamName:team.trim(),entryDirection:dir.trim(),activityFloor:floor.trim(),
+    detailLocation:detail.trim(),history:history
   });
   loadDashboard(false);
 }
