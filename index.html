@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>소방현장 진입·철수 태그 관리앱 <span class="v2Badge">V2</span> V2 - V2.24 안정화 기준판</title>
+<title>소방현장 진입·철수 태그 관리앱 V2 - V2 전용 서버 안정화판</title>
 
 <script src="https://unpkg.com/html5-qrcode" type="text/javascript">
 document.addEventListener("DOMContentLoaded",function(){v31UpdateTeamPreviewAuto();});
@@ -1244,16 +1244,277 @@ const API =
 ===================================================== */
 
 const SITE_CACHE_KEY =
-"fire_app_sites_v3";
+"fire_app_v2_only_sites_20260827";
 
 const MEMBER_CACHE_KEY =
-"fire_app_members_v3";
+"fire_app_v2_only_members_20260827";
 
 const SITE_CACHE_TIME_KEY =
-"fire_app_sites_time_v3";
+"fire_app_v2_only_sites_time_20260827";
 
 const MEMBER_CACHE_TIME_KEY =
-"fire_app_members_time_v3";
+"fire_app_v2_only_members_time_20260827";
+
+/* =====================================================
+V2 전용 서버 호환 계층
+- V1 캐시/서버와 완전 분리
+- 기존 화면 디자인과 조작 방식은 유지
+- 새 V2 Apps Script의 ok 응답을 기존 화면 형식으로 변환
+- PPE / 진입 / 철수 / 조·방면·층·세부장소를 V2 시트에 기록
+===================================================== */
+
+const V2_NATIVE_FETCH = window.fetch.bind(window);
+const V2_SITE_ID_BY_NAME = new Map();
+
+function v2JsonResponse(obj){
+  return new Response(
+    JSON.stringify(obj),
+    {status:200, headers:{"Content-Type":"application/json"}}
+  );
+}
+
+function v2SiteId(site){
+  const s=String(site||"").trim();
+  return V2_SITE_ID_BY_NAME.get(s)||s;
+}
+
+function v2MinutesBetween(start,end){
+  if(!start)return 0;
+  const a=new Date(String(start).replace(" ","T"));
+  const b=end?new Date(String(end).replace(" ","T")):new Date();
+  if(isNaN(a.getTime())||isNaN(b.getTime()))return 0;
+  return Math.max(0,Math.floor((b-a)/60000));
+}
+
+function v2SyncServerMeta(m){
+  try{
+    if(typeof v23SetMemberMeta!=="function" || !m || !m.memberId)return;
+    v23SetMemberMeta(m.memberId,{
+      teamName:m.team||"미지정",
+      teamActivityNo:Number(m.activityNo)||1,
+      entryDirection:m.direction||"미지정",
+      activityFloor:m.floor||"미지정",
+      detailLocation:m.detail||"세부장소 미지정"
+    });
+  }catch(e){
+    console.log("V2 서버 메타 동기화 참고",e);
+  }
+}
+
+function v2OldInsideMember(m){
+  v2SyncServerMeta(m);
+  return {
+    memberId:m.memberId||"",
+    memberName:m.name||"",
+    entryTime:m.entryTime||"",
+    currentMinutes:v2MinutesBetween(m.entryTime,""),
+    entryCount:Number(m.activityNo)||1,
+    team:m.team||"미지정",
+    activityNo:Number(m.activityNo)||1,
+    direction:m.direction||"미지정",
+    floor:m.floor||"미지정",
+    detail:m.detail||"세부장소 미지정"
+  };
+}
+
+function v2AggregateExited(rows){
+  const map=new Map();
+  (rows||[]).forEach(r=>{
+    if(!r || r.status!=="철수완료")return;
+    const id=String(r.memberId||"");
+    if(!map.has(id)){
+      map.set(id,{
+        memberId:id,
+        memberName:r.name||"",
+        entryCount:0,
+        totalMinutes:0,
+        records:[]
+      });
+    }
+    const x=map.get(id);
+    const mins=v2MinutesBetween(r.entryTime,r.exitTime);
+    x.entryCount++;
+    x.totalMinutes+=mins;
+    x.records.push({
+      sequence:Number(r.activityNo)||x.entryCount,
+      entryTime:r.entryTime||"",
+      exitTime:r.exitTime||"",
+      minutes:mins,
+      status:"철수완료"
+    });
+  });
+  return [...map.values()];
+}
+
+async function v2CallPost(params){
+  const res=await V2_NATIVE_FETCH(API,{method:"POST",body:params});
+  return await res.json();
+}
+
+window.fetch = async function(input, init){
+  const url=typeof input==="string" ? input : (input&&input.url)||"";
+  if(!url.startsWith(API)){
+    return V2_NATIVE_FETCH(input,init);
+  }
+
+  const method=String((init&&init.method)||"GET").toUpperCase();
+
+  if(method==="GET"){
+    const u=new URL(url);
+    const action=u.searchParams.get("action")||"";
+
+    if(action==="sites"){
+      const res=await V2_NATIVE_FETCH(url,init);
+      const d=await res.json();
+      const sites=(d.sites||[]).map(s=>{
+        if(s.siteName&&s.siteId)V2_SITE_ID_BY_NAME.set(String(s.siteName),String(s.siteId));
+        return s;
+      });
+      return v2JsonResponse({success:!!d.ok,sites:sites,message:d.error||""});
+    }
+
+    if(action==="members"){
+      const res=await V2_NATIVE_FETCH(url,init);
+      const d=await res.json();
+      const members=(d.members||[]).map(m=>({
+        id:m.memberId||"",
+        name:m.name||"",
+        rank:m.rank||"",
+        dept:m.department||""
+      }));
+      return v2JsonResponse({success:!!d.ok,members:members,message:d.error||""});
+    }
+
+    if(action==="inside"){
+      const siteId=v2SiteId(u.searchParams.get("site"));
+      const res=await V2_NATIVE_FETCH(
+        API+"?action=current&siteId="+encodeURIComponent(siteId)+"&t="+Date.now()
+      );
+      const d=await res.json();
+      const active=(d.members||[])
+        .filter(m=>m.status==="활동중")
+        .map(v2OldInsideMember);
+      return v2JsonResponse({success:!!d.ok,members:active,message:d.error||""});
+    }
+
+    if(action==="dashboard"){
+      const siteId=v2SiteId(u.searchParams.get("site"));
+      const res=await V2_NATIVE_FETCH(
+        API+"?action=dashboard&siteId="+encodeURIComponent(siteId)+"&t="+Date.now()
+      );
+      const d=await res.json();
+
+      const inside=(d.insideMembers||[]).map(v2OldInsideMember);
+      const exited=v2AggregateExited(d.exitedMembers||[]);
+
+      return v2JsonResponse({
+        success:!!d.ok,
+        dashboard:{
+          insideCount:Number(d.insideCount)||0,
+          uniqueMemberCount:Number(d.participantCount)||0,
+          exitedCount:exited.length,
+          insideMembers:inside,
+          exitedMembers:exited
+        },
+        message:d.error||""
+      });
+    }
+
+    return V2_NATIVE_FETCH(input,init);
+  }
+
+  if(method==="POST" && init && init.body instanceof URLSearchParams){
+    const old=init.body;
+    const action=old.get("action")||"";
+
+    if(action==="batchEntry"){
+      const siteId=v2SiteId(old.get("site"));
+      const team=old.get("teamName")||"";
+      const activityNo=old.get("activityNo")||"";
+      const direction=old.get("entryDirection")||"";
+      const floor=old.get("activityFloor")||"";
+      const detail=old.get("detailLocation")||"";
+      let arr=[];
+      try{arr=JSON.parse(old.get("members")||"[]");}catch(e){}
+
+      const succeeded=[];
+      const failed=[];
+
+      for(const m of arr){
+        try{
+          const ppe=new URLSearchParams();
+          ppe.set("action","savePpe");
+          ppe.set("siteId",siteId);
+          ppe.set("memberId",m.id||"");
+          ppe.set("personal","true");
+          ppe.set("scba","true");
+          ppe.set("communication","true");
+          const pd=await v2CallPost(ppe);
+          if(!pd.ok)throw new Error(pd.error||"PPE 기록 실패");
+
+          const entry=new URLSearchParams();
+          entry.set("action","entry");
+          entry.set("siteId",siteId);
+          entry.set("memberId",m.id||"");
+          entry.set("team",team);
+          if(activityNo)entry.set("activityNo",activityNo);
+          entry.set("direction",direction);
+          entry.set("floor",floor);
+          entry.set("detail",detail);
+          const ed=await v2CallPost(entry);
+          if(!ed.ok)throw new Error(ed.error||"진입 기록 실패");
+
+          v2SyncServerMeta(ed);
+          succeeded.push({id:m.id,name:m.name||ed.name||""});
+        }catch(e){
+          failed.push({id:m.id,name:m.name||"",message:e.message||String(e)});
+        }
+      }
+
+      return v2JsonResponse({
+        success:failed.length===0,
+        successCount:succeeded.length,
+        succeeded:succeeded,
+        failed:failed,
+        message:succeeded.length+"명 진입 기록 완료"+(failed.length?" · "+failed.length+"명 처리 제외":"")
+      });
+    }
+
+    if(action==="batchExit"){
+      const siteId=v2SiteId(old.get("site"));
+      let arr=[];
+      try{arr=JSON.parse(old.get("members")||"[]");}catch(e){}
+      const succeeded=[];
+      const failed=[];
+
+      for(const m of arr){
+        try{
+          const exit=new URLSearchParams();
+          exit.set("action","exit");
+          exit.set("siteId",siteId);
+          exit.set("memberId",m.id||"");
+          exit.set("exitType",arr.length>1?"다중 일괄철수":"단독철수");
+          const xd=await v2CallPost(exit);
+          if(!xd.ok)throw new Error(xd.error||"철수 기록 실패");
+          succeeded.push({id:m.id,name:m.name||""});
+        }catch(e){
+          failed.push({id:m.id,name:m.name||"",message:e.message||String(e)});
+        }
+      }
+
+      return v2JsonResponse({
+        success:failed.length===0,
+        successCount:succeeded.length,
+        succeeded:succeeded,
+        failed:failed,
+        message:succeeded.length+"명 철수 처리 완료"+(failed.length?" · "+failed.length+"명 처리 제외":"")
+      });
+    }
+  }
+
+  return V2_NATIVE_FETCH(input,init);
+};
+
 
 
 /* =====================================================
@@ -2233,7 +2494,7 @@ function renderQueue(){
 /* ===== V2.3 위치 메타데이터(브라우저 저장) ===== */
 function v23SiteKey(){
   const s=(document.getElementById("site")||{}).value||"";
-  return "fire-entry-v23-meta-"+s;
+  return "fire-v2-only-entry-meta-"+s;
 }
 function v23LoadMeta(){
   try{return JSON.parse(localStorage.getItem(v23SiteKey())||"{}");}catch(e){return {};}
@@ -2377,7 +2638,7 @@ function chooseV2(btn,type){
 /* ===== V2.11 조 = 대원구성 / 활동차수 = 재진입 ===== */
 function v31TeamRegistryKey(){
   const site=(document.getElementById("site")||{}).value||"default";
-  return "fireAppTeamRegistry:"+site;
+  return "fireV2OnlyTeamRegistry:"+site;
 }
 function v31LoadTeams(){
   try{return JSON.parse(localStorage.getItem(v31TeamRegistryKey())||"[]");}
@@ -3277,6 +3538,7 @@ async function batchEntryMembers(){
 
   // V2 메타데이터: 서버가 지원하면 저장, 미지원 시 기존 V1 진입기록은 그대로 처리
   form.append("teamName", teamName);
+  form.append("activityNo", activityNo);
   form.append("entryDirection", entryDirection);
   form.append("activityFloor", activityFloor);
   form.append("detailLocation", detailLocation);
