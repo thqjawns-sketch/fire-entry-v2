@@ -777,116 +777,6 @@ button:disabled{
 
 /* ===== V2.23 2번째창/3번째창 완전 분리 ===== */
 #exitedPageV23{display:none;max-width:700px;margin:0 auto;padding-bottom:28px}
-
-/* ===== V2 두번째 화면 확정 디자인 : 인원현황 / 조별현황 / 현장활동대원 ===== */
-#dashboardPage{max-width:760px;margin:0 auto;padding-bottom:32px}
-#dashboardPage .dashboardHeader{
-  margin:12px 0 10px;padding:18px 20px;border-radius:15px;
-  background:linear-gradient(135deg,#123c69,#0b2f57);color:#fff;
-  box-shadow:0 6px 18px rgba(15,55,95,.16)
-}
-#dashboardPage .dashboardTitle{font-size:24px;font-weight:950;letter-spacing:-.5px}
-#dashboardPage .siteName{margin-top:5px;font-size:14px;font-weight:800;opacity:.92}
-#dashboardPage .dashboardLogoPersonnel{
-  display:flex;align-items:center;gap:12px;margin:14px 0 10px
-}
-#dashboardPage .dashboardLogoPlaceholder{
-  width:78px;height:58px;flex:0 0 auto;border:1.5px dashed #9fb2c6;border-radius:12px;
-  background:#f8fafc;color:#6b7f94;display:flex;align-items:center;justify-content:center;
-  font-size:13px;font-weight:900
-}
-#dashboardPage .dashboardMajorTitle{
-  flex:1;font-size:21px;font-weight:950;color:#173d67;letter-spacing:-.4px
-}
-#dashboardPage .dashSectionCard{
-  background:#fff;border:1px solid #dfe7ef;border-radius:15px;
-  box-shadow:0 3px 12px rgba(20,50,80,.06);padding:15px;margin-bottom:15px
-}
-#dashboardPage .dashSectionHeading{
-  display:flex;align-items:center;gap:7px;margin:0 0 12px;
-  color:#173d67;font-size:18px;font-weight:950
-}
-#dashboardPage .summaryGridV2{
-  display:grid;grid-template-columns:repeat(3,1fr);gap:10px
-}
-#dashboardPage .summaryBoxV2{
-  min-height:92px;border:1px solid #dfe6ee;border-radius:12px;background:#fbfcfe;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px 7px
-}
-#dashboardPage .summaryLabelV2{font-size:13px;font-weight:900;color:#526274;white-space:nowrap}
-#dashboardPage .summaryValueV2{display:flex;align-items:baseline;gap:3px;margin-top:7px}
-#dashboardPage .summaryValueV2 .summaryNumber{font-size:31px;line-height:1;font-weight:950;margin:0}
-#dashboardPage .summaryValueV2 .summaryUnit{font-size:14px;font-weight:900;color:#4a5968}
-#dashboardPage .exitedInlineBtn{
-  margin-top:7px!important;padding:5px 9px!important;font-size:10.5px!important
-}
-#dashboardPage .stayPanelV2{margin-top:11px;border:1px solid #dfe6ee;border-radius:12px;overflow:hidden}
-#dashboardPage .stayPanelTitleV2{
-  padding:9px 11px;background:#f5f8fb;color:#334a62;font-size:13px;font-weight:950
-}
-#dashboardPage .stayGridV2{display:grid;grid-template-columns:repeat(4,1fr)}
-#dashboardPage .stayCellV2{
-  min-width:0;padding:10px 5px;text-align:center;border-right:1px solid #e7edf3;
-  font-size:11px;font-weight:850;white-space:nowrap
-}
-#dashboardPage .stayCellV2:last-child{border-right:0}
-#dashboardPage .stayCountV2{display:block;margin-top:4px;font-size:17px;font-weight:950}
-#dashboardPage #criticalSummary{margin:10px 0 0}
-#dashboardPage #dashboardRefreshBtn{margin:10px 0 0}
-#dashboardPage #teamStatusV28 .v28TeamTitle{display:none}
-#dashboardPage .v28TeamList{gap:8px}
-#dashboardPage .v28TeamRow{
-  display:grid;grid-template-columns:minmax(145px,auto) 1fr auto;
-  min-height:45px;padding:10px 12px;border-radius:10px;background:#fbfcfe
-}
-#dashboardPage .v28TeamName{font-size:13px}
-#dashboardPage .v28TeamLoc{font-size:12px;color:#35495f}
-#dashboardPage .v28TeamTime{font-size:12px}
-#dashboardPage .dashboardRosterToolbar{
-  display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 0 10px
-}
-#dashboardPage .dashboardActiveCount{
-  font-size:13px;font-weight:900;color:#526274;background:#eef4fa;padding:5px 9px;border-radius:999px
-}
-#dashboardPage #dashboardInside{
-  border:1px solid #dfe6ee;border-radius:12px;overflow:hidden;background:#fff
-}
-#dashboardPage #dashboardInside .teamDividerV19{margin:0!important;border-radius:0!important;border-top:1px solid #e3eaf1}
-#dashboardPage #dashboardInside .teamDividerV19:first-child{border-top:0}
-#dashboardPage #dashboardInside .memberRow{margin:0;border-radius:0;border-left-width:5px;border-bottom:1px solid #e7edf3}
-#dashboardPage #dashboardInside .memberRow:last-child{border-bottom:0}
-#dashboardPage .dashboardExitBar{
-  display:grid;grid-template-columns:1fr auto;gap:9px;align-items:center;margin-top:11px
-}
-#dashboardPage .dashboardSelectedInfo{
-  min-height:42px;display:flex;align-items:center;padding:0 12px;border-radius:10px;
-  background:#f3f6f9;color:#45586b;font-size:13px;font-weight:900
-}
-#dashboardPage .dashboardExitBtn{
-  min-height:42px;border:0;border-radius:10px;padding:0 16px;background:#dc2626;color:#fff;
-  font-size:13px;font-weight:950;cursor:pointer
-}
-#dashboardPage .dashboardBottomBack{margin-top:4px}
-@media(max-width:560px){
-  #dashboardPage{padding-left:8px;padding-right:8px}
-  #dashboardPage .dashboardHeader{padding:15px 16px}
-  #dashboardPage .dashboardTitle{font-size:21px}
-  #dashboardPage .dashboardLogoPlaceholder{width:66px;height:52px}
-  #dashboardPage .dashboardMajorTitle{font-size:19px}
-  #dashboardPage .dashSectionCard{padding:12px}
-  #dashboardPage .summaryGridV2{gap:6px}
-  #dashboardPage .summaryBoxV2{min-height:82px;padding:8px 4px}
-  #dashboardPage .summaryLabelV2{font-size:11.5px}
-  #dashboardPage .summaryValueV2 .summaryNumber{font-size:27px}
-  #dashboardPage .stayGridV2{grid-template-columns:1fr 1fr}
-  #dashboardPage .stayCellV2:nth-child(2){border-right:0}
-  #dashboardPage .stayCellV2:nth-child(-n+2){border-bottom:1px solid #e7edf3}
-  #dashboardPage .v28TeamRow{grid-template-columns:1fr auto}
-  #dashboardPage .v28TeamLoc{grid-column:1 / -1;margin-top:3px}
-  #dashboardPage .dashboardExitBar{grid-template-columns:1fr}
-  #dashboardPage .dashboardExitBtn{width:100%}
-}
-
 </style>
 </head>
 
@@ -1201,82 +1091,126 @@ PPE 점검 대기
 ===================================================== -->
 <div id="dashboardPage">
 
-  <div class="dashboardHeader">
-    <div class="dashboardTitle">🔥 현장 활동 현황</div>
-    <div id="dashboardSiteName" class="siteName">-</div>
-  </div>
+<div class="dashboardHeader">
 
-  <!-- 1. 인원현황 -->
-  <div class="dashboardLogoPersonnel">
-    <div class="dashboardLogoPlaceholder">로고</div>
-    <div class="dashboardMajorTitle">👥 인원현황</div>
-  </div>
+<div class="dashboardTitle">
+🔥 현장 활동 현황
+</div>
 
-  <div class="dashSectionCard">
-    <div class="summaryGridV2">
-      <div class="summaryBoxV2">
-        <div class="summaryLabelV2">현재 내부</div>
-        <div class="summaryValueV2">
-          <span id="dashInside" class="summaryNumber red">0</span><span class="summaryUnit">명</span>
-        </div>
-      </div>
+<div id="dashboardSiteName" class="siteName">
+-
+</div>
 
-      <div class="summaryBoxV2">
-        <div class="summaryLabelV2">현장 참여대원</div>
-        <div class="summaryValueV2">
-          <span id="dashUnique" class="summaryNumber blue">0</span><span class="summaryUnit">명</span>
-        </div>
-      </div>
+</div>
 
-      <div class="summaryBoxV2">
-        <div class="summaryLabelV2">철수 완료</div>
-        <div class="summaryValueV2">
-          <span id="dashExited" class="summaryNumber green">0</span><span class="summaryUnit">명</span>
-        </div>
-        <button type="button" class="exitedInlineBtn" onclick="openExitedPage()">철수대원 확인 ›</button>
-      </div>
-    </div>
+<div class="stationLogo">
+<img src="wanju-logo.png" alt="완주소방서 WANJU FIRE STATION">
+</div>
 
-    <div class="stayPanelV2">
-      <div class="stayPanelTitleV2">현재 내부 체류시간</div>
-      <div class="stayGridV2">
-        <div class="stayCellV2">🟢 0~20분<span id="stayGreenCount" class="stayCountV2 green">0명</span></div>
-        <div class="stayCellV2">🟠 21~25분<span id="stayOrangeCount" class="stayCountV2 orange">0명</span></div>
-        <div class="stayCellV2">🔴 26~30분<span id="stayRedCount" class="stayCountV2 red">0명</span></div>
-        <div class="stayCellV2">🔴 31분 이상<span id="stayCriticalCount" class="stayCountV2 red">0명</span></div>
-      </div>
-    </div>
+<div class="card">
 
-    <div id="criticalSummary" class="criticalSummary">✅ 31분 이상 즉시 확인 대상 0명</div>
+<div class="summaryGrid">
 
-    <button id="dashboardRefreshBtn" class="refresh" onclick="loadDashboard(false)">
-      <span class="refreshMainV22">🔄 현황 새로고침</span>
-      <span id="dashboardAutoRefreshInfo" class="refreshSubV22">60초 자동갱신 · 마지막 갱신 --:--:--</span>
-    </button>
-  </div>
+<div class="summaryBox compactSummaryBox">
+<div class="summaryLabel">현재 내부</div>
+<div class="summaryValueLine"><span id="dashInside" class="summaryNumber red">0</span><span class="summaryUnit">명</span></div>
+</div>
 
-  <!-- 2. 조별현황 -->
-  <div class="dashSectionCard">
-    <div class="dashSectionHeading">👥 조별현황</div>
-    <div id="teamStatusV28"></div>
-  </div>
+<div class="summaryBox">
+현장 참여대원
+<div id="dashUnique" class="summaryNumber blue">0</div>
+명
+</div>
 
-  <!-- 3. 현장활동대원 -->
-  <div class="dashSectionCard">
-    <div class="dashboardRosterToolbar">
-      <div class="dashSectionHeading" style="margin:0">👨‍🚒 현장활동대원</div>
-      <div class="dashboardActiveCount">현재 <span id="v28ActiveCount">0명</span></div>
-    </div>
+<div class="summaryBox compactSummaryBox exitedSummaryBox">
+<div class="summaryLabel">철수 완료</div>
+<div class="summaryValueLine"><span id="dashExited" class="summaryNumber green">0</span><span class="summaryUnit">명</span></div>
+<button type="button" class="exitedInlineBtn" onclick="openExitedPage()">철수대원 확인 ›</button>
+</div>
 
-    <div id="dashboardInside"></div>
+<div class="summaryBox">
 
-    <div class="dashboardExitBar">
-      <div id="dashboardSelectedCount" class="dashboardSelectedInfo">선택 대원 0명</div>
-      <button type="button" class="dashboardExitBtn" onclick="dashboardBatchExit()">선택대원 일괄철수</button>
-    </div>
-  </div>
+<div class="staySummaryTitle">
+현재 내부 체류시간
+</div>
 
-  <button class="back dashboardBottomBack" onclick="closeDashboard()">⬅ 안전관리 화면으로 돌아가기</button>
+<div class="staySummaryRows staySummaryGridV22">
+
+<div class="staySummaryRow">
+<span>🟢 0~20분</span>
+<span id="stayGreenCount" class="green">0명</span>
+</div>
+
+<div class="staySummaryRow">
+<span>🟠 21~25분</span>
+<span id="stayOrangeCount" class="orange">0명</span>
+</div>
+
+<div class="staySummaryRow">
+<span>🔴 26~30분</span>
+<span id="stayRedCount" class="red">0명</span>
+</div>
+
+<div class="staySummaryRow">
+<span>🔴 31분 이상</span>
+<span id="stayCriticalCount" class="red">0명</span>
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+<div
+  id="criticalSummary"
+  class="criticalSummary"
+>
+✅ 31분 이상 즉시 확인 대상 0명
+</div>
+<button
+  id="dashboardRefreshBtn"
+  class="refresh"
+  onclick="loadDashboard(false)"
+>
+<span class="refreshMainV22">🔄 현황 새로고침</span>
+<span id="dashboardAutoRefreshInfo" class="refreshSubV22">60초 자동갱신 · 마지막 갱신 --:--:--</span>
+</button>
+
+<button
+  class="back"
+  onclick="closeDashboard()"
+>
+⬅ 안전관리 화면으로 돌아가기
+</button>
+
+</div>
+
+
+<div class="card">
+
+<div class="sectionTitle">
+📋 현장 활동 대원
+</div>
+
+
+<div id="teamStatusV28"></div>
+<div class="v28Title">👨‍🚒 현장 활동대원 <span id="v28ActiveCount"></span></div>
+<div id="dashboardInside"></div>
+
+
+</div>
+
+
+<button
+  class="back"
+  onclick="closeDashboard()"
+>
+⬅ 안전관리 화면으로 돌아가기
+</button>
+
+</div>
+
 </div>
 
 <!-- 3번째 창 : 철수 대원 확인 -->
@@ -5096,8 +5030,6 @@ function drawDashboardInside(list){
   const area=document.getElementById("dashboardInside");
   if(!area)return;
   area.innerHTML="";
-  const selectedBox=document.getElementById("dashboardSelectedCount");
-  if(selectedBox)selectedBox.textContent="선택 대원 0명";
 
   const c=document.getElementById("v28ActiveCount");
   if(c)c.textContent=(list||[]).length+"명";
@@ -5259,40 +5191,6 @@ function saveDashboardMemberLocation(memberId){
   closeDashboardMemberDetail();
   loadDashboard(false);
 }
-
-
-/* =====================================================
-두번째 화면 선택대원 표시 / 일괄철수
-===================================================== */
-function updateDashboardSelectedCount(){
-  const box=document.getElementById("dashboardSelectedCount");
-  if(!box)return;
-  const count=document.querySelectorAll("#dashboardInside .insideCheck:checked").length;
-  box.textContent="선택 대원 "+count+"명";
-}
-
-async function dashboardBatchExit(){
-  const checked=Array.from(document.querySelectorAll("#dashboardInside .insideCheck:checked"));
-  if(!checked.length){
-    alert("철수할 대원을 선택하세요.");
-    return;
-  }
-
-  // 메인화면에 혹시 남아 있는 선택은 해제하여 두번째 화면 선택만 처리한다.
-  document.querySelectorAll("#insideList .insideCheck").forEach(x=>x.checked=false);
-
-  await batchExitMembers();
-
-  // 서버 저장 후 두번째 화면을 최신 상태로 갱신
-  setTimeout(()=>loadDashboard(true),350);
-}
-
-document.addEventListener("change",function(e){
-  if(e.target && e.target.matches("#dashboardInside .insideCheck")){
-    updateDashboardSelectedCount();
-  }
-});
-
 
 /* =====================================================
 철수 대원 표시
