@@ -3330,7 +3330,7 @@ async function quickEntryMembers(){
       entryQueue=entryQueue.filter(m=>!successIds.has(String(m.id)));
       renderQueue();
       if(entryQueue.length===0) resetPPE(); else { checkPPE(); renderTeamMembers(); }
-      await loadInsideMembers();
+      void loadInsideMembers();
     }
   }catch(e){console.error(e);alert("즉시 투입 기록 오류");}
   finally{entrySubmitting=false;if(qbtn){qbtn.innerText="⚡ 즉시 투입";qbtn.disabled=!(entryQueue.length>0&&isPPEComplete());} updateTeamSetupState();}
@@ -3662,7 +3662,7 @@ async function batchEntryMembers(){
       }
 
       closeTeamSetup();
-      await loadInsideMembers();
+      void loadInsideMembers();
 
     }
 
@@ -4377,7 +4377,7 @@ async function batchExitMembers(){
     );
 
 
-    await loadInsideMembers();
+    void loadInsideMembers();
 
   }catch(error){
 
