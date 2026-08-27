@@ -820,6 +820,127 @@ button:disabled{
   .personnelStatusCardStable .staySummaryTitle{font-size:16px}
 }
 
+
+/* ===== V2 조별현황 + 조 활동상태판 (안전관리/현재위치 중심) ===== */
+.v29TeamHeader{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;
+}
+.v29TeamHeaderTitle{
+  font-size:20px;font-weight:900;color:#173d67;letter-spacing:-.3px;
+}
+.v29BoardOpenBtn{
+  width:auto!important;margin:0!important;padding:9px 13px!important;border:0!important;
+  border-radius:10px!important;background:#1764cf!important;color:#fff!important;
+  font-size:13px!important;font-weight:900!important;white-space:nowrap;
+}
+#teamStatusV28 .v28TeamTitle{display:none}
+.v28TeamRow{cursor:default}
+.v28TeamName{font-weight:900}
+.v28TeamLoc{font-weight:800}
+.v28TeamTime{font-weight:900}
+
+/* 전체 위치 상태판 */
+#teamBoardPageV29{
+  display:none;max-width:1180px;margin:0 auto;padding:0 10px 30px;
+}
+.v29BoardHeader{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  margin:10px 0 12px;padding:15px 18px;border-radius:14px;background:#123c69;color:#fff;
+}
+.v29BoardHeaderMain{min-width:0}
+.v29BoardTitle{font-size:23px;font-weight:950;letter-spacing:-.4px}
+.v29BoardSite{margin-top:4px;font-size:13px;font-weight:800;opacity:.9;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.v29BoardHeaderBtns{display:flex;gap:8px;flex:0 0 auto}
+.v29BoardHeaderBtns button{
+  width:auto!important;margin:0!important;padding:9px 12px!important;border-radius:9px!important;
+  font-size:12px!important;font-weight:900!important;
+}
+.v29BoardRefresh{background:#fff!important;color:#173d67!important;border:0!important}
+.v29BoardClose{background:#e9eef5!important;color:#24384d!important;border:0!important}
+
+.v29BoardCard{
+  background:#fff;border:1px solid #dce5ee;border-radius:15px;padding:14px;
+  box-shadow:0 3px 12px rgba(20,50,80,.06);
+}
+.v29BoardGuide{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;
+  margin-bottom:11px;font-size:12px;font-weight:800;color:#516274;
+}
+.v29Legend{display:flex;gap:10px;flex-wrap:wrap}
+.v29Legend span{white-space:nowrap}
+
+.v29LocationBoard{
+  display:grid;
+  grid-template-columns:92px repeat(4,minmax(145px,1fr));
+  border:1px solid #ccd8e4;border-radius:12px;overflow:hidden;background:#fff;
+}
+.v29Corner,.v29DirHead,.v29FloorHead,.v29Cell{
+  border-right:1px solid #dfe7ef;border-bottom:1px solid #dfe7ef;
+}
+.v29Corner,.v29DirHead{
+  min-height:43px;display:flex;align-items:center;justify-content:center;
+  background:#eef4fa;color:#173d67;font-size:14px;font-weight:950;
+}
+.v29FloorHead{
+  min-height:72px;display:flex;align-items:center;justify-content:center;padding:7px;
+  background:#f7f9fc;color:#263b50;font-size:13px;font-weight:950;text-align:center;
+}
+.v29FloorHead.fire{background:#fff1f1;color:#b42318}
+.v29Cell{
+  min-height:72px;padding:7px;background:#fff;display:flex;align-content:flex-start;
+  align-items:flex-start;gap:6px;flex-wrap:wrap;
+}
+.v29Cell.fire{background:#fffafa}
+.v29LocationBoard > :nth-child(5n){border-right:0}
+.v29LocationBoard > :nth-last-child(-n+5){border-bottom:0}
+
+.v29TeamChip{
+  border:1px solid #d6e0ea;border-radius:10px;background:#f8fafc;padding:7px 8px;
+  min-width:86px;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.04);
+}
+.v29TeamChipTop{display:flex;align-items:center;justify-content:space-between;gap:5px}
+.v29TeamChipName{font-size:14px;font-weight:950;color:#162b40}
+.v29TeamChipNo{font-size:11px;font-weight:900;color:#5b6c7d}
+.v29TeamChipTime{margin-top:4px;font-size:12px;font-weight:950}
+.v29TeamChip.normal{border-left:5px solid #19a55a}
+.v29TeamChip.caution{border-left:5px solid #f59e0b}
+.v29TeamChip.warning{border-left:5px solid #ef4444}
+.v29TeamChip.critical{border-left:5px solid #b91c1c;background:#fff1f1}
+.v29TeamChip.critical .v29TeamChipTime{color:#b91c1c}
+
+.v29BoardDetail{
+  margin-top:12px;border:1px solid #dce5ee;border-radius:12px;padding:13px 14px;background:#fbfcfe;
+}
+.v29DetailEmpty{font-size:13px;font-weight:800;color:#718096}
+.v29DetailTop{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.v29DetailTeam{font-size:20px;font-weight:950;color:#173d67}
+.v29DetailStatus{font-size:13px;font-weight:950}
+.v29DetailLocation{margin-top:8px;font-size:17px;font-weight:950;color:#111827}
+.v29DetailMeta{margin-top:7px;display:flex;gap:14px;flex-wrap:wrap;font-size:13px;font-weight:800;color:#526274}
+.v29BoardFoot{
+  margin-top:9px;font-size:11px;line-height:1.5;color:#66788a;font-weight:700;
+}
+
+/* 태블릿 가로 화면에서 상태판을 넓게 사용 */
+@media(min-width:800px){
+  #teamBoardPageV29{max-width:1180px}
+  .v29LocationBoard{grid-template-columns:105px repeat(4,minmax(155px,1fr))}
+  .v29Cell,.v29FloorHead{min-height:78px}
+}
+/* 휴대폰에서는 가로 스크롤로 정보 구조를 유지 */
+@media(max-width:799px){
+  .v29TeamHeader{align-items:flex-start}
+  .v29TeamHeaderTitle{font-size:18px}
+  .v29BoardOpenBtn{font-size:12px!important;padding:8px 10px!important}
+  .v29BoardHeader{padding:13px 12px}
+  .v29BoardTitle{font-size:19px}
+  .v29BoardHeaderBtns{gap:5px}
+  .v29BoardHeaderBtns button{padding:8px 9px!important}
+  .v29BoardCard{padding:10px;overflow-x:auto}
+  .v29LocationBoard{width:790px;grid-template-columns:90px repeat(4,175px)}
+  .v29BoardDetail{min-width:0}
+}
+
 </style>
 </head>
 
@@ -1233,15 +1354,15 @@ PPE 점검 대기
 
 <div class="card">
 
-<div class="sectionTitle">
-📋 현장 활동 대원
+<div class="v29TeamHeader">
+  <div class="v29TeamHeaderTitle">👥 2. 조별현황</div>
+  <button type="button" class="v29BoardOpenBtn" onclick="openTeamBoardV29()">🗺️ 조 활동상태판 보기</button>
 </div>
 
-
 <div id="teamStatusV28"></div>
-<div class="v28Title">👨‍🚒 현장 활동대원 <span id="v28ActiveCount"></span></div>
-<div id="dashboardInside"></div>
 
+<div class="v28Title" style="margin-top:18px">👨‍🚒 3. 현장 활동대원 <span id="v28ActiveCount"></span></div>
+<div id="dashboardInside"></div>
 
 </div>
 
@@ -1254,6 +1375,43 @@ PPE 점검 대기
 </button>
 
 </div>
+
+</div>
+
+
+<!-- 조 활동상태판 : 안전관리용 현재 위치 시각화 -->
+<div id="teamBoardPageV29">
+
+  <div class="v29BoardHeader">
+    <div class="v29BoardHeaderMain">
+      <div class="v29BoardTitle">🗺️ 조 활동상태판</div>
+      <div id="v29BoardSite" class="v29BoardSite">-</div>
+    </div>
+    <div class="v29BoardHeaderBtns">
+      <button type="button" class="v29BoardRefresh" onclick="refreshTeamBoardV29()">🔄 새로고침</button>
+      <button type="button" class="v29BoardClose" onclick="closeTeamBoardV29()">✕ 닫기</button>
+    </div>
+  </div>
+
+  <div class="v29BoardCard">
+    <div class="v29BoardGuide">
+      <div>현재 활동 중인 조의 <b>층 · 방면 · 진입차수 · 체류시간</b>을 한눈에 확인합니다.</div>
+      <div class="v29Legend">
+        <span>🟢 0~20분</span><span>🟠 21~25분</span><span>🔴 26~30분</span><span>🚨 31분 이상</span>
+      </div>
+    </div>
+
+    <div id="v29LocationBoard" class="v29LocationBoard"></div>
+
+    <div id="v29BoardDetail" class="v29BoardDetail">
+      <div class="v29DetailEmpty">조를 누르면 현재 위치 상세정보가 표시됩니다.</div>
+    </div>
+
+    <div class="v29BoardFoot">
+      ※ 조의 체류시간은 해당 조에서 가장 오래 활동 중인 대원을 기준으로 표시합니다.
+      위치가 서로 다르게 등록된 조는 상태판에서 ‘위치 분산’으로 별도 표시합니다.
+    </div>
+  </div>
 
 </div>
 
@@ -5060,6 +5218,158 @@ function v28DrawTeamStatus(list){
   });
   area.innerHTML=out+'</div>';
 }
+
+function v29StayState(minutes){
+  const n=Number(minutes)||0;
+  if(n<=20)return {cls:"normal",icon:"🟢",text:"정상"};
+  if(n<=25)return {cls:"caution",icon:"🟠",text:"주의"};
+  if(n<=30)return {cls:"warning",icon:"🔴",text:"경고"};
+  return {cls:"critical",icon:"🚨",text:"즉시확인"};
+}
+
+function v29GroupTeams(list){
+  const meta=v23LoadMeta(), groups={};
+  (list||[]).forEach(m=>{
+    const vm=meta[String(m.memberId)]||{};
+    const team=vm.teamName||"조 미지정";
+    (groups[team]||(groups[team]=[])).push({m,vm});
+  });
+
+  return Object.keys(groups).sort((a,b)=>v28TeamNo(a)-v28TeamNo(b)).map(team=>{
+    const g=groups[team];
+    const unique=(key,fallback)=>[...new Set(g.map(x=>String(x.vm[key]||fallback)))];
+    const dirs=unique("entryDirection","미지정");
+    const floors=unique("activityFloor","미지정");
+    const details=unique("detailLocation","세부장소 미지정");
+    const maxMin=Math.max(...g.map(x=>Number(x.m.currentMinutes)||0));
+    const actNo=Math.max(...g.map(x=>Number(x.vm.teamActivityNo)||1));
+    return {
+      team,
+      count:g.length,
+      activityNo:actNo,
+      minutes:maxMin,
+      direction:dirs.length===1?dirs[0]:"위치 분산",
+      floor:floors.length===1?floors[0]:"위치 분산",
+      detail:details.length===1?details[0]:"위치 분산",
+      dispersed:dirs.length>1||floors.length>1||details.length>1
+    };
+  });
+}
+
+function v29FloorKey(value){
+  const v=String(value||"");
+  if(v==="옥상")return "옥상";
+  if(v==="상층부"||v==="상층")return "상층";
+  if(v==="직상층")return "직상층";
+  if(v==="화점층")return "화점층";
+  if(v==="직하층")return "직하층";
+  if(v==="하층부"||v==="하층")return "하층";
+  if(v==="지하층")return "지하층";
+  return "";
+}
+
+function v29DirectionKey(value){
+  const m=String(value||"").match(/([ABCD])방면/);
+  return m?m[1]+"방면":"";
+}
+
+function drawTeamBoardV29(){
+  const board=document.getElementById("v29LocationBoard");
+  const detail=document.getElementById("v29BoardDetail");
+  if(!board)return;
+
+  const teams=v29GroupTeams(window.__dashboardInsideMembers||[]);
+  const floors=["옥상","상층","직상층","화점층","직하층","하층","지하층"];
+  const dirs=["A방면","B방면","C방면","D방면"];
+
+  let html='<div class="v29Corner">층 / 방면</div>';
+  dirs.forEach(d=>html+='<div class="v29DirHead">'+d+'</div>');
+
+  floors.forEach(f=>{
+    const fire=f==="화점층";
+    html+='<div class="v29FloorHead '+(fire?'fire':'')+'">'+(fire?'🔥 ':'')+f+'</div>';
+    dirs.forEach(d=>{
+      const here=teams.filter(t=>!t.dispersed && v29FloorKey(t.floor)===f && v29DirectionKey(t.direction)===d);
+      html+='<div class="v29Cell '+(fire?'fire':'')+'">';
+      here.forEach(t=>{
+        const st=v29StayState(t.minutes);
+        html+='<div class="v29TeamChip '+st.cls+'" onclick="showTeamBoardDetailV29(\''+escapeAttr(t.team)+'\')">'+
+          '<div class="v29TeamChipTop"><span class="v29TeamChipName">'+escapeHtml(t.team)+'</span>'+
+          '<span class="v29TeamChipNo">'+Number(t.activityNo)+'차</span></div>'+
+          '<div class="v29TeamChipTime">'+st.icon+' '+Number(t.minutes)+'분</div>'+
+          '</div>';
+      });
+      html+='</div>';
+    });
+  });
+
+  board.innerHTML=html;
+
+  // 위치가 분산/미지정인 조는 상세영역에 별도 안내
+  const unresolved=teams.filter(t=>t.dispersed || !v29FloorKey(t.floor) || !v29DirectionKey(t.direction));
+  if(unresolved.length && detail){
+    detail.innerHTML=
+      '<div class="v29DetailTeam">⚠ 위치 확인 필요</div>'+
+      '<div class="v29DetailMeta">'+
+      unresolved.map(t=>escapeHtml(t.team)+' · '+escapeHtml(t.floor)+' · '+escapeHtml(t.direction)).join('　|　')+
+      '</div>';
+  }else if(detail){
+    detail.innerHTML='<div class="v29DetailEmpty">조를 누르면 현재 위치 상세정보가 표시됩니다.</div>';
+  }
+}
+
+function showTeamBoardDetailV29(teamName){
+  const detail=document.getElementById("v29BoardDetail");
+  if(!detail)return;
+  const t=v29GroupTeams(window.__dashboardInsideMembers||[]).find(x=>x.team===teamName);
+  if(!t)return;
+  const st=v29StayState(t.minutes);
+  detail.innerHTML=
+    '<div class="v29DetailTop">'+
+      '<div class="v29DetailTeam">'+escapeHtml(t.team)+' · '+Number(t.activityNo)+'차 진입</div>'+
+      '<div class="v29DetailStatus">'+st.icon+' '+st.text+' · '+Number(t.minutes)+'분</div>'+
+    '</div>'+
+    '<div class="v29DetailLocation">📍 '+escapeHtml(t.floor)+' · '+escapeHtml(t.direction)+
+      (t.detail&&t.detail!=="세부장소 미지정"?' · '+escapeHtml(t.detail):'')+
+    '</div>'+
+    '<div class="v29DetailMeta"><span>현재 활동 '+Number(t.count)+'명</span><span>체류시간은 조 내 최장 체류 기준</span></div>';
+}
+
+function openTeamBoardV29(){
+  const dashboard=document.getElementById("dashboardPage");
+  const board=document.getElementById("teamBoardPageV29");
+  if(!board)return;
+  if(dashboard)dashboard.style.display="none";
+  board.style.display="block";
+
+  const site=document.getElementById("v29BoardSite");
+  const dashSite=document.getElementById("dashboardSiteName");
+  if(site)site.textContent=dashSite?dashSite.textContent:"";
+
+  drawTeamBoardV29();
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+function closeTeamBoardV29(){
+  const dashboard=document.getElementById("dashboardPage");
+  const board=document.getElementById("teamBoardPageV29");
+  if(board)board.style.display="none";
+  if(dashboard)dashboard.style.display="block";
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+async function refreshTeamBoardV29(){
+  // 기존 안정화된 현황 조회 함수를 그대로 사용
+  await loadDashboard(false);
+  // loadDashboard가 dashboardPage 표시를 건드리지 않으므로 상태판을 다시 표시
+  const dashboard=document.getElementById("dashboardPage");
+  const board=document.getElementById("teamBoardPageV29");
+  if(dashboard)dashboard.style.display="none";
+  if(board)board.style.display="block";
+  drawTeamBoardV29();
+}
+
+
 function v28NextTeamName(){
   const meta=v23LoadMeta();
   let max=0;
