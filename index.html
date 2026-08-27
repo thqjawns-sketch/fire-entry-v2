@@ -1428,90 +1428,39 @@ window.fetch = async function(input, init){
     const action=old.get("action")||"";
 
     if(action==="batchEntry"){
-      const siteId=v2SiteId(old.get("site"));
-      const team=old.get("teamName")||"";
-      const activityNo=old.get("activityNo")||"";
-      const direction=old.get("entryDirection")||"";
-      const floor=old.get("activityFloor")||"";
-      const detail=old.get("detailLocation")||"";
-      let arr=[];
-      try{arr=JSON.parse(old.get("members")||"[]");}catch(e){}
+      const p=new URLSearchParams();
+      p.set("action","batchEntry");
+      p.set("siteId",v2SiteId(old.get("site")));
+      p.set("members",old.get("members")||"[]");
+      p.set("teamName",old.get("teamName")||"");
+      p.set("activityNo",old.get("activityNo")||"");
+      p.set("entryDirection",old.get("entryDirection")||"");
+      p.set("activityFloor",old.get("activityFloor")||"");
+      p.set("detailLocation",old.get("detailLocation")||"");
 
-      // 속도개선:
-      // 기존에는 대원1 PPE→진입 완료 후 대원2 PPE→진입... 식으로 완전 직렬 처리.
-      // 이제 각 대원 내부에서는 PPE→진입 순서를 유지하면서,
-      // 여러 대원은 동시에 서버 처리한다.
-      const results=await Promise.all(arr.map(async (m)=>{
-        try{
-          const ppe=new URLSearchParams();
-          ppe.set("action","savePpe");
-          ppe.set("siteId",siteId);
-          ppe.set("memberId",m.id||"");
-          ppe.set("personal","true");
-          ppe.set("scba","true");
-          ppe.set("communication","true");
-          const pd=await v2CallPost(ppe);
-          if(!pd.ok)throw new Error(pd.error||"PPE 기록 실패");
-
-          const entry=new URLSearchParams();
-          entry.set("action","entry");
-          entry.set("siteId",siteId);
-          entry.set("memberId",m.id||"");
-          entry.set("team",team);
-          if(activityNo)entry.set("activityNo",activityNo);
-          entry.set("direction",direction);
-          entry.set("floor",floor);
-          entry.set("detail",detail);
-          const ed=await v2CallPost(entry);
-          if(!ed.ok)throw new Error(ed.error||"진입 기록 실패");
-
-          v2SyncServerMeta(ed);
-          return {ok:true,id:m.id,name:m.name||ed.name||""};
-        }catch(e){
-          return {ok:false,id:m.id,name:m.name||"",message:e.message||String(e)};
-        }
-      }));
-
-      const succeeded=results.filter(r=>r.ok).map(r=>({id:r.id,name:r.name}));
-      const failed=results.filter(r=>!r.ok).map(r=>({id:r.id,name:r.name,message:r.message}));
-
+      const d=await v2CallPost(p);
       return v2JsonResponse({
-        success:failed.length===0,
-        successCount:succeeded.length,
-        succeeded:succeeded,
-        failed:failed,
-        message:succeeded.length+"명 진입 기록 완료"+(failed.length?" · "+failed.length+"명 처리 제외":"")
+        success:!!(d.ok || d.success),
+        successCount:Number(d.successCount)||0,
+        succeeded:d.succeeded||[],
+        failed:d.failed||[],
+        message:d.message||""
       });
     }
 
     if(action==="batchExit"){
-      const siteId=v2SiteId(old.get("site"));
-      let arr=[];
-      try{arr=JSON.parse(old.get("members")||"[]");}catch(e){}
-      const succeeded=[];
-      const failed=[];
+      const p=new URLSearchParams();
+      p.set("action","batchExit");
+      p.set("siteId",v2SiteId(old.get("site")));
+      p.set("members",old.get("members")||"[]");
 
-      for(const m of arr){
-        try{
-          const exit=new URLSearchParams();
-          exit.set("action","exit");
-          exit.set("siteId",siteId);
-          exit.set("memberId",m.id||"");
-          exit.set("exitType",arr.length>1?"다중 일괄철수":"단독철수");
-          const xd=await v2CallPost(exit);
-          if(!xd.ok)throw new Error(xd.error||"철수 기록 실패");
-          succeeded.push({id:m.id,name:m.name||""});
-        }catch(e){
-          failed.push({id:m.id,name:m.name||"",message:e.message||String(e)});
-        }
-      }
-
+      const d=await v2CallPost(p);
       return v2JsonResponse({
-        success:failed.length===0,
-        successCount:succeeded.length,
-        succeeded:succeeded,
-        failed:failed,
-        message:succeeded.length+"명 철수 처리 완료"+(failed.length?" · "+failed.length+"명 처리 제외":"")
+        success:!!(d.ok || d.success),
+        successCount:Number(d.successCount)||0,
+        succeeded:d.succeeded||[],
+        failed:d.failed||[],
+        message:d.message||""
       });
     }
   }
