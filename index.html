@@ -1,2159 +1,5621 @@
-/************************************************************
- * 소방현장 진입·철수 안전관리 앱 V2
- * V2 전용 Apps Script
- *
- * 사용 시트
- * 1. 대원명부
- * 2. 현장정보
- * 3. PPE점검
- * 4. 활동이력
- * 5. 현재상태
- * 6. 변경이력
- * 7. 앱설정
- *
- * 중요:
- * - V1과 완전히 별개
- * - 현재 스프레드시트에 연결된 V2 전용 코드
- * - 현장ID 기준으로 모든 기록 분리
- ************************************************************/
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>소방현장 진입·철수 태그 관리앱 V2 - V2 전용 서버 안정화판</title>
 
-const SHEETS = {
-  MEMBERS: "대원명부",
-  SITES: "현장정보",
-  PPE: "PPE점검",
-  HISTORY: "활동이력",
-  CURRENT: "현재상태",
-  CHANGES: "변경이력",
-  SETTINGS: "앱설정"
+<script src="https://unpkg.com/html5-qrcode" type="text/javascript">
+document.addEventListener("DOMContentLoaded",function(){v31UpdateTeamPreviewAuto();});
+
+</script>
+
+<style>
+body{
+  margin:0;
+  padding:14px;
+  background:#f4f6f8;
+  font-family:Arial,"Malgun Gothic",sans-serif;
+  color:#111;
+}
+.container{
+  max-width:600px;
+  margin:auto;
+}
+.title,.dashboardHeader{
+  background:#173d67;
+  color:#fff;
+  padding:18px 12px;
+  border-radius:12px;
+  text-align:center;
+  font-weight:bold;
+  margin-bottom:12px;
+}
+.title{font-size:22px}
+.dashboardTitle{font-size:20px}
+.siteName{
+  font-size:27px;
+  margin-top:10px;
+}
+.stationLogo,.card{
+  background:#fff;
+  border-radius:12px;
+  margin-bottom:14px;
+  box-shadow:0 2px 8px rgba(0,0,0,.08);
+}
+.stationLogo{
+  padding:12px 16px;
+  text-align:center;
+}
+.stationLogo img{
+  display:block;
+  width:100%;
+  max-width:285px;
+  height:auto;
+  margin:auto;
+}
+.card{padding:16px}
+h3{margin:4px 0 12px}
+
+label{
+  display:block;
+  font-weight:bold;
+  margin:12px 0 6px;
+}
+select,input[type=text]{
+  width:100%;
+  box-sizing:border-box;
+  padding:13px;
+  font-size:16px;
+  border:1px solid #ccc;
+  border-radius:8px;
+}
+button{
+  width:100%;
+  padding:15px;
+  border:0;
+  border-radius:10px;
+  font-size:17px;
+  font-weight:bold;
+  margin-top:10px;
+  cursor:pointer;
+}
+button:disabled{
+  opacity:.65;
+  cursor:not-allowed;
+}
+
+.dashboardBtn{background:#f9ab00;color:#222}
+.scan,.back{background:#173d67;color:#fff}
+.entry{background:#d93025;color:#fff}
+.batchExit{background:#188038;color:#fff}
+.refresh{background:#44546a;color:#fff}
+.selectAll,.addBtn,.detailBtn{
+  background:#e8f0fe;
+  color:#173d67;
+}
+.removeBtn{
+  width:auto;
+  padding:8px 11px;
+  margin:0;
+  background:#fce8e6;
+  color:#b3261e;
+  font-size:13px;
+}
+.clearBtn{
+  background:#eee;
+  color:#444;
+}
+#reader{
+  width:100%;
+  margin-top:12px;
+}
+.info{
+  padding:13px;
+  background:#e8f0fe;
+  border-radius:10px;
+  text-align:center;
+  line-height:1.55;
+  margin-top:10px;
+}
+.cacheInfo{
+  margin-top:7px;
+  text-align:center;
+  color:#666;
+  font-size:12px;
+}
+.autoRefreshInfo{
+  margin-top:10px;
+  padding:9px;
+  border-radius:8px;
+  text-align:center;
+  background:#e8f0fe;
+  color:#173d67;
+  font-size:13px;
+  font-weight:bold;
+}
+
+.queueHeader{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  margin-bottom:8px;
+}
+.queueCount{
+  font-size:20px;
+  font-weight:bold;
+  color:#173d67;
+}
+.queueItem{
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+  padding:12px;
+  border:1px solid #d9e0e8;
+  border-radius:10px;
+  margin-top:8px;
+  background:#fafcff;
+}
+.queueName{
+  font-size:17px;
+  font-weight:bold;
+  line-height:1.45;
+}
+.queueId{
+  font-size:13px;
+  color:#666;
+  margin-top:3px;
+}
+
+.ppeHeader{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+}
+.ppeAllCheck{
+  background:#fff7e6;
+  border:1px solid #f9ab00;
+  border-radius:9px;
+  padding:9px 12px;
+}
+.ppeAllCheck label{
+  margin:0;
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.ppeAllCheck input{
+  transform:scale(1.35);
+}
+.ppeBox{
+  padding:14px;
+  margin-top:10px;
+  background:#f5f7fa;
+  border-radius:10px;
+}
+.ppeBox label{margin:0}
+.ppeBox input{
+  transform:scale(1.3);
+  margin-right:8px;
+}
+.small{
+  font-size:13px;
+  color:#666;
+  margin-left:28px;
+  margin-top:5px;
+}
+.status{
+  padding:14px;
+  margin-top:14px;
+  text-align:center;
+  font-weight:bold;
+  border-radius:10px;
+  background:#eee;
+}
+
+.insideTitle,.sectionTitle{
+  font-size:20px;
+  font-weight:bold;
+}
+.memberRow{
+  padding:13px 8px;
+  margin-top:7px;
+  border-radius:9px;
+  display:flex;
+  align-items:flex-start;
+  gap:10px;
+}
+.memberRow>input{
+  transform:scale(1.5);
+  margin-top:6px;
+}
+.memberDetail{flex:1}
+.memberLine{
+  font-size:17px;
+  font-weight:bold;
+}
+.memberId{
+  font-size:13px;
+  color:#666;
+  margin-top:3px;
+}
+.time{
+  margin-top:4px;
+  font-size:14px;
+  color:#555;
+}
+.selectedCount{
+  text-align:center;
+  font-weight:bold;
+  margin-top:10px;
+  color:#188038;
+}
+
+.stayBadge{
+  display:inline-block;
+  margin-top:7px;
+  padding:6px 10px;
+  border-radius:7px;
+  font-size:14px;
+  font-weight:bold;
+}
+.stayNormal{
+  background:#e6f4ea;
+  color:#137333;
+  border-left:6px solid #188038;
+}
+.stayCaution{
+  background:#fff3e0;
+  color:#e37400;
+  border-left:6px solid #f9ab00;
+}
+.stayWarning{
+  background:#fce8e6;
+  color:#b3261e;
+  border-left:6px solid #d93025;
+}
+.stayCritical{
+  background:#d93025;
+  color:#fff;
+  border-left:6px solid #8b0000;
+  animation:dangerBlink 1s infinite;
+}
+@keyframes dangerBlink{
+  0%,100%{background:#d93025;color:#fff}
+  50%{background:#fff;color:#d93025}
+}
+
+#dashboardPage{display:none}
+
+.summaryGrid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+}
+.summaryBox{
+  padding:17px 8px;
+  border-radius:10px;
+  text-align:center;
+  background:#f5f7fa;
+}
+.summaryNumber{
+  font-size:30px;
+  font-weight:bold;
+  margin-top:5px;
+}
+.red{color:#d93025}
+.green{color:#188038}
+.blue{color:#173d67}
+.orange{color:#e37400}
+
+.staySummaryTitle{
+  font-size:16px;
+  font-weight:bold;
+  margin-bottom:8px;
+}
+.staySummaryRows{
+  max-width:175px;
+  margin:auto;
+  text-align:left;
+}
+.staySummaryRow{
+  display:flex;
+  justify-content:space-between;
+  gap:6px;
+  padding:4px 0;
+  font-size:14px;
+  font-weight:bold;
+}
+.criticalSummary{
+  margin-top:14px;
+  padding:14px;
+  border-radius:10px;
+  text-align:center;
+  font-size:18px;
+  font-weight:bold;
+  background:#e6f4ea;
+  color:#137333;
+  border:2px solid #188038;
+}
+.criticalSummary.hasCritical{
+  background:#d93025;
+  color:#fff;
+  border-color:#8b0000;
+  animation:dangerBlink 1s infinite;
+}
+.safetyNotice{
+  margin-top:12px;
+  padding:12px;
+  background:#fff8e1;
+  border-left:5px solid #f9ab00;
+  border-radius:8px;
+  color:#5f4b00;
+  font-size:14px;
+  line-height:1.55;
+  font-weight:bold;
+}
+.commandMember{
+  padding:14px;
+  border:1px solid #ddd;
+  border-radius:10px;
+  margin-bottom:10px;
+  background:#fff;
+}
+.commandMember.exited{
+  border-left:6px solid #188038;
+}
+.commandName{
+  font-size:19px;
+  font-weight:bold;
+}
+.commandInfo{
+  margin-top:8px;
+  line-height:1.7;
+}
+.history{
+  background:#f5f7fa;
+  border-radius:8px;
+  padding:10px;
+  margin-top:10px;
+  display:none;
+}
+.historyRow{
+  padding:7px 0;
+  border-bottom:1px solid #ddd;
+}
+.historyRow:last-child{border-bottom:0}
+.detailBtn{
+  padding:9px;
+  font-size:14px;
+}
+.empty{
+  text-align:center;
+  color:#777;
+  padding:20px;
+}
+.progressText{
+  text-align:center;
+  font-weight:bold;
+  color:#173d67;
+  margin-top:10px;
+}
+
+/* ===== V2 조 편성 / 활동구역 ===== */
+.v2Badge{display:inline-block;background:#fff;color:#173d67;border-radius:999px;padding:3px 9px;font-size:12px;margin-left:6px}
+.teamSetup{border:2px solid #173d67;background:#f7fbff}
+.teamSetup .teamBody{display:none;margin-top:10px}
+.teamSetup.open .teamBody{display:block}
+.teamSetup.locked{border-color:#cbd5e1;background:#f8fafc}
+.teamToggle{width:100%;padding:13px;border:0;border-radius:10px;background:#64748b;color:#fff;font-weight:bold;font-size:15px}
+.teamToggle.ready{background:#173d67}
+.teamToggle:disabled{opacity:.65;cursor:not-allowed}
+.teamHint{font-size:12px;color:#64748b;margin-top:7px;line-height:1.5}
+.teamMemberList{display:grid;gap:8px;margin:10px 0}
+.teamMember{display:flex;align-items:center;gap:10px;padding:11px;border:1px solid #d9e2ec;border-radius:10px;background:#fff}
+.teamMember input{width:22px;height:22px;flex:0 0 auto}
+.teamMember .tmName{font-weight:bold;flex:1}
+.v2ChoiceGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:8px 0 12px}
+.v2Choice{border:1px solid #9fb3c8;background:#fff;color:#173d67;border-radius:10px;padding:12px 5px;font-weight:bold;cursor:pointer}
+.v2Choice.active{background:#173d67;color:#fff;border-color:#173d67}
+.v2Sub{font-size:13px;color:#53606d;margin:4px 0 8px}
+.teamPreview{padding:12px;background:#eef5fb;border-radius:10px;line-height:1.7;margin-top:10px;font-weight:bold}
+.teamError{color:#b42318;font-size:13px;margin-top:8px}
+@media(max-width:480px){.v2ChoiceGrid{grid-template-columns:repeat(2,1fr)}}
+
+/* ===== V2.3 ===== */
+.quickEntryBtn{width:100%;margin-top:10px;padding:14px;border:0;border-radius:12px;background:#c62828;color:#fff;font-weight:800;font-size:16px;cursor:pointer}
+.quickEntryBtn:disabled{opacity:.45;cursor:not-allowed}
+.extraFloorBox{display:none;margin-top:8px;padding:10px;border:1px dashed #b7c6d8;border-radius:10px;background:#f8fafc}
+.extraFloorBox.show{display:block}
+.floorBadge{display:inline-block;margin-left:5px;padding:3px 7px;border-radius:999px;font-size:12px;font-weight:800}
+.floor-fire{background:#fee2e2;color:#991b1b}.floor-above{background:#ffedd5;color:#9a3412}
+.floor-yellow{background:#fef9c3;color:#854d0e}.floor-green{background:#dcfce7;color:#166534}
+.floor-neutral{background:#e5e7eb;color:#374151}
+.locationLine{margin-top:5px;font-size:13px;font-weight:700;color:#334155}
+.locationEditBtn{margin-top:7px;padding:7px 10px;border:1px solid #94a3b8;border-radius:8px;background:#fff;font-weight:700;cursor:pointer}
+.v23Summary{margin:10px 0;padding:10px;border-radius:10px;background:#f1f5f9;font-size:13px;font-weight:700}
+
+
+/* ===== V2.4 첫 화면 단순화 ===== */
+.entryModeBox{
+  margin-top:12px;
+  padding:12px;
+  border:1px solid #d7e0ea;
+  border-radius:12px;
+  background:#fff;
+}
+.entryModeTitle{font-size:15px;font-weight:800;margin-bottom:9px}
+.entryModeGrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.entryModeBtn{
+  width:100%;min-height:48px;border:0;border-radius:10px;
+  color:#fff;font-size:15px;font-weight:800;cursor:pointer;
+}
+.entryModeBtn.fast{background:#c62828}
+.entryModeBtn.team{background:#173d67}
+.entryModeBtn:disabled{opacity:.45;cursor:not-allowed}
+.entryModeHelp{font-size:12px;color:#64748b;line-height:1.5;margin-top:8px}
+#teamSetupCard{display:none}
+#teamSetupCard.modeOpen{display:block}
+.statusManageHint{
+  margin:8px 0 12px;padding:10px;border-radius:9px;
+  background:#eef5fb;color:#334155;font-size:12px;line-height:1.55;
+}
+@media(max-width:480px){.entryModeGrid{grid-template-columns:1fr}}
+
+
+/* ===== V2.5 현장현황 중심 관리 ===== */
+.memberIdentityGrid,.dashIdentityGrid{
+  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin:7px 0;
+}
+.identityCell,.locationCell{
+  padding:8px 7px;border-radius:8px;background:#f8fafc;border:1px solid #e2e8f0;
+  font-size:13px;font-weight:800;line-height:1.3;text-align:center;word-break:keep-all;
+}
+.locationGrid{
+  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin:7px 0 9px;
+}
+.locationCell.direction{background:#eef5fb}
+.locationCell.floor{background:#fff7e6}
+.locationCell.detail{background:#f4f0ff}
+.dashboardManageBtn{
+  width:100%;padding:10px;border:1px solid #173d67;border-radius:9px;
+  background:#fff;color:#173d67;font-weight:800;cursor:pointer;margin:4px 0 8px;
+}
+.exitedToggleBtn{
+  width:100%;padding:13px;border:1px solid #15803d;border-radius:10px;
+  background:#fff;color:#15803d;font-weight:800;font-size:15px;cursor:pointer;
+}
+#exitedHistoryCard{display:none}
+#exitedHistoryCard.show{display:block}
+@media(max-width:430px){
+ .memberIdentityGrid,.dashIdentityGrid,.locationGrid{grid-template-columns:1fr 1fr 1fr}
+ .identityCell,.locationCell{font-size:12px;padding:7px 4px}
+}
+
+
+/* ===== V2.6 현장 활동 현황 - 현장용 압축 UI ===== */
+.dashMemberCompact{
+  padding:11px 12px;border-bottom:1px solid #dfe5ec;background:#fff;cursor:pointer;
+}
+.dashMemberCompact:last-child{border-bottom:none}
+.dashTopLine,.dashLocationLine{
+  display:flex;align-items:center;min-width:0;gap:6px;
+}
+.dashTopLine{font-size:15px;font-weight:900;color:#111827}
+.dashLocationLine{margin-top:5px;font-size:14px;font-weight:800;color:#263445}
+.dashNameDept,.dashLocText{
+  min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.dashTime{
+  margin-left:auto;flex:0 0 auto;text-align:right;font-size:12px;color:#526071;font-weight:700;
+}
+.liveDot{
+  width:10px;height:10px;border-radius:50%;background:#22a95b;display:inline-block;flex:0 0 auto;
+  box-shadow:0 0 0 2px #e7f7ed;
+}
+.floorMini{
+  display:inline-block;padding:2px 6px;border-radius:6px;border:1px solid #aeb9c6;
+  background:#f7f9fb;font-size:12px;font-weight:900;white-space:nowrap;
+}
+.floorMini.floor-fire{color:#d82020;border-color:#ef6a6a;background:#fff2f2}
+.floorMini.floor-above{color:#d66b00;border-color:#f0a44b;background:#fff8ec}
+.floorMini.floor-yellow{color:#9b7200;border-color:#e2bd43;background:#fffbea}
+.floorMini.floor-green{color:#16834b;border-color:#63bd8a;background:#effbf4}
+.floorMini.floor-basement{color:#1665c1;border-color:#6ca6e8;background:#eff6ff}
+.floorMini.floor-roof{color:#6d3dc1;border-color:#a98ae0;background:#f7f1ff}
+.dashboardHintCompact{
+  padding:9px 10px;margin-bottom:8px;border-radius:8px;background:#edf5ff;color:#36526e;
+  font-size:12px;line-height:1.45;
+}
+.dashboardRoster{border:1px solid #dfe5ec;border-radius:10px;overflow:hidden;background:#fff}
+.dashboardDetailOverlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:9998;display:none;
+  align-items:flex-end;justify-content:center;
+}
+.dashboardDetailOverlay.show{display:flex}
+.dashboardDetailSheet{
+  width:min(600px,100%);max-height:88vh;overflow:auto;background:#fff;border-radius:18px 18px 0 0;
+  padding:18px 16px 22px;box-shadow:0 -8px 28px rgba(0,0,0,.18)
+}
+.sheetHeader{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.sheetHeader b{font-size:19px}
+.sheetClose{border:0;background:#eef2f6;border-radius:8px;padding:7px 11px;font-weight:900;cursor:pointer}
+.sheetMemberTitle{font-size:17px;font-weight:900;margin-bottom:6px}
+.sheetLocation{font-size:15px;font-weight:800;padding:10px;background:#f6f8fb;border-radius:9px;margin-bottom:12px}
+.sheetInfo{font-size:14px;line-height:1.8;color:#334155;margin-bottom:12px}
+.sheetActions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.sheetActions button{padding:12px 8px;border-radius:9px;font-weight:900;cursor:pointer;background:#fff}
+.sheetEdit{border:1px solid #2d6fc0;color:#1e5fae}
+.sheetExit{border:1px solid #e04747;color:#d22b2b}
+@media(max-width:430px){
+  .dashTopLine{font-size:14px}.dashLocationLine{font-size:13px}
+  .dashMemberCompact{padding:10px 9px}
+}
+
+
+/* ===== V2.6R 승인 시안 정밀반영 ===== */
+.dashMemberCompact{position:relative}
+.dashMemberCompact:active{background:#f7faff}
+.dashChevron{flex:0 0 auto;color:#7b8794;font-size:20px;margin-left:2px}
+.dashTopLine .dashTime,.dashLocationLine .dashTime{min-width:76px}
+.locationEditForm{display:grid;gap:10px}
+.locationEditForm label{font-size:13px;font-weight:900;color:#263445}
+.locationEditForm select,.locationEditForm input{width:100%;box-sizing:border-box;margin-top:5px;padding:11px 10px;border:1px solid #cbd5e1;border-radius:9px;background:#fff;font-size:15px}
+.sheetSave{width:100%;margin-top:12px;padding:13px;border:0;border-radius:9px;background:#1769c2;color:#fff;font-weight:900;font-size:15px}
+
+
+/* ===== V2.7 실제 첫 화면 현장내부 카드 직접 교체 ===== */
+#insideList .memberRow{
+  display:grid;
+  grid-template-columns:26px minmax(0,1fr);
+  align-items:start;
+  gap:6px;
+  padding:11px 10px;
+}
+#insideList .insideCheck{grid-column:1;grid-row:1 / span 3;margin-top:3px}
+#insideList .memberDetail{grid-column:2;min-width:0}
+#insideList .memberLine{
+  display:inline;font-size:15px;font-weight:900;color:#087d3c;
+}
+#insideList .compactId{
+  display:inline;margin-left:7px;font-size:11px;color:#778390;font-weight:700;
+}
+#insideList .insideCompactLocation{
+  display:flex;align-items:center;gap:3px;min-width:0;margin-top:6px;
+  font-size:13px;font-weight:850;color:#27384a;white-space:nowrap;
+}
+#insideList .insideLocText{
+  min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+#insideList .insideCompactBottom{
+  display:flex;align-items:center;gap:8px;margin-top:6px;
+  font-size:12px;color:#526071;
+}
+#insideList .insideCompactBottom>span:first-child{
+  min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+#insideList .insideStatus{
+  margin-left:auto;flex:0 0 auto;font-size:12px;font-weight:900;
+}
+#insideList .locationGrid,#insideList .locationLine{display:none!important}
+@media(max-width:430px){
+  #insideList .memberRow{padding:10px 8px}
+  #insideList .memberLine{font-size:14px}
+  #insideList .insideCompactLocation{font-size:12.5px}
+  #insideList .insideCompactBottom{font-size:11.5px}
+}
+
+
+/* ===== V2.8 ===== */
+.v28Title{font-size:16px;font-weight:900;margin:14px 0 8px;color:#173d67}
+.v28TeamTitle{font-size:16px;font-weight:900;margin:12px 0 8px;color:#173d67}
+.v28TeamList{display:grid;gap:7px}
+.v28TeamRow{display:flex;align-items:center;gap:7px;padding:9px 10px;border:1px solid #dbe3ec;border-radius:9px;background:#fff;font-size:13px;font-weight:800}
+.v28TeamName{font-weight:900;color:#173d67;white-space:nowrap}
+.v28TeamLoc{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.v28TeamTime{margin-left:auto;white-space:nowrap;font-size:12px;color:#526071}
+.v28GroupHead{font-size:14px;font-weight:900;color:#173d67;margin:10px 0 5px;padding:5px 7px;background:#eef5fb;border-radius:7px}
+
+
+/* ===== V2.12 조별 그룹 카드 ===== */
+.v32TeamGroup{
+  border:2px solid #cbd8e6;border-radius:14px;background:#fff;
+  margin:0 0 16px;overflow:hidden;box-shadow:0 2px 7px rgba(0,0,0,.04)
+}
+.v32TeamHead{
+  padding:11px 13px;background:#eaf2fb;border-bottom:1px solid #cbd8e6
+}
+.v32TeamHeadTitle{font-size:16px;font-weight:900;color:#173d67}
+.v32TeamHeadLoc{font-size:13px;font-weight:800;color:#40566f;margin-top:4px}
+.v32MemberRow{padding:10px 12px;border-bottom:1px solid #e4e9ef;cursor:pointer}
+.v32MemberRow:last-child{border-bottom:0}
+.v32MemberMain{display:flex;align-items:flex-start;gap:9px}
+.v32Check{padding-top:1px}
+.v32Check input{width:19px;height:19px}
+.v32MemberText{flex:1;min-width:0}
+.v32NameLine{font-size:14px;color:#087d3d;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.v32Code{font-size:11px;color:#73849a;margin-left:7px}
+.v32LocLine{font-size:13px;font-weight:900;color:#16283c;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.v32TimeLine{font-size:12px;color:#607086;margin-top:5px}
+.v32Status{font-size:12px;font-weight:900;white-space:nowrap;margin-left:auto;padding-top:3px}
+.v32Normal{border-left:5px solid #159447}
+.v32WarnOrange{border-left:5px solid #f59e0b;background:#fff9ed}
+.v32WarnRed{border-left:5px solid #dc2626;background:#fff1f1}
+.v32Danger{border-left:5px solid #991b1b;background:#ffe4e4}
+@media(max-width:520px){
+  .v32TeamHeadTitle{font-size:15px}
+  .v32MemberMain{gap:7px}
+  .v32NameLine,.v32LocLine{font-size:12.5px}
+  .v32Status{font-size:11px}
+}
+
+
+/* ===== V2.19 조 제목만 추가 ===== */
+.teamDividerV19{
+  --team:#64748b;
+  display:flex;
+  align-items:center;
+  gap:9px;
+  margin:22px 0 8px;
+  padding:7px 10px;
+  border-left:7px solid var(--team);
+  border-radius:8px;
+  background:#f7f9fc;
+}
+.teamDividerV19:first-child{margin-top:6px}
+.teamBadgeV19{
+  background:var(--team);
+  color:#fff;
+  min-width:48px;
+  padding:7px 9px;
+  border-radius:8px;
+  text-align:center;
+  font-size:15px;
+  font-weight:900;
+  white-space:nowrap;
+}
+.teamMetaV19{
+  color:#334155;
+  font-size:12px;
+  font-weight:900;
+  white-space:nowrap;
+}
+.teamC0{--team:#64748b}
+.teamC1{--team:#2563eb}
+.teamC2{--team:#f28705}
+.teamC3{--team:#8b46d8}
+.teamC4{--team:#0f9588}
+.teamC5{--team:#d64c72}
+.teamC6{--team:#607c18}
+.teamC7{--team:#6d42d8}
+.teamC8{--team:#08758d}
+
+
+/* ===== V2.20 조 헤더 위치 + 조 전체선택 ===== */
+.teamDividerV19{
+  display:flex!important;
+  align-items:center!important;
+  flex-wrap:nowrap!important;
+}
+.teamLocationV20{
+  flex:1;min-width:0;
+  font-size:12px;font-weight:900;color:#27384c;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  padding-left:5px;
+}
+.teamSelectV20{
+  flex:0 0 auto;
+  display:flex;align-items:center;gap:4px;
+  font-size:12px;font-weight:900;color:#173d67;
+  white-space:nowrap;cursor:pointer;
+}
+.teamSelectV20 input{width:17px;height:17px;margin:0}
+@media(max-width:560px){
+  .teamDividerV19{gap:6px!important;padding:7px 7px!important}
+  .teamBadgeV19{min-width:42px;padding:6px 7px;font-size:13px}
+  .teamMetaV19,.teamLocationV20,.teamSelectV20{font-size:10.5px}
+}
+
+
+/* ===== V2.21 첫 화면 마무리 ===== */
+
+/* 현재 현장 내부의 '활동 중 n개조 / n명 · 층별 n명' 요약줄 완전 제거 */
+#insideSummary,
+#insideActivitySummary,
+#activeSummary,
+#v28InsideSummary,
+.insideSummary,
+.insideActivitySummary,
+.activeSummary,
+.v28InsideSummary,
+#insideCountSummary,
+.insideCountSummary{
+  display:none!important;
+  height:0!important;
+  min-height:0!important;
+  margin:0!important;
+  padding:0!important;
+  border:0!important;
+  overflow:hidden!important;
+}
+
+/* 첫 화면 안내문은 한 줄 중심으로 간결하게 */
+.v21CompactGuide{
+  white-space:normal;
+  line-height:1.45;
+}
+
+
+/* ===== V2.22 현장 활동 현황 압축/철수대원 분리 ===== */
+.compactSummaryBox{display:flex;flex-direction:column;align-items:center;justify-content:center}
+.summaryLabel{font-size:16px}
+.summaryValueLine{display:flex;align-items:baseline;justify-content:center;gap:3px;margin-top:6px}
+.summaryValueLine .summaryNumber{margin:0;line-height:1}
+.summaryUnit{font-size:14px;font-weight:700}
+.staySummaryGridV22{
+  max-width:none!important;
+  display:grid!important;
+  grid-template-columns:1fr 1fr;
+  column-gap:14px;
+  row-gap:2px;
+}
+.staySummaryGridV22 .staySummaryRow{min-width:0;white-space:nowrap;font-size:12px}
+.exitedInlineBtn{
+  margin-top:8px!important;width:auto!important;padding:6px 10px!important;
+  border:1px solid #2471e8!important;border-radius:8px!important;
+  background:#fff!important;color:#1764cf!important;font-size:11px!important;font-weight:900!important;
+}
+#dashboardRefreshBtn{display:flex!important;flex-direction:column;align-items:center;justify-content:center;gap:4px}
+.refreshMainV22{font-size:18px;font-weight:900;line-height:1.2}
+.refreshSubV22{font-size:11px;font-weight:700;opacity:.9;line-height:1.2}
+@media(max-width:560px){
+  .staySummaryGridV22{column-gap:8px}
+  .staySummaryGridV22 .staySummaryRow{font-size:10.5px}
+}
+
+/* ===== V2.23 2번째창/3번째창 완전 분리 ===== */
+#exitedPageV23{display:none;max-width:700px;margin:0 auto;padding-bottom:28px}
+
+/* ===== V2 두번째 화면 확정 디자인 : 인원현황 / 조별현황 / 현장활동대원 ===== */
+#dashboardPage{max-width:760px;margin:0 auto;padding-bottom:32px}
+#dashboardPage .dashboardHeader{
+  margin:12px 0 10px;padding:18px 20px;border-radius:15px;
+  background:linear-gradient(135deg,#123c69,#0b2f57);color:#fff;
+  box-shadow:0 6px 18px rgba(15,55,95,.16)
+}
+#dashboardPage .dashboardTitle{font-size:24px;font-weight:950;letter-spacing:-.5px}
+#dashboardPage .siteName{margin-top:5px;font-size:14px;font-weight:800;opacity:.92}
+#dashboardPage .dashboardLogoPersonnel{
+  display:flex;align-items:center;gap:12px;margin:14px 0 10px
+}
+#dashboardPage .dashboardLogoPlaceholder{
+  width:78px;height:58px;flex:0 0 auto;border:1.5px dashed #9fb2c6;border-radius:12px;
+  background:#f8fafc;color:#6b7f94;display:flex;align-items:center;justify-content:center;
+  font-size:13px;font-weight:900
+}
+#dashboardPage .dashboardMajorTitle{
+  flex:1;font-size:21px;font-weight:950;color:#173d67;letter-spacing:-.4px
+}
+#dashboardPage .dashSectionCard{
+  background:#fff;border:1px solid #dfe7ef;border-radius:15px;
+  box-shadow:0 3px 12px rgba(20,50,80,.06);padding:15px;margin-bottom:15px
+}
+#dashboardPage .dashSectionHeading{
+  display:flex;align-items:center;gap:7px;margin:0 0 12px;
+  color:#173d67;font-size:18px;font-weight:950
+}
+#dashboardPage .summaryGridV2{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:10px
+}
+#dashboardPage .summaryBoxV2{
+  min-height:92px;border:1px solid #dfe6ee;border-radius:12px;background:#fbfcfe;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px 7px
+}
+#dashboardPage .summaryLabelV2{font-size:13px;font-weight:900;color:#526274;white-space:nowrap}
+#dashboardPage .summaryValueV2{display:flex;align-items:baseline;gap:3px;margin-top:7px}
+#dashboardPage .summaryValueV2 .summaryNumber{font-size:31px;line-height:1;font-weight:950;margin:0}
+#dashboardPage .summaryValueV2 .summaryUnit{font-size:14px;font-weight:900;color:#4a5968}
+#dashboardPage .exitedInlineBtn{
+  margin-top:7px!important;padding:5px 9px!important;font-size:10.5px!important
+}
+#dashboardPage .stayPanelV2{margin-top:11px;border:1px solid #dfe6ee;border-radius:12px;overflow:hidden}
+#dashboardPage .stayPanelTitleV2{
+  padding:9px 11px;background:#f5f8fb;color:#334a62;font-size:13px;font-weight:950
+}
+#dashboardPage .stayGridV2{display:grid;grid-template-columns:repeat(4,1fr)}
+#dashboardPage .stayCellV2{
+  min-width:0;padding:10px 5px;text-align:center;border-right:1px solid #e7edf3;
+  font-size:11px;font-weight:850;white-space:nowrap
+}
+#dashboardPage .stayCellV2:last-child{border-right:0}
+#dashboardPage .stayCountV2{display:block;margin-top:4px;font-size:17px;font-weight:950}
+#dashboardPage #criticalSummary{margin:10px 0 0}
+#dashboardPage #dashboardRefreshBtn{margin:10px 0 0}
+#dashboardPage #teamStatusV28 .v28TeamTitle{display:none}
+#dashboardPage .v28TeamList{gap:8px}
+#dashboardPage .v28TeamRow{
+  display:grid;grid-template-columns:minmax(145px,auto) 1fr auto;
+  min-height:45px;padding:10px 12px;border-radius:10px;background:#fbfcfe
+}
+#dashboardPage .v28TeamName{font-size:13px}
+#dashboardPage .v28TeamLoc{font-size:12px;color:#35495f}
+#dashboardPage .v28TeamTime{font-size:12px}
+#dashboardPage .dashboardRosterToolbar{
+  display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 0 10px
+}
+#dashboardPage .dashboardActiveCount{
+  font-size:13px;font-weight:900;color:#526274;background:#eef4fa;padding:5px 9px;border-radius:999px
+}
+#dashboardPage #dashboardInside{
+  border:1px solid #dfe6ee;border-radius:12px;overflow:hidden;background:#fff
+}
+#dashboardPage #dashboardInside .teamDividerV19{margin:0!important;border-radius:0!important;border-top:1px solid #e3eaf1}
+#dashboardPage #dashboardInside .teamDividerV19:first-child{border-top:0}
+#dashboardPage #dashboardInside .memberRow{margin:0;border-radius:0;border-left-width:5px;border-bottom:1px solid #e7edf3}
+#dashboardPage #dashboardInside .memberRow:last-child{border-bottom:0}
+#dashboardPage .dashboardExitBar{
+  display:grid;grid-template-columns:1fr auto;gap:9px;align-items:center;margin-top:11px
+}
+#dashboardPage .dashboardSelectedInfo{
+  min-height:42px;display:flex;align-items:center;padding:0 12px;border-radius:10px;
+  background:#f3f6f9;color:#45586b;font-size:13px;font-weight:900
+}
+#dashboardPage .dashboardExitBtn{
+  min-height:42px;border:0;border-radius:10px;padding:0 16px;background:#dc2626;color:#fff;
+  font-size:13px;font-weight:950;cursor:pointer
+}
+#dashboardPage .dashboardBottomBack{margin-top:4px}
+@media(max-width:560px){
+  #dashboardPage{padding-left:8px;padding-right:8px}
+  #dashboardPage .dashboardHeader{padding:15px 16px}
+  #dashboardPage .dashboardTitle{font-size:21px}
+  #dashboardPage .dashboardLogoPlaceholder{width:66px;height:52px}
+  #dashboardPage .dashboardMajorTitle{font-size:19px}
+  #dashboardPage .dashSectionCard{padding:12px}
+  #dashboardPage .summaryGridV2{gap:6px}
+  #dashboardPage .summaryBoxV2{min-height:82px;padding:8px 4px}
+  #dashboardPage .summaryLabelV2{font-size:11.5px}
+  #dashboardPage .summaryValueV2 .summaryNumber{font-size:27px}
+  #dashboardPage .stayGridV2{grid-template-columns:1fr 1fr}
+  #dashboardPage .stayCellV2:nth-child(2){border-right:0}
+  #dashboardPage .stayCellV2:nth-child(-n+2){border-bottom:1px solid #e7edf3}
+  #dashboardPage .v28TeamRow{grid-template-columns:1fr auto}
+  #dashboardPage .v28TeamLoc{grid-column:1 / -1;margin-top:3px}
+  #dashboardPage .dashboardExitBar{grid-template-columns:1fr}
+  #dashboardPage .dashboardExitBtn{width:100%}
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<!-- =====================================================
+메인 안전관리 화면
+===================================================== -->
+<div id="mainPage">
+
+<div class="title">
+🚒 소방현장 진입·철수 태그 관리앱
+</div>
+
+<div class="stationLogo">
+<img src="wanju-logo.png" alt="완주소방서 WANJU FIRE STATION">
+</div>
+
+<div class="card">
+
+<label>화재현장</label>
+
+<select id="site" onchange="siteChanged()">
+<option value="">⏳ 현장목록 불러오는 중...</option>
+</select>
+
+<div id="siteLoadInfo" class="cacheInfo">
+저장된 현장정보를 확인 중입니다.
+</div>
+
+<label>안전점검관</label>
+
+<input
+  type="text"
+  id="officer"
+  placeholder="안전점검관 성명"
+>
+
+<button
+  class="dashboardBtn"
+  onclick="openDashboard()"
+>
+📊 현장 현황
+</button>
+
+</div>
+
+
+<!-- 투입대원 등록 -->
+<div class="card">
+
+<h3>👨‍🚒 투입 대원 등록</h3>
+
+<button
+  id="scanButton"
+  class="scan"
+  onclick="toggleScanner()"
+>
+📷 QR 연속 스캔 시작
+</button>
+
+<div id="reader"></div>
+
+<div class="info">
+QR 스캔 또는 검색으로 투입대원을 추가하세요.
+</div>
+
+<label>이름 / 초성 / 관리번호 검색</label>
+
+<input
+  type="text"
+  id="memberSearch"
+  placeholder="예: 소범준 / ㅅㅂㅈ / FW-005"
+  oninput="filterMembers()"
+>
+
+<label>검색 결과</label>
+
+<select id="member">
+<option value="">검색 결과에서 대원을 선택하세요</option>
+</select>
+
+<button
+  class="addBtn"
+  onclick="addSelectedMember()"
+>
+➕ 투입대기 명단에 추가
+</button>
+
+</div>
+
+
+<!-- 투입대기 -->
+<div class="card">
+
+<div class="queueHeader">
+<div class="queueCount">
+👥 투입대기 <span id="queueCount">0</span>명
+</div>
+</div>
+
+<div id="queueList">
+<div class="empty">
+등록된 투입대원이 없습니다.
+</div>
+</div>
+
+<button
+  class="clearBtn"
+  onclick="clearQueue()"
+>
+🗑 투입대기 명단 전체 비우기
+</button>
+
+</div>
+
+
+<!-- PPE -->
+<div class="card">
+
+<div class="ppeHeader">
+
+<h3>🦺 투입대원 PPE 안전점검</h3>
+
+<div class="ppeAllCheck">
+<label>
+<input
+  type="checkbox"
+  id="ppeAll"
+  onchange="togglePPEAll(this)"
+>
+전체확인
+</label>
+</div>
+
+</div>
+
+<div class="info">
+투입대기 명단에 등록된
+<b>모든 대원의 장비를 각각 확인한 후</b>
+체크하세요.
+</div>
+
+<div class="ppeBox">
+<label>
+<input
+  type="checkbox"
+  id="ppe1"
+  class="ppeItem"
+  onchange="checkPPE()"
+>
+개인보호장비 정상
+</label>
+<div class="small">
+방화복 · 헬멧 · 두건 · 장갑 · 안전화
+</div>
+</div>
+
+<div class="ppeBox">
+<label>
+<input
+  type="checkbox"
+  id="ppe2"
+  class="ppeItem"
+  onchange="checkPPE()"
+>
+공기호흡기 정상
+</label>
+<div class="small">
+공기호흡기 · 면체 정상상태 확인
+</div>
+</div>
+
+<div class="ppeBox">
+<label>
+<input
+  type="checkbox"
+  id="ppe3"
+  class="ppeItem"
+  onchange="checkPPE()"
+>
+안전·통신장비 정상
+</label>
+<div class="small">
+PASS · 무전기 정상상태 확인
+</div>
+</div>
+
+<div id="ppeStatus" class="status">
+PPE 점검 대기
+</div>
+<div class="entryModeBox">
+  <div class="entryModeTitle">🚒 투입 방식 선택</div>
+  <div class="entryModeGrid">
+    <button type="button" id="quickEntryButton" class="entryModeBtn fast" onclick="quickEntryMembers()" disabled>
+      ⚡ 즉시 투입
+    </button>
+    <button type="button" id="teamModeButton" class="entryModeBtn team" onclick="openTeamSetup()" disabled>
+      👥 조 편성 후 투입
+    </button>
+  </div>
+  <div class="entryModeHelp">
+    PPE 완료 후 바로 투입하거나, 필요 시 조·위치를 지정하세요.
+  </div>
+</div>
+</div>
+
+<!-- V2 조 편성 -->
+<div class="card teamSetup" id="teamSetupCard">
+<h3>👥 조 편성 · 투입위치</h3>
+<div class="teamHint" id="teamHint">같이 진입할 대원을 선택하고 투입위치를 지정하세요.</div>
+<div class="teamBody" id="teamBody" style="display:block">
+<div class="info">안전점검이 끝난 대원 중 <b>같이 진입할 대원만 선택</b>하세요. 2명·4명 등 현장 상황에 맞게 편성할 수 있습니다.</div>
+<button type="button" class="locationEditBtn" onclick="closeTeamSetup()" style="width:100%;margin-bottom:10px">▲ 조 편성 화면 닫기</button>
+
+<label>조 명칭</label>
+<select id="teamName" disabled><option value="">대원 선택 후 자동 결정</option></select><div id="nextTeamHint" class="hint" style="margin-top:5px">같은 대원 구성은 기존 조 · 새로운 구성은 새 조로 자동 편성</div>
+
+<label>조 대원 선택 <span id="teamSelectedCount">0명</span></label>
+<div id="teamMemberList" class="teamMemberList"><div class="empty">투입대기 대원을 먼저 등록하세요.</div></div>
+
+<label>진입 방면</label>
+<div class="v2ChoiceGrid" id="entryDirectionChoices">
+<button type="button" class="v2Choice" data-value="A방면" onclick="chooseV2(this,'entryDirection')">A방면</button>
+<button type="button" class="v2Choice" data-value="B방면" onclick="chooseV2(this,'entryDirection')">B방면</button>
+<button type="button" class="v2Choice" data-value="C방면" onclick="chooseV2(this,'entryDirection')">C방면</button>
+<button type="button" class="v2Choice" data-value="D방면" onclick="chooseV2(this,'entryDirection')">D방면</button>
+</div>
+
+<label>활동층</label>
+<div class="v2ChoiceGrid" id="activityFloorChoices">
+<button type="button" class="v2Choice" data-value="화점층" onclick="chooseV2(this,'activityFloor')">🔥 화점층</button>
+<button type="button" class="v2Choice" data-value="직상층" onclick="chooseV2(this,'activityFloor')">⬆ 직상층</button>
+<button type="button" class="v2Choice" data-value="직하층" onclick="chooseV2(this,'activityFloor')">⬇ 직하층</button>
+<button type="button" class="v2Choice" data-value="기타" onclick="toggleExtraFloors(this)">기타</button>
+</div>
+<div id="extraFloorBox" class="extraFloorBox">
+  <div class="v2Sub"><b>기타 활동층 선택</b></div>
+  <div class="v2ChoiceGrid">
+    <button type="button" class="v2Choice" data-value="상층부" onclick="chooseExtraFloor(this)">⬆⬆ 상층부</button>
+    <button type="button" class="v2Choice" data-value="하층부" onclick="chooseExtraFloor(this)">⬇⬇ 하층부</button>
+    <button type="button" class="v2Choice" data-value="지하층" onclick="chooseExtraFloor(this)">지하층</button>
+    <button type="button" class="v2Choice" data-value="옥상" onclick="chooseExtraFloor(this)">옥상</button>
+  </div>
+</div>
+
+<label>세부 위치 <span class="v2Sub">(선택)</span></label>
+<input type="text" id="detailLocation" placeholder="예: 기계실 / 1203호 / 생산라인" oninput="updateTeamPreview()">
+
+<div id="teamPreview" class="teamPreview">조 편성 정보를 선택하세요.</div>
+<div id="teamError" class="teamError"></div>
+
+<button
+  id="batchEntryButton"
+  class="entry"
+  onclick="batchEntryMembers()"
+>
+🔴 조 투입 승인
+</button>
+
+<div id="entryProgress" class="progressText"></div>
+
+</div><!-- teamBody -->
+</div>
+
+
+<!-- 현재 내부 -->
+<div class="card">
+
+<div id="insideCount" class="insideTitle">
+🔴 현재 현장 내부 0명
+</div>
+
+<button
+  id="insideRefreshBtn"
+  class="refresh"
+  onclick="loadInsideMembers()"
+>
+🔄 현황 새로고침
+</button>
+
+<div id="v23InsideSummary" class="v23Summary">활동 중 조·위치 요약은 현장현황을 불러오면 표시됩니다.</div>
+<div id="insideList"></div>
+
+<button
+  class="selectAll"
+  onclick="toggleSelectAll()"
+>
+☑ 전체 선택 / 해제
+</button>
+
+<div id="selectedCount" class="selectedCount">
+선택 대원 0명
+</div>
+
+<button
+  class="batchExit"
+  onclick="batchExitMembers()"
+>
+🟢 선택 대원 일괄 철수처리
+</button>
+
+</div>
+
+</div>
+
+
+<!-- =====================================================
+현장 활동 현황
+===================================================== -->
+<div id="dashboardPage">
+
+  <div class="dashboardHeader">
+    <div class="dashboardTitle">🔥 현장 활동 현황</div>
+    <div id="dashboardSiteName" class="siteName">-</div>
+  </div>
+
+  <!-- 1. 인원현황 -->
+  <div class="dashboardLogoPersonnel">
+    <div class="dashboardLogoPlaceholder">로고</div>
+    <div class="dashboardMajorTitle">👥 인원현황</div>
+  </div>
+
+  <div class="dashSectionCard">
+    <div class="summaryGridV2">
+      <div class="summaryBoxV2">
+        <div class="summaryLabelV2">현재 내부</div>
+        <div class="summaryValueV2">
+          <span id="dashInside" class="summaryNumber red">0</span><span class="summaryUnit">명</span>
+        </div>
+      </div>
+
+      <div class="summaryBoxV2">
+        <div class="summaryLabelV2">현장 참여대원</div>
+        <div class="summaryValueV2">
+          <span id="dashUnique" class="summaryNumber blue">0</span><span class="summaryUnit">명</span>
+        </div>
+      </div>
+
+      <div class="summaryBoxV2">
+        <div class="summaryLabelV2">철수 완료</div>
+        <div class="summaryValueV2">
+          <span id="dashExited" class="summaryNumber green">0</span><span class="summaryUnit">명</span>
+        </div>
+        <button type="button" class="exitedInlineBtn" onclick="openExitedPage()">철수대원 확인 ›</button>
+      </div>
+    </div>
+
+    <div class="stayPanelV2">
+      <div class="stayPanelTitleV2">현재 내부 체류시간</div>
+      <div class="stayGridV2">
+        <div class="stayCellV2">🟢 0~20분<span id="stayGreenCount" class="stayCountV2 green">0명</span></div>
+        <div class="stayCellV2">🟠 21~25분<span id="stayOrangeCount" class="stayCountV2 orange">0명</span></div>
+        <div class="stayCellV2">🔴 26~30분<span id="stayRedCount" class="stayCountV2 red">0명</span></div>
+        <div class="stayCellV2">🔴 31분 이상<span id="stayCriticalCount" class="stayCountV2 red">0명</span></div>
+      </div>
+    </div>
+
+    <div id="criticalSummary" class="criticalSummary">✅ 31분 이상 즉시 확인 대상 0명</div>
+
+    <button id="dashboardRefreshBtn" class="refresh" onclick="loadDashboard(false)">
+      <span class="refreshMainV22">🔄 현황 새로고침</span>
+      <span id="dashboardAutoRefreshInfo" class="refreshSubV22">60초 자동갱신 · 마지막 갱신 --:--:--</span>
+    </button>
+  </div>
+
+  <!-- 2. 조별현황 -->
+  <div class="dashSectionCard">
+    <div class="dashSectionHeading">👥 조별현황</div>
+    <div id="teamStatusV28"></div>
+  </div>
+
+  <!-- 3. 현장활동대원 -->
+  <div class="dashSectionCard">
+    <div class="dashboardRosterToolbar">
+      <div class="dashSectionHeading" style="margin:0">👨‍🚒 현장활동대원</div>
+      <div class="dashboardActiveCount">현재 <span id="v28ActiveCount">0명</span></div>
+    </div>
+
+    <div id="dashboardInside"></div>
+
+    <div class="dashboardExitBar">
+      <div id="dashboardSelectedCount" class="dashboardSelectedInfo">선택 대원 0명</div>
+      <button type="button" class="dashboardExitBtn" onclick="dashboardBatchExit()">선택대원 일괄철수</button>
+    </div>
+  </div>
+
+  <button class="back dashboardBottomBack" onclick="closeDashboard()">⬅ 안전관리 화면으로 돌아가기</button>
+</div>
+
+<!-- 3번째 창 : 철수 대원 확인 -->
+<div id="exitedPageV23">
+  <div class="dashboardHeader">
+    <div class="dashboardTitle">👨‍🚒 철수 대원</div>
+    <div id="exitedPageSiteName" class="siteName">-</div>
+  </div>
+  <div class="stationLogo">
+    <img src="wanju-logo.png" alt="완주소방서 WANJU FIRE STATION">
+  </div>
+  <div class="card">
+    <div class="sectionTitle">철수 완료 대원</div>
+    <div id="dashboardExited"></div>
+  </div>
+  <button type="button" class="back" onclick="closeExitedPage()">⬅ 현장 활동 현황으로 돌아가기</button>
+</div>
+
+<script>
+
+/* =====================================================
+Apps Script 주소
+===================================================== */
+
+const API =
+"https://script.google.com/macros/s/AKfycbzdAvlTM8i3GoH-zh7Gep_ekif0ohY75ykPanCSutoNm7Yo2EMd6i9qgZpH1a39zq0B6A/exec";
+
+
+/* =====================================================
+로컬 저장
+===================================================== */
+
+const SITE_CACHE_KEY =
+"fire_app_v2_only_sites_20260827";
+
+const MEMBER_CACHE_KEY =
+"fire_app_v2_only_members_20260827";
+
+const SITE_CACHE_TIME_KEY =
+"fire_app_v2_only_sites_time_20260827";
+
+const MEMBER_CACHE_TIME_KEY =
+"fire_app_v2_only_members_time_20260827";
+
+/* =====================================================
+V2 전용 서버 호환 계층
+- V1 캐시/서버와 완전 분리
+- 기존 화면 디자인과 조작 방식은 유지
+- 새 V2 Apps Script의 ok 응답을 기존 화면 형식으로 변환
+- PPE / 진입 / 철수 / 조·방면·층·세부장소를 V2 시트에 기록
+===================================================== */
+
+const V2_NATIVE_FETCH = window.fetch.bind(window);
+const V2_SITE_ID_BY_NAME = new Map();
+
+function v2JsonResponse(obj){
+  return new Response(
+    JSON.stringify(obj),
+    {status:200, headers:{"Content-Type":"application/json"}}
+  );
+}
+
+function v2SiteId(site){
+  const s=String(site||"").trim();
+  return V2_SITE_ID_BY_NAME.get(s)||s;
+}
+
+function v2MinutesBetween(start,end){
+  if(!start)return 0;
+  const a=new Date(String(start).replace(" ","T"));
+  const b=end?new Date(String(end).replace(" ","T")):new Date();
+  if(isNaN(a.getTime())||isNaN(b.getTime()))return 0;
+  return Math.max(0,Math.floor((b-a)/60000));
+}
+
+function v2SyncServerMeta(m){
+  try{
+    if(typeof v23SetMemberMeta!=="function" || !m || !m.memberId)return;
+    v23SetMemberMeta(m.memberId,{
+      teamName:m.team||"미지정",
+      teamActivityNo:Number(m.activityNo)||1,
+      entryDirection:m.direction||"미지정",
+      activityFloor:m.floor||"미지정",
+      detailLocation:m.detail||"세부장소 미지정"
+    });
+  }catch(e){
+    console.log("V2 서버 메타 동기화 참고",e);
+  }
+}
+
+function v2OldInsideMember(m){
+  v2SyncServerMeta(m);
+  return {
+    memberId:m.memberId||"",
+    memberName:m.name||"",
+    entryTime:m.entryTime||"",
+    currentMinutes:v2MinutesBetween(m.entryTime,""),
+    entryCount:Number(m.activityNo)||1,
+    team:m.team||"미지정",
+    activityNo:Number(m.activityNo)||1,
+    direction:m.direction||"미지정",
+    floor:m.floor||"미지정",
+    detail:m.detail||"세부장소 미지정"
+  };
+}
+
+function v2AggregateExited(rows){
+  const map=new Map();
+  (rows||[]).forEach(r=>{
+    if(!r || r.status!=="철수완료")return;
+    const id=String(r.memberId||"");
+    if(!map.has(id)){
+      map.set(id,{
+        memberId:id,
+        memberName:r.name||"",
+        entryCount:0,
+        totalMinutes:0,
+        records:[]
+      });
+    }
+    const x=map.get(id);
+    const mins=v2MinutesBetween(r.entryTime,r.exitTime);
+    x.entryCount++;
+    x.totalMinutes+=mins;
+    x.records.push({
+      sequence:Number(r.activityNo)||x.entryCount,
+      entryTime:r.entryTime||"",
+      exitTime:r.exitTime||"",
+      minutes:mins,
+      status:"철수완료"
+    });
+  });
+  return [...map.values()];
+}
+
+async function v2CallPost(params){
+  const res=await V2_NATIVE_FETCH(API,{method:"POST",body:params});
+  return await res.json();
+}
+
+window.fetch = async function(input, init){
+  const url=typeof input==="string" ? input : (input&&input.url)||"";
+  if(!url.startsWith(API)){
+    return V2_NATIVE_FETCH(input,init);
+  }
+
+  const method=String((init&&init.method)||"GET").toUpperCase();
+
+  if(method==="GET"){
+    const u=new URL(url);
+    const action=u.searchParams.get("action")||"";
+
+    if(action==="sites"){
+      const res=await V2_NATIVE_FETCH(url,init);
+      const d=await res.json();
+      const sites=(d.sites||[]).map(s=>{
+        if(s.siteName&&s.siteId)V2_SITE_ID_BY_NAME.set(String(s.siteName),String(s.siteId));
+        return s;
+      });
+      return v2JsonResponse({success:!!d.ok,sites:sites,message:d.error||""});
+    }
+
+    if(action==="members"){
+      const res=await V2_NATIVE_FETCH(url,init);
+      const d=await res.json();
+      const members=(d.members||[]).map(m=>({
+        id:m.memberId||"",
+        name:m.name||"",
+        rank:m.rank||"",
+        dept:m.department||""
+      }));
+      return v2JsonResponse({success:!!d.ok,members:members,message:d.error||""});
+    }
+
+    if(action==="inside"){
+      const siteId=v2SiteId(u.searchParams.get("site"));
+      const res=await V2_NATIVE_FETCH(
+        API+"?action=current&siteId="+encodeURIComponent(siteId)+"&t="+Date.now()
+      );
+      const d=await res.json();
+      const active=(d.members||[])
+        .filter(m=>m.status==="활동중")
+        .map(v2OldInsideMember);
+      return v2JsonResponse({success:!!d.ok,members:active,message:d.error||""});
+    }
+
+    if(action==="dashboard"){
+      const siteId=v2SiteId(u.searchParams.get("site"));
+      const res=await V2_NATIVE_FETCH(
+        API+"?action=dashboard&siteId="+encodeURIComponent(siteId)+"&t="+Date.now()
+      );
+      const d=await res.json();
+
+      const inside=(d.insideMembers||[]).map(v2OldInsideMember);
+      const exited=v2AggregateExited(d.exitedMembers||[]);
+
+      return v2JsonResponse({
+        success:!!d.ok,
+        dashboard:{
+          insideCount:Number(d.insideCount)||0,
+          uniqueMemberCount:Number(d.participantCount)||0,
+          exitedCount:exited.length,
+          insideMembers:inside,
+          exitedMembers:exited
+        },
+        message:d.error||""
+      });
+    }
+
+    return V2_NATIVE_FETCH(input,init);
+  }
+
+  if(method==="POST" && init && init.body instanceof URLSearchParams){
+    const old=init.body;
+    const action=old.get("action")||"";
+
+    if(action==="batchEntry"){
+      const p=new URLSearchParams();
+      p.set("action","batchEntry");
+      p.set("siteId",v2SiteId(old.get("site")));
+      p.set("members",old.get("members")||"[]");
+      p.set("teamName",old.get("teamName")||"");
+      p.set("activityNo",old.get("activityNo")||"");
+      p.set("entryDirection",old.get("entryDirection")||"");
+      p.set("activityFloor",old.get("activityFloor")||"");
+      p.set("detailLocation",old.get("detailLocation")||"");
+
+      const d=await v2CallPost(p);
+      return v2JsonResponse({
+        success:!!(d.ok || d.success),
+        successCount:Number(d.successCount)||0,
+        succeeded:d.succeeded||[],
+        failed:d.failed||[],
+        message:d.message||""
+      });
+    }
+
+    if(action==="batchExit"){
+      const p=new URLSearchParams();
+      p.set("action","batchExit");
+      p.set("siteId",v2SiteId(old.get("site")));
+      p.set("members",old.get("members")||"[]");
+
+      const d=await v2CallPost(p);
+      return v2JsonResponse({
+        success:!!(d.ok || d.success),
+        successCount:Number(d.successCount)||0,
+        succeeded:d.succeeded||[],
+        failed:d.failed||[],
+        message:d.message||""
+      });
+    }
+  }
+
+  return V2_NATIVE_FETCH(input,init);
 };
 
 
-/* =========================================================
-   기본 웹앱 응답
-========================================================= */
 
-function doGet(e) {
-  try {
-    const action = clean_(e.parameter.action);
+/* =====================================================
+변수
+===================================================== */
 
-    switch (action) {
+let members = [];
+let entryQueue = [];
 
-      case "ping":
-        return json_({
-          ok: true,
-          version: "V2",
-          message: "V2 서버 정상"
-        });
+// V2 조 편성 상태
+let selectedTeamMemberIds = new Set();
+let entryDirection = "";
+let activityFloor = "";
 
-      case "members":
-        return getMembers_();
+let scanner = null;
+let scanning = false;
 
-      case "sites":
-        return getSites_(false);
+let lastScannedId = "";
+let lastScannedAt = 0;
 
-      case "closedSites":
-        return getSites_(true);
+let selectAllState = false;
 
-      case "current":
-        return getCurrent_(clean_(e.parameter.siteId));
+let insideLoading = false;
+let dashboardLoading = false;
 
-      case "history":
-        return getHistory_(
-          clean_(e.parameter.siteId),
-          clean_(e.parameter.memberId)
-        );
+let entrySubmitting = false;
+let exitSubmitting = false;
 
-      case "ppe":
-        return getPpe_(
-          clean_(e.parameter.siteId),
-          clean_(e.parameter.memberId)
-        );
+let scanAudioContext = null;
 
-      case "changes":
-        return getChanges_(clean_(e.parameter.siteId));
 
-      case "dashboard":
-        return getDashboard_(clean_(e.parameter.siteId));
+/* =====================================================
+현장 현황 60초 자동갱신
+===================================================== */
 
-      default:
-        return json_({
-          ok: true,
-          version: "V2",
-          message: "소방현장 진입·철수 안전관리 V2 서버"
-        });
-    }
+let dashboardAutoRefreshTimer = null;
 
-  } catch (err) {
-    return error_(err);
-  }
-}
+const DASHBOARD_AUTO_REFRESH_MS =
+60000;
 
 
-function doPost(e) {
-  try {
-    const p = getPostData_(e);
-    const action = clean_(p.action);
+const CHOSUNG = [
+"ㄱ","ㄲ","ㄴ","ㄷ","ㄸ",
+"ㄹ","ㅁ","ㅂ","ㅃ","ㅅ",
+"ㅆ","ㅇ","ㅈ","ㅉ","ㅊ",
+"ㅋ","ㅌ","ㅍ","ㅎ"
+];
 
-    switch (action) {
 
-      case "createSite":
-        return createSite_(p);
+/* =====================================================
+앱 시작
+===================================================== */
 
-      case "closeSite":
-        return closeSite_(p);
+window.onload =
+function(){
 
-      case "savePpe":
-        return savePpe_(p);
+  loadLocalCache();
 
-      case "entry":
-        return entry_(p);
+  loadSites();
 
-      case "batchEntry":
-        return batchEntry_(p);
+  loadMembers();
 
-      case "exit":
-        return exit_(p);
+};
 
-      case "batchExit":
-        return batchExit_(p);
 
-      case "updateLocation":
-        return updateLocation_(p);
+/* =====================================================
+캐시 먼저 읽기
+===================================================== */
 
-      case "updateTeam":
-        return updateTeam_(p);
+function loadLocalCache(){
 
-      default:
-        throw new Error("알 수 없는 action: " + action);
-    }
+  try{
 
-  } catch (err) {
-    return error_(err);
-  }
-}
-
-
-/* =========================================================
-   대원명부
-   A 관리번호
-   B 성명
-   C 계급
-   D 소속
-   E 사용여부
-========================================================= */
-
-function getMembers_() {
-  const sh = sheet_(SHEETS.MEMBERS);
-  const values = sh.getDataRange().getValues();
-
-  if (values.length <= 1) {
-    return json_({
-      ok: true,
-      members: []
-    });
-  }
-
-  const members = [];
-
-  for (let i = 1; i < values.length; i++) {
-    const r = values[i];
-
-    const memberId = clean_(r[0]);
-    const name = clean_(r[1]);
-    const rank = clean_(r[2]);
-    const department = clean_(r[3]);
-    const use = clean_(r[4]);
-
-    if (!memberId || !name) continue;
-
-    if (
-      use &&
-      !["사용", "사용중", "Y", "YES", "TRUE", "1"].includes(
-        use.toUpperCase()
-      )
-    ) {
-      continue;
-    }
-
-    members.push({
-      memberId: memberId,
-      name: name,
-      rank: rank,
-      department: department,
-      use: use || "사용"
-    });
-  }
-
-  return json_({
-    ok: true,
-    members: members
-  });
-}
-
-
-/* =========================================================
-   현장 생성
-========================================================= */
-
-function createSite_(p) {
-
-  const siteName = clean_(p.siteName);
-  const safetyOfficer = clean_(p.safetyOfficer);
-
-  if (!siteName) {
-    throw new Error("현장명이 없습니다.");
-  }
-
-  const lock = LockService.getScriptLock();
-  lock.waitLock(10000);
-
-  try {
-
-    const siteId = makeSiteId_();
-    const now = new Date();
-
-    sheet_(SHEETS.SITES).appendRow([
-      siteId,
-      siteName,
-      now,
-      safetyOfficer,
-      "진행중",
-      ""
-    ]);
-
-    return json_({
-      ok: true,
-      siteId: siteId,
-      siteName: siteName,
-      status: "진행중",
-      createdAt: formatDate_(now)
-    });
-
-  } finally {
-    lock.releaseLock();
-  }
-}
-
-
-/* =========================================================
-   현장 종료
-========================================================= */
-
-function closeSite_(p) {
-
-  const siteId = clean_(p.siteId);
-
-  if (!siteId) {
-    throw new Error("현장ID가 없습니다.");
-  }
-
-  const sh = sheet_(SHEETS.SITES);
-  const values = sh.getDataRange().getValues();
-
-  let found = false;
-
-  for (let i = 1; i < values.length; i++) {
-
-    if (clean_(values[i][0]) === siteId) {
-
-      sh.getRange(i + 1, 5).setValue("종료");
-      sh.getRange(i + 1, 6).setValue(new Date());
-
-      found = true;
-      break;
-    }
-  }
-
-  if (!found) {
-    throw new Error("현장을 찾을 수 없습니다.");
-  }
-
-  return json_({
-    ok: true,
-    siteId: siteId,
-    status: "종료"
-  });
-}
-
-
-/* =========================================================
-   현장목록 / 종료현장 기록
-========================================================= */
-
-function getSites_(closedOnly) {
-
-  const sh = sheet_(SHEETS.SITES);
-  const values = sh.getDataRange().getValues();
-
-  const sites = [];
-
-  for (let i = 1; i < values.length; i++) {
-
-    const r = values[i];
-
-    const siteId = clean_(r[0]);
-    if (!siteId) continue;
-
-    const status = clean_(r[4]) || "진행중";
-
-    if (closedOnly) {
-      if (status !== "종료") continue;
-    } else {
-      if (status === "종료") continue;
-    }
-
-    sites.push({
-      siteId: siteId,
-      siteName: clean_(r[1]),
-      createdAt: formatDate_(r[2]),
-      safetyOfficer: clean_(r[3]),
-      status: status,
-      closedAt: formatDate_(r[5])
-    });
-  }
-
-  sites.sort(function(a, b) {
-    return String(b.siteId).localeCompare(String(a.siteId));
-  });
-
-  return json_({
-    ok: true,
-    sites: sites
-  });
-}
-
-
-/* =========================================================
-   PPE 점검 저장
-
-   PPE점검 시트
-   A 점검ID
-   B 현장ID
-   C 관리번호
-   D 성명
-   E 개인보호장비
-   F 공기호흡기
-   G 안전통신장비
-   H 전체확인
-   I 점검일시
-========================================================= */
-
-function savePpe_(p) {
-
-  const siteId = clean_(p.siteId);
-  const memberId = clean_(p.memberId);
-
-  if (!siteId || !memberId) {
-    throw new Error("현장ID 또는 관리번호가 없습니다.");
-  }
-
-  assertSiteActive_(siteId);
-
-  const member = findMember_(memberId);
-
-  if (!member) {
-    throw new Error("대원명부에서 대원을 찾을 수 없습니다.");
-  }
-
-  const personal = bool_(p.personal);
-  const scba = bool_(p.scba);
-  const communication = bool_(p.communication);
-
-  const allChecked =
-    personal &&
-    scba &&
-    communication;
-
-  const checkId =
-    "PPE-" +
-    Utilities.getUuid();
-
-  const now = new Date();
-
-  sheet_(SHEETS.PPE).appendRow([
-    checkId,
-    siteId,
-    memberId,
-    member.name,
-    personal ? "완료" : "미완료",
-    scba ? "완료" : "미완료",
-    communication ? "완료" : "미완료",
-    allChecked ? "완료" : "미완료",
-    now
-  ]);
-
-  return json_({
-    ok: true,
-    checkId: checkId,
-    memberId: memberId,
-    name: member.name,
-    personal: personal,
-    scba: scba,
-    communication: communication,
-    allChecked: allChecked,
-    checkedAt: formatDate_(now)
-  });
-}
-
-
-/* =========================================================
-   진입 처리
-
-   활동이력
-   A 활동ID
-   B 현장ID
-   C 관리번호
-   D 성명
-   E 계급
-   F 소속
-   G 조
-   H 활동차수
-   I 진입방면
-   J 활동층
-   K 세부장소
-   L 진입시각
-   M 철수시각
-   N 활동상태
-   O 철수구분
-   P 기록일시
-========================================================= */
-
-function entry_(p) {
-
-  const siteId = clean_(p.siteId);
-  const memberId = clean_(p.memberId);
-
-  if (!siteId || !memberId) {
-    throw new Error("현장ID 또는 관리번호가 없습니다.");
-  }
-
-  assertSiteActive_(siteId);
-
-  const member = findMember_(memberId);
-
-  if (!member) {
-    throw new Error("대원명부에서 대원을 찾을 수 없습니다.");
-  }
-
-  const lock = LockService.getScriptLock();
-  lock.waitLock(10000);
-
-  try {
-
-    if (isInside_(siteId, memberId)) {
-      throw new Error(member.name + " 대원은 이미 현장 내부 활동 중입니다.");
-    }
-
-    const team =
-      clean_(p.team) ||
-      clean_(p.teamName) ||
-      "미지정";
-
-    let activityNo = Number(
-      p.activityNo ||
-      p.teamActivityNo ||
-      0
-    );
-
-    if (!activityNo) {
-      activityNo =
-        nextActivityNo_(
-          siteId,
-          memberId
-        );
-    }
-
-    const direction =
-      clean_(p.direction) ||
-      clean_(p.entryDirection) ||
-      "미지정";
-
-    const floor =
-      clean_(p.floor) ||
-      clean_(p.activityFloor) ||
-      "미지정";
-
-    const detail =
-      clean_(p.detail) ||
-      clean_(p.detailLocation) ||
-      "세부장소 미지정";
-
-    const activityId =
-      "ACT-" +
-      Utilities.getUuid();
-
-    const now = new Date();
-
-    /* 활동이력 추가 */
-
-    sheet_(SHEETS.HISTORY).appendRow([
-      activityId,
-      siteId,
-      memberId,
-      member.name,
-      member.rank,
-      member.department,
-      team,
-      activityNo,
-      direction,
-      floor,
-      detail,
-      now,
-      "",
-      "활동중",
-      "",
-      now
-    ]);
-
-
-    /* 현재상태 저장 */
-
-    upsertCurrent_({
-      siteId: siteId,
-      memberId: memberId,
-      name: member.name,
-      rank: member.rank,
-      department: member.department,
-      team: team,
-      activityNo: activityNo,
-      direction: direction,
-      floor: floor,
-      detail: detail,
-      entryTime: now,
-      status: "활동중"
-    });
-
-
-    return json_({
-      ok: true,
-      activityId: activityId,
-      siteId: siteId,
-      memberId: memberId,
-      name: member.name,
-      rank: member.rank,
-      department: member.department,
-      team: team,
-      activityNo: activityNo,
-      direction: direction,
-      floor: floor,
-      detail: detail,
-      entryTime: formatDate_(now),
-      status: "활동중"
-    });
-
-  } finally {
-    lock.releaseLock();
-  }
-}
-
-
-/* =========================================================
-   철수 처리
-========================================================= */
-
-function exit_(p) {
-
-  const siteId = clean_(p.siteId);
-  const memberId = clean_(p.memberId);
-
-  const exitType =
-    clean_(p.exitType) ||
-    clean_(p.type) ||
-    "일반철수";
-
-  if (!siteId || !memberId) {
-    throw new Error("현장ID 또는 관리번호가 없습니다.");
-  }
-
-  const lock = LockService.getScriptLock();
-  lock.waitLock(10000);
-
-  try {
-
-    const history =
-      sheet_(SHEETS.HISTORY);
-
-    const values =
-      history
-        .getDataRange()
-        .getValues();
-
-    let rowIndex = -1;
-
-    for (
-      let i = values.length - 1;
-      i >= 1;
-      i--
-    ) {
-
-      const r = values[i];
-
-      if (
-        clean_(r[1]) === siteId &&
-        clean_(r[2]) === memberId &&
-        clean_(r[13]) === "활동중"
-      ) {
-        rowIndex = i + 1;
-        break;
-      }
-    }
-
-    if (rowIndex < 0) {
-      throw new Error(
-        "현재 활동 중인 기록을 찾을 수 없습니다."
+    const siteCache =
+      localStorage.getItem(
+        SITE_CACHE_KEY
       );
-    }
 
-    const now = new Date();
-
-    history
-      .getRange(rowIndex, 13)
-      .setValue(now);
-
-    history
-      .getRange(rowIndex, 14)
-      .setValue("철수완료");
-
-    history
-      .getRange(rowIndex, 15)
-      .setValue(exitType);
-
-
-    /* 현재상태 변경 */
-
-    const current =
-      sheet_(SHEETS.CURRENT);
-
-    const currentValues =
-      current
-        .getDataRange()
-        .getValues();
-
-    for (
-      let i = 1;
-      i < currentValues.length;
-      i++
-    ) {
-
-      if (
-        clean_(currentValues[i][0]) === siteId &&
-        clean_(currentValues[i][1]) === memberId
-      ) {
-
-        current
-          .getRange(i + 1, 12)
-          .setValue("철수완료");
-
-        current
-          .getRange(i + 1, 13)
-          .setValue(now);
-
-        break;
+    if(siteCache){
+      const cachedSites = JSON.parse(siteCache);
+      if(Array.isArray(cachedSites) && cachedSites.length){
+        // V2 전용 캐시만 즉시 표시하고, 뒤에서 최신 V2 서버값으로 갱신
+        renderSites(cachedSites, true);
       }
     }
 
+  }catch(error){
 
-    return json_({
-      ok: true,
-      siteId: siteId,
-      memberId: memberId,
-      status: "철수완료",
-      exitType: exitType,
-      exitTime: formatDate_(now)
-    });
+    console.log(
+      "현장 캐시 읽기 실패",
+      error
+    );
 
-  } finally {
-    lock.releaseLock();
-  }
-}
-
-
-
-/* =========================================================
-   V2 고속 일괄 진입 / 철수
-   - 브라우저 ↔ Apps Script 왕복을 1회로 축소
-   - 시트 읽기/쓰기를 묶어서 처리
-========================================================= */
-
-function parseMembers_(value) {
-  if (Array.isArray(value)) return value;
-  const s = clean_(value);
-  if (!s) return [];
-  try {
-    const arr = JSON.parse(s);
-    return Array.isArray(arr) ? arr : [];
-  } catch (e) {
-    throw new Error("대원 목록 형식이 올바르지 않습니다.");
-  }
-}
-
-function memberMap_() {
-  const cache = CacheService.getScriptCache();
-  const cacheKey = "V2_MEMBER_MAP_FAST";
-  const cached = cache.get(cacheKey);
-
-  if (cached) {
-    try {
-      return JSON.parse(cached);
-    } catch (e) {}
   }
 
-  const values = sheet_(SHEETS.MEMBERS).getDataRange().getValues();
-  const map = {};
 
-  for (let i = 1; i < values.length; i++) {
-    const id = clean_(values[i][0]);
-    const name = clean_(values[i][1]);
-    const use = clean_(values[i][4]);
+  try{
 
-    if (!id || !name) continue;
-    if (
-      use &&
-      !["사용","사용중","Y","YES","TRUE","1"].includes(use.toUpperCase())
-    ) continue;
+    const memberCache =
+      localStorage.getItem(
+        MEMBER_CACHE_KEY
+      );
 
-    map[id] = {
-      memberId:id,
-      name:name,
-      rank:clean_(values[i][2]),
-      department:clean_(values[i][3])
-    };
-  }
+    if(memberCache){
 
-  try {
-    cache.put(cacheKey, JSON.stringify(map), 300);
-  } catch (e) {}
-
-  return map;
-}
-
-function batchEntry_(p) {
-  const siteId = clean_(p.siteId || p.site);
-  const requested = parseMembers_(p.members);
-  if (!siteId) throw new Error("현장ID가 없습니다.");
-  if (!requested.length) throw new Error("투입 대원이 없습니다.");
-
-  assertSiteActive_(siteId);
-
-  const team = clean_(p.team || p.teamName) || "미지정";
-  const requestedActivityNo = Number(p.activityNo || p.teamActivityNo || 0);
-  const direction = clean_(p.direction || p.entryDirection) || "미지정";
-  const floor = clean_(p.floor || p.activityFloor) || "미지정";
-  const detail = clean_(p.detail || p.detailLocation) || "세부장소 미지정";
-
-  const lock = LockService.getScriptLock();
-  lock.waitLock(5000);
-
-  try {
-    const members = memberMap_();
-    const currentSh = sheet_(SHEETS.CURRENT);
-    const historySh = sheet_(SHEETS.HISTORY);
-    const ppeSh = sheet_(SHEETS.PPE);
-
-    const currentValues = currentSh.getDataRange().getValues();
-
-    const currentRowById = {};
-    const inside = {};
-    for (let i=1;i<currentValues.length;i++) {
-      if (clean_(currentValues[i][0]) !== siteId) continue;
-      const id = clean_(currentValues[i][1]);
-      currentRowById[id] = i + 1;
-      if (clean_(currentValues[i][11]) === "활동중") inside[id] = true;
-    }
-
-    // 앱에서 활동차수를 이미 보내는 정상 투입은 활동이력 전체를 다시 읽지 않는다.
-    // 활동차수가 없는 예외 상황에서만 기존 기록을 읽어 다음 차수를 계산한다.
-    const maxActivity = {};
-    if (!requestedActivityNo) {
-      const historyValues = historySh.getDataRange().getValues();
-
-      for (let i=1;i<historyValues.length;i++) {
-        if (clean_(historyValues[i][1]) !== siteId) continue;
-        const id = clean_(historyValues[i][2]);
-        maxActivity[id] = Math.max(
-          maxActivity[id] || 0,
-          Number(historyValues[i][7]) || 0
+      const cachedMembers =
+        JSON.parse(
+          memberCache
         );
+
+      if(
+        Array.isArray(cachedMembers) &&
+        cachedMembers.length
+      ){
+
+        members =
+          cachedMembers;
+
       }
+
     }
 
-    const now = new Date();
-    const ppeRows = [];
-    const historyRows = [];
-    const currentAppendRows = [];
-    const currentUpdates = [];
-    const succeeded = [];
-    const failed = [];
+  }catch(error){
 
-    requested.forEach(function(req) {
-      const id = clean_(req.id || req.memberId);
-      const m = members[id];
-
-      if (!m) {
-        failed.push({id:id, name:clean_(req.name), message:"대원명부에서 대원을 찾을 수 없습니다."});
-        return;
-      }
-      if (inside[id]) {
-        failed.push({id:id, name:m.name, message:"이미 현장 내부 활동 중입니다."});
-        return;
-      }
-
-      const activityNo = requestedActivityNo || ((maxActivity[id] || 0) + 1);
-      const activityId = "ACT-" + Utilities.getUuid();
-
-      ppeRows.push([
-        "PPE-" + Utilities.getUuid(), siteId, id, m.name,
-        "완료","완료","완료","완료", now
-      ]);
-
-      historyRows.push([
-        activityId, siteId, id, m.name, m.rank, m.department,
-        team, activityNo, direction, floor, detail,
-        now, "", "활동중", "", now
-      ]);
-
-      const currentRow = [
-        siteId, id, m.name, m.rank, m.department,
-        team, activityNo, direction, floor, detail,
-        now, "활동중", now
-      ];
-
-      if (currentRowById[id]) {
-        currentUpdates.push({row:currentRowById[id], values:currentRow});
-      } else {
-        currentAppendRows.push(currentRow);
-      }
-
-      inside[id] = true;
-      maxActivity[id] = activityNo;
-      succeeded.push({
-        id:id, memberId:id, name:m.name, rank:m.rank, department:m.department,
-        team:team, activityNo:activityNo, direction:direction, floor:floor,
-        detail:detail, entryTime:formatDate_(now), status:"활동중"
-      });
-    });
-
-    if (ppeRows.length) {
-      ppeSh.getRange(ppeSh.getLastRow()+1,1,ppeRows.length,9).setValues(ppeRows);
-    }
-    if (historyRows.length) {
-      historySh.getRange(historySh.getLastRow()+1,1,historyRows.length,16).setValues(historyRows);
-    }
-    currentUpdates.forEach(function(x) {
-      currentSh.getRange(x.row,1,1,13).setValues([x.values]);
-    });
-    if (currentAppendRows.length) {
-      currentSh.getRange(currentSh.getLastRow()+1,1,currentAppendRows.length,13).setValues(currentAppendRows);
-    }
-
-    return json_({
-      ok: failed.length === 0,
-      success: failed.length === 0,
-      successCount: succeeded.length,
-      succeeded:succeeded,
-      failed:failed,
-      message:succeeded.length + "명 진입 기록 완료" +
-        (failed.length ? " · " + failed.length + "명 처리 제외" : "")
-    });
-
-  } finally {
-    lock.releaseLock();
-  }
-}
-
-function batchExit_(p) {
-  const siteId = clean_(p.siteId || p.site);
-  const requested = parseMembers_(p.members);
-  if (!siteId) throw new Error("현장ID가 없습니다.");
-  if (!requested.length) throw new Error("철수 대원이 없습니다.");
-
-  const lock = LockService.getScriptLock();
-  lock.waitLock(5000);
-
-  try {
-    const historySh = sheet_(SHEETS.HISTORY);
-    const currentSh = sheet_(SHEETS.CURRENT);
-    const historyValues = historySh.getDataRange().getValues();
-    const currentValues = currentSh.getDataRange().getValues();
-
-    const wanted = {};
-    requested.forEach(function(m) {
-      const id = clean_(m.id || m.memberId);
-      if (id) wanted[id] = clean_(m.name);
-    });
-
-    const historyRowById = {};
-    for (let i=historyValues.length-1;i>=1;i--) {
-      const id = clean_(historyValues[i][2]);
-      if (!wanted[id] || historyRowById[id]) continue;
-      if (clean_(historyValues[i][1]) === siteId &&
-          clean_(historyValues[i][13]) === "활동중") {
-        historyRowById[id] = i + 1;
-      }
-    }
-
-    const currentRowById = {};
-    for (let i=1;i<currentValues.length;i++) {
-      const id = clean_(currentValues[i][1]);
-      if (!wanted[id]) continue;
-      if (clean_(currentValues[i][0]) === siteId &&
-          clean_(currentValues[i][11]) === "활동중") {
-        currentRowById[id] = i + 1;
-      }
-    }
-
-    const now = new Date();
-    const exitType = requested.length > 1 ? "다중 일괄철수" : "단독철수";
-    const succeeded = [];
-    const failed = [];
-
-    Object.keys(wanted).forEach(function(id) {
-      const hRow = historyRowById[id];
-      if (!hRow) {
-        failed.push({id:id,name:wanted[id],message:"현재 활동 중인 기록을 찾을 수 없습니다."});
-        return;
-      }
-
-      historySh.getRange(hRow,13,1,3).setValues([[now,"철수완료",exitType]]);
-
-      const cRow = currentRowById[id];
-      if (cRow) {
-        currentSh.getRange(cRow,12,1,2).setValues([["철수완료",now]]);
-      }
-
-      succeeded.push({id:id,name:wanted[id]});
-    });
-
-    return json_({
-      ok: failed.length === 0,
-      success: failed.length === 0,
-      successCount:succeeded.length,
-      succeeded:succeeded,
-      failed:failed,
-      message:succeeded.length + "명 철수 처리 완료" +
-        (failed.length ? " · " + failed.length + "명 처리 제외" : "")
-    });
-
-  } finally {
-    lock.releaseLock();
-  }
-}
-
-
-/* =========================================================
-   조 / 방면 / 층 / 세부장소 수정
-
-   PC에서 수정해도 서버에 저장되므로
-   휴대폰에서도 동일하게 표시됨.
-========================================================= */
-
-function updateLocation_(p) {
-
-  const siteId = clean_(p.siteId);
-  const memberId = clean_(p.memberId);
-
-  if (!siteId || !memberId) {
-    throw new Error("현장ID 또는 관리번호가 없습니다.");
-  }
-
-  assertSiteActive_(siteId);
-
-  const current =
-    findCurrentRow_(
-      siteId,
-      memberId
+    console.log(
+      "대원 캐시 읽기 실패",
+      error
     );
 
-  if (!current) {
-    throw new Error(
-      "현재상태에서 대원을 찾을 수 없습니다."
+  }
+
+}
+
+
+/* =====================================================
+현장목록 표시
+===================================================== */
+
+function renderSites(
+  sites,
+  fromCache
+){
+
+  const select =
+    document.getElementById(
+      "site"
     );
+
+  const currentValue =
+    select.value;
+
+
+  select.innerHTML =
+    '<option value="">현장을 선택하세요</option>';
+
+
+  sites.forEach(
+    site => {
+
+      const option =
+        document.createElement(
+          "option"
+        );
+
+      option.value =
+        site.siteName;
+
+      option.textContent =
+        site.siteName;
+
+      select.appendChild(
+        option
+      );
+
+    }
+  );
+
+
+  if(
+    currentValue &&
+    sites.some(
+      site =>
+        site.siteName ===
+        currentValue
+    )
+  ){
+
+    select.value =
+      currentValue;
+
   }
 
-  const newTeam =
-    clean_(p.team) ||
-    clean_(p.teamName) ||
-    current.team;
 
-  const newActivityNo =
-    Number(
-      p.activityNo ||
-      p.teamActivityNo ||
-      current.activityNo
+  const info =
+    document.getElementById(
+      "siteLoadInfo"
     );
 
-  const newDirection =
-    clean_(p.direction) ||
-    clean_(p.entryDirection) ||
-    current.direction;
 
-  const newFloor =
-    clean_(p.floor) ||
-    clean_(p.activityFloor) ||
-    current.floor;
+  if(fromCache){
 
-  const newDetail =
-    clean_(p.detail) ||
-    clean_(p.detailLocation) ||
-    current.detail;
+    info.innerText =
+      "⚡ 저장된 현장목록을 먼저 표시했습니다. 최신정보 확인 중...";
 
-  const now = new Date();
+  }else{
 
+    info.innerText =
+      "✅ 최신 현장목록";
 
-  /* 변경이력 기록 */
-
-  logChangeIfNeeded_(
-    siteId,
-    memberId,
-    current.name,
-    "조",
-    current.team,
-    newTeam,
-    now
-  );
-
-  logChangeIfNeeded_(
-    siteId,
-    memberId,
-    current.name,
-    "활동차수",
-    current.activityNo,
-    newActivityNo,
-    now
-  );
-
-  logChangeIfNeeded_(
-    siteId,
-    memberId,
-    current.name,
-    "진입방면",
-    current.direction,
-    newDirection,
-    now
-  );
-
-  logChangeIfNeeded_(
-    siteId,
-    memberId,
-    current.name,
-    "활동층",
-    current.floor,
-    newFloor,
-    now
-  );
-
-  logChangeIfNeeded_(
-    siteId,
-    memberId,
-    current.name,
-    "세부장소",
-    current.detail,
-    newDetail,
-    now
-  );
-
-
-  /* 현재상태 변경 */
-
-  const sh =
-    sheet_(SHEETS.CURRENT);
-
-  sh
-    .getRange(current.row, 6, 1, 5)
-    .setValues([[
-      newTeam,
-      newActivityNo,
-      newDirection,
-      newFloor,
-      newDetail
-    ]]);
-
-  sh
-    .getRange(current.row, 13)
-    .setValue(now);
-
-
-  /* 현재 활동중인 활동이력에도 반영 */
-
-  updateActiveHistoryLocation_(
-    siteId,
-    memberId,
-    newTeam,
-    newActivityNo,
-    newDirection,
-    newFloor,
-    newDetail
-  );
-
-
-  return json_({
-    ok: true,
-    siteId: siteId,
-    memberId: memberId,
-    team: newTeam,
-    activityNo: newActivityNo,
-    direction: newDirection,
-    floor: newFloor,
-    detail: newDetail,
-    updatedAt: formatDate_(now)
-  });
-}
-
-
-/* 조 수정도 같은 처리 */
-
-function updateTeam_(p) {
-  return updateLocation_(p);
-}
-
-
-/* =========================================================
-   현재상태 조회
-========================================================= */
-
-function getCurrent_(siteId) {
-
-  if (!siteId) {
-    throw new Error("현장ID가 없습니다.");
   }
 
-  const sh =
-    sheet_(SHEETS.CURRENT);
+}
 
-  const values =
-    sh
-      .getDataRange()
-      .getValues();
 
-  const members = [];
+/* =====================================================
+현장목록 서버 조회
+===================================================== */
 
-  for (
-    let i = 1;
-    i < values.length;
-    i++
-  ) {
+async function loadSites(){
 
-    const r = values[i];
+  const info =
+    document.getElementById(
+      "siteLoadInfo"
+    );
 
-    if (
-      clean_(r[0]) !== siteId
-    ) {
-      continue;
+  try{
+
+    const response =
+      await fetch(
+        API +
+        "?action=sites&t=" +
+        Date.now(),
+        {cache:"no-store"}
+      );
+
+    const data =
+      await response.json();
+
+
+    if(
+      !data.success
+    ){
+
+      throw new Error(
+        "현장목록 조회 실패"
+      );
+
     }
 
-    members.push({
-      siteId: clean_(r[0]),
-      memberId: clean_(r[1]),
-      name: clean_(r[2]),
-      rank: clean_(r[3]),
-      department: clean_(r[4]),
 
-      team: clean_(r[5]),
-      activityNo: Number(r[6]) || 1,
-
-      direction: clean_(r[7]),
-      floor: clean_(r[8]),
-      detail: clean_(r[9]),
-
-      entryTime:
-        formatDate_(r[10]),
-
-      status:
-        clean_(r[11]),
-
-      updatedAt:
-        formatDate_(r[12])
-    });
-  }
-
-  return json_({
-    ok: true,
-    siteId: siteId,
-    members: members
-  });
-}
+    const sites =
+      data.sites || [];
 
 
-/* =========================================================
-   현장 활동 현황
-========================================================= */
-
-function getDashboard_(siteId) {
-
-  if (!siteId) {
-    throw new Error("현장ID가 없습니다.");
-  }
-
-  const current =
-    getCurrentData_(siteId);
-
-  const history =
-    getHistoryData_(siteId, "");
-
-  const inside =
-    current.filter(function(m) {
-      return m.status === "활동중";
-    });
-
-  const exited =
-    history.filter(function(m) {
-      return m.status === "철수완료";
-    });
-
-  return json_({
-    ok: true,
-    siteId: siteId,
-
-    insideCount:
-      inside.length,
-
-    participantCount:
-      uniqueMemberCount_(history),
-
-    exitedCount:
-      exited.length,
-
-    insideMembers:
-      inside,
-
-    exitedMembers:
-      exited
-  });
-}
+    renderSites(
+      sites,
+      false
+    );
 
 
-/* =========================================================
-   개인 / 현장 활동이력
-========================================================= */
+    try{
 
-function getHistory_(siteId, memberId) {
+      localStorage.setItem(
+        SITE_CACHE_KEY,
+        JSON.stringify(
+          sites
+        )
+      );
 
-  if (!siteId) {
-    throw new Error("현장ID가 없습니다.");
-  }
+      localStorage.setItem(
+        SITE_CACHE_TIME_KEY,
+        String(
+          Date.now()
+        )
+      );
 
-  return json_({
-    ok: true,
-    siteId: siteId,
-    memberId: memberId || "",
-    history:
-      getHistoryData_(
-        siteId,
-        memberId
-      )
-  });
-}
+    }catch(error){
 
+      console.log(
+        "현장목록 저장 실패",
+        error
+      );
 
-function getHistoryData_(
-  siteId,
-  memberId
-) {
-
-  const sh =
-    sheet_(SHEETS.HISTORY);
-
-  const values =
-    sh
-      .getDataRange()
-      .getValues();
-
-  const result = [];
-
-  for (
-    let i = 1;
-    i < values.length;
-    i++
-  ) {
-
-    const r = values[i];
-
-    if (
-      clean_(r[1]) !== siteId
-    ) {
-      continue;
     }
 
-    if (
-      memberId &&
-      clean_(r[2]) !== memberId
-    ) {
-      continue;
+  }catch(error){
+
+    console.error(
+      error
+    );
+
+
+    const select =
+      document.getElementById(
+        "site"
+      );
+
+
+    if(
+      select.options.length > 1
+    ){
+
+      info.innerText =
+        "⚠️ 최신 현장목록 연결 지연 · 저장된 목록 사용 중";
+
+    }else{
+
+      select.innerHTML =
+        '<option value="">현장목록을 불러오지 못했습니다</option>';
+
+      info.innerText =
+        "⚠️ 인터넷 연결을 확인하세요.";
+
     }
 
-    result.push({
-      activityId:
-        clean_(r[0]),
+  }
 
-      siteId:
-        clean_(r[1]),
+}
 
-      memberId:
-        clean_(r[2]),
 
-      name:
-        clean_(r[3]),
+/* =====================================================
+대원명단 서버 조회
+===================================================== */
 
-      rank:
-        clean_(r[4]),
+async function loadMembers(){
 
-      department:
-        clean_(r[5]),
+  try{
 
-      team:
-        clean_(r[6]),
+    const response =
+      await fetch(
+        API +
+        "?action=members&t=" +
+        Date.now(),
+        {cache:"no-store"}
+      );
 
-      activityNo:
-        Number(r[7]) || 1,
+    const data =
+      await response.json();
 
-      direction:
-        clean_(r[8]),
 
-      floor:
-        clean_(r[9]),
+    if(
+      data.success || data.ok
+    ){
 
-      detail:
-        clean_(r[10]),
+      // V2 서버 응답 형식 통일
+      // 서버: memberId / department
+      // 앱 내부: id / dept
+      members =
+        (data.members || [])
+          .filter(member =>
+            String(member.use || "Y").toUpperCase() !== "N"
+          )
+          .map(member => ({
+            ...member,
+            id:
+              member.id ||
+              member.memberId ||
+              "",
+            name:
+              member.name ||
+              "",
+            rank:
+              member.rank ||
+              "",
+            dept:
+              member.dept ||
+              member.department ||
+              ""
+          }));
 
-      entryTime:
-        formatDate_(r[11]),
 
-      exitTime:
-        formatDate_(r[12]),
+      try{
 
-      status:
-        clean_(r[13]),
+        localStorage.setItem(
+          MEMBER_CACHE_KEY,
+          JSON.stringify(
+            members
+          )
+        );
 
-      exitType:
-        clean_(r[14]),
+        localStorage.setItem(
+          MEMBER_CACHE_TIME_KEY,
+          String(
+            Date.now()
+          )
+        );
 
-      recordedAt:
-        formatDate_(r[15])
-    });
+      }catch(error){
+
+        console.log(
+          "대원명단 저장 실패",
+          error
+        );
+
+      }
+
+    }
+
+  }catch(error){
+
+    console.error(
+      error
+    );
+
+  }
+
+}
+
+
+/* =====================================================
+현장 변경
+===================================================== */
+
+function siteChanged(){
+
+  entryQueue =
+    [];
+
+  renderQueue();
+
+  resetPPE();
+
+  loadInsideMembers();
+
+}
+
+
+/* =====================================================
+초성
+===================================================== */
+
+function getChosung(
+  text
+){
+
+  let result =
+    "";
+
+  for(
+    const char of text
+  ){
+
+    const code =
+      char.charCodeAt(
+        0
+      );
+
+    if(
+      code >= 0xAC00 &&
+      code <= 0xD7A3
+    ){
+
+      result +=
+        CHOSUNG[
+          Math.floor(
+            (code - 0xAC00) /
+            588
+          )
+        ];
+
+    }else{
+
+      result +=
+        char;
+
+    }
+
   }
 
   return result;
+
 }
 
 
-/* =========================================================
-   PPE 조회
-========================================================= */
+/* =====================================================
+대원 정보 찾기
+===================================================== */
 
-function getPpe_(
-  siteId,
-  memberId
-) {
+function getMemberInfoById(
+  id
+){
 
-  const sh =
-    sheet_(SHEETS.PPE);
+  return members.find(
+    member =>
+      String(
+        member.id
+      ).trim()
+      ===
+      String(
+        id
+      ).trim()
+  ) || {
 
-  const values =
-    sh
-      .getDataRange()
-      .getValues();
+    id:
+      id || "",
 
-  const result = [];
+    name:
+      "",
 
-  for (
-    let i = 1;
-    i < values.length;
-    i++
-  ) {
+    rank:
+      "",
 
-    const r = values[i];
+    dept:
+      ""
 
-    if (
-      siteId &&
-      clean_(r[1]) !== siteId
-    ) {
-      continue;
-    }
+  };
 
-    if (
-      memberId &&
-      clean_(r[2]) !== memberId
-    ) {
-      continue;
-    }
-
-    result.push({
-      checkId: clean_(r[0]),
-      siteId: clean_(r[1]),
-      memberId: clean_(r[2]),
-      name: clean_(r[3]),
-
-      personal:
-        clean_(r[4]) === "완료",
-
-      scba:
-        clean_(r[5]) === "완료",
-
-      communication:
-        clean_(r[6]) === "완료",
-
-      allChecked:
-        clean_(r[7]) === "완료",
-
-      checkedAt:
-        formatDate_(r[8])
-    });
-  }
-
-  return json_({
-    ok: true,
-    ppe: result
-  });
 }
 
 
-/* =========================================================
-   변경이력 조회
-========================================================= */
+/* =====================================================
+성명 + 계급 / 부서
+===================================================== */
 
-function getChanges_(siteId) {
+function getMemberDisplay(
+  id,
+  fallbackName
+){
 
-  if (!siteId) {
-    throw new Error("현장ID가 없습니다.");
-  }
-
-  const sh =
-    sheet_(SHEETS.CHANGES);
-
-  const values =
-    sh
-      .getDataRange()
-      .getValues();
-
-  const result = [];
-
-  for (
-    let i = 1;
-    i < values.length;
-    i++
-  ) {
-
-    const r = values[i];
-
-    if (
-      clean_(r[1]) !== siteId
-    ) {
-      continue;
-    }
-
-    result.push({
-      changeId: clean_(r[0]),
-      siteId: clean_(r[1]),
-      memberId: clean_(r[2]),
-      name: clean_(r[3]),
-      item: clean_(r[4]),
-      before: clean_(r[5]),
-      after: clean_(r[6]),
-      changedAt: formatDate_(r[7])
-    });
-  }
-
-  return json_({
-    ok: true,
-    changes: result
-  });
-}
-
-
-/* =========================================================
-   내부 함수
-========================================================= */
-
-function findMember_(memberId) {
-
-  const sh =
-    sheet_(SHEETS.MEMBERS);
-
-  const values =
-    sh
-      .getDataRange()
-      .getValues();
-
-  for (
-    let i = 1;
-    i < values.length;
-    i++
-  ) {
-
-    if (
-      clean_(values[i][0]) ===
-      memberId
-    ) {
-
-      return {
-        memberId:
-          clean_(values[i][0]),
-
-        name:
-          clean_(values[i][1]),
-
-        rank:
-          clean_(values[i][2]),
-
-        department:
-          clean_(values[i][3]),
-
-        use:
-          clean_(values[i][4])
-      };
-    }
-  }
-
-  return null;
-}
-
-
-function upsertCurrent_(data) {
-
-  const sh =
-    sheet_(SHEETS.CURRENT);
-
-  const values =
-    sh
-      .getDataRange()
-      .getValues();
-
-  const now = new Date();
-
-  for (
-    let i = 1;
-    i < values.length;
-    i++
-  ) {
-
-    if (
-      clean_(values[i][0]) ===
-        data.siteId &&
-      clean_(values[i][1]) ===
-        data.memberId
-    ) {
-
-      sh
-        .getRange(i + 1, 1, 1, 13)
-        .setValues([[
-          data.siteId,
-          data.memberId,
-          data.name,
-          data.rank,
-          data.department,
-          data.team,
-          data.activityNo,
-          data.direction,
-          data.floor,
-          data.detail,
-          data.entryTime,
-          data.status,
-          now
-        ]]);
-
-      return;
-    }
-  }
-
-  sh.appendRow([
-    data.siteId,
-    data.memberId,
-    data.name,
-    data.rank,
-    data.department,
-    data.team,
-    data.activityNo,
-    data.direction,
-    data.floor,
-    data.detail,
-    data.entryTime,
-    data.status,
-    now
-  ]);
-}
-
-
-function findCurrentRow_(
-  siteId,
-  memberId
-) {
-
-  const sh =
-    sheet_(SHEETS.CURRENT);
-
-  const values =
-    sh
-      .getDataRange()
-      .getValues();
-
-  for (
-    let i = 1;
-    i < values.length;
-    i++
-  ) {
-
-    const r = values[i];
-
-    if (
-      clean_(r[0]) === siteId &&
-      clean_(r[1]) === memberId
-    ) {
-
-      return {
-        row: i + 1,
-
-        siteId:
-          clean_(r[0]),
-
-        memberId:
-          clean_(r[1]),
-
-        name:
-          clean_(r[2]),
-
-        rank:
-          clean_(r[3]),
-
-        department:
-          clean_(r[4]),
-
-        team:
-          clean_(r[5]),
-
-        activityNo:
-          Number(r[6]) || 1,
-
-        direction:
-          clean_(r[7]),
-
-        floor:
-          clean_(r[8]),
-
-        detail:
-          clean_(r[9]),
-
-        entryTime:
-          r[10],
-
-        status:
-          clean_(r[11])
-      };
-    }
-  }
-
-  return null;
-}
-
-
-function isInside_(
-  siteId,
-  memberId
-) {
-
-  const current =
-    findCurrentRow_(
-      siteId,
-      memberId
+  const member =
+    getMemberInfoById(
+      id
     );
 
-  return !!(
-    current &&
-    current.status ===
-      "활동중"
+
+  let text =
+    member.name ||
+    fallbackName ||
+    "";
+
+
+  if(
+    member.rank
+  ){
+
+    text +=
+      " " +
+      member.rank;
+
+  }
+
+
+  if(
+    member.dept
+  ){
+
+    text +=
+      " / " +
+      member.dept;
+
+  }
+
+
+  return text;
+
+}
+
+
+/* =====================================================
+대원 검색
+===================================================== */
+
+function filterMembers(){
+
+  const input =
+    document
+      .getElementById(
+        "memberSearch"
+      )
+      .value
+      .trim()
+      .toLowerCase();
+
+
+  const select =
+    document.getElementById(
+      "member"
+    );
+
+
+  select.innerHTML =
+    '<option value="">검색 결과에서 대원을 선택하세요</option>';
+
+
+  if(
+    !input
+  ){
+
+    return;
+
+  }
+
+
+  const filtered =
+    members.filter(
+      member => {
+
+        const name =
+          String(
+            member.name || ""
+          ).toLowerCase();
+
+        const chosung =
+          getChosung(
+            String(
+              member.name || ""
+            )
+          );
+
+        const id =
+          String(
+            member.id || ""
+          ).toLowerCase();
+
+        const rank =
+          String(
+            member.rank || ""
+          ).toLowerCase();
+
+        const dept =
+          String(
+            member.dept || ""
+          ).toLowerCase();
+
+
+        return(
+          name.includes(input) ||
+          chosung.includes(input) ||
+          id.includes(input) ||
+          rank.includes(input) ||
+          dept.includes(input)
+        );
+
+      }
+    );
+
+
+  filtered.forEach(
+    member => {
+
+      const option =
+        document.createElement(
+          "option"
+        );
+
+      option.value =
+        member.id;
+
+      option.textContent =
+        getMemberDisplay(
+          member.id,
+          member.name
+        ) +
+        " (" +
+        member.id +
+        ")";
+
+      select.appendChild(
+        option
+      );
+
+    }
   );
+
+
+  if(
+    filtered.length === 1
+  ){
+
+    select.value =
+      filtered[0].id;
+
+  }
+
 }
 
 
-function nextActivityNo_(
-  siteId,
-  memberId
-) {
+/* =====================================================
+검색 대원 추가
+===================================================== */
 
-  const history =
-    getHistoryData_(
-      siteId,
-      memberId
+function addSelectedMember(){
+
+  const id =
+    document
+      .getElementById(
+        "member"
+      )
+      .value;
+
+
+  if(
+    !id
+  ){
+
+    alert(
+      "검색 결과에서 대원을 선택하세요."
     );
 
-  if (!history.length) {
-    return 1;
+    return;
+
   }
 
-  let max = 0;
 
-  history.forEach(function(h) {
-    max = Math.max(
-      max,
-      Number(h.activityNo) || 0
+  const member =
+    getMemberInfoById(
+      id
     );
+
+
+  addMemberToQueue(
+    member
+  );
+
+
+  document
+    .getElementById(
+      "memberSearch"
+    )
+    .value =
+    "";
+
+
+  document
+    .getElementById(
+      "member"
+    )
+    .innerHTML =
+    '<option value="">검색 결과에서 대원을 선택하세요</option>';
+
+}
+
+
+/* =====================================================
+투입대기 추가
+===================================================== */
+
+function addMemberToQueue(
+  member
+){
+
+  if(
+    !member ||
+    !member.id
+  ){
+
+    alert(
+      "등록되지 않은 대원입니다."
+    );
+
+    return false;
+
+  }
+
+
+  if(
+    entryQueue.some(
+      item =>
+        String(
+          item.id
+        ) ===
+        String(
+          member.id
+        )
+    )
+  ){
+
+    showTemporaryMessage(
+      member.name +
+      " 대원은 이미 투입대기 명단에 있습니다."
+    );
+
+    return false;
+
+  }
+
+
+  entryQueue.push({
+
+    id:
+      member.id,
+
+    name:
+      member.name,
+
+    rank:
+      member.rank || "",
+
+    dept:
+      member.dept || ""
+
   });
 
-  return max + 1;
+
+  renderQueue();
+
+  return true;
+
 }
 
 
-function updateActiveHistoryLocation_(
-  siteId,
-  memberId,
-  team,
-  activityNo,
-  direction,
-  floor,
-  detail
-) {
+/* =====================================================
+투입대기 삭제
+===================================================== */
 
-  const sh =
-    sheet_(SHEETS.HISTORY);
+function removeQueueMember(
+  id
+){
 
-  const values =
-    sh
-      .getDataRange()
-      .getValues();
+  entryQueue =
+    entryQueue.filter(
+      member =>
+        String(
+          member.id
+        )
+        !==
+        String(
+          id
+        )
+    );
 
-  for (
-    let i = values.length - 1;
-    i >= 1;
-    i--
-  ) {
 
-    const r = values[i];
+  renderQueue();
 
-    if (
-      clean_(r[1]) === siteId &&
-      clean_(r[2]) === memberId &&
-      clean_(r[13]) === "활동중"
-    ) {
 
-      sh
-        .getRange(i + 1, 7, 1, 5)
-        .setValues([[
-          team,
-          activityNo,
-          direction,
-          floor,
-          detail
-        ]]);
+  if(
+    entryQueue.length === 0
+  ){
 
-      return;
+    resetPPE();
+
+  }
+
+}
+
+
+/* =====================================================
+투입대기 전체 비우기
+===================================================== */
+
+function clearQueue(){
+
+  if(
+    entryQueue.length === 0
+  ){
+
+    return;
+
+  }
+
+
+  if(
+    confirm(
+      "투입대기 명단을 모두 비우시겠습니까?"
+    )
+  ){
+
+    entryQueue =
+      [];
+
+    renderQueue();
+
+    resetPPE();
+
+  }
+
+}
+
+
+/* =====================================================
+투입대기 화면
+===================================================== */
+
+function renderQueue(){
+
+  const area =
+    document.getElementById(
+      "queueList"
+    );
+
+
+  document
+    .getElementById(
+      "queueCount"
+    )
+    .innerText =
+    entryQueue.length;
+
+
+  const v2EntryButton = document.getElementById("batchEntryButton");
+  if(v2EntryButton){ v2EntryButton.innerText = "🔴 조 투입 승인"; }
+  renderTeamMembers();
+  updateTeamSetupState();
+
+
+  if(
+    entryQueue.length === 0
+  ){
+
+    area.innerHTML =
+      '<div class="empty">등록된 투입대원이 없습니다.</div>';
+
+    return;
+
+  }
+
+
+  area.innerHTML =
+    "";
+
+
+  entryQueue.forEach(
+    (member,index) => {
+
+      const row =
+        document.createElement(
+          "div"
+        );
+
+      row.className =
+        "queueItem";
+
+
+      const left =
+        document.createElement(
+          "div"
+        );
+
+
+      left.innerHTML =
+        '<div class="queueName">' +
+        (index + 1) +
+        ". " +
+        escapeHtml(
+          getMemberDisplay(
+            member.id,
+            member.name
+          )
+        ) +
+        '</div>' +
+
+        '<div class="queueId">' +
+        escapeHtml(
+          member.id
+        ) +
+        '</div>';
+
+
+      const button =
+        document.createElement(
+          "button"
+        );
+
+      button.className =
+        "removeBtn";
+
+      button.innerText =
+        "삭제";
+
+      button.onclick =
+        function(){
+
+          removeQueueMember(
+            member.id
+          );
+
+        };
+
+
+      row.appendChild(
+        left
+      );
+
+      row.appendChild(
+        button
+      );
+
+      area.appendChild(
+        row
+      );
+
     }
+  );
+
+}
+
+
+
+/* ===== V2.3 위치 메타데이터(브라우저 저장) ===== */
+function v23SiteKey(){
+  const s=(document.getElementById("site")||{}).value||"";
+  return "fire-v2-only-entry-meta-"+s;
+}
+function v23LoadMeta(){
+  try{return JSON.parse(localStorage.getItem(v23SiteKey())||"{}");}catch(e){return {};}
+}
+function v23SaveMeta(meta){
+  try{localStorage.setItem(v23SiteKey(),JSON.stringify(meta));}catch(e){}
+}
+function v23SetMemberMeta(id, patch){
+  const meta=v23LoadMeta(), key=String(id);
+  meta[key]=Object.assign({},meta[key]||{},patch||{});
+  v23SaveMeta(meta);
+}
+function v23FloorClass(f){
+  if(f==="화점층")return "floor-fire";
+  if(f==="직상층")return "floor-above";
+  if(f==="직하층"||f==="상층부")return "floor-yellow";
+  if(f==="하층부")return "floor-green";
+  if(f==="지하층")return "floor-basement";
+  if(f==="옥상")return "floor-roof";
+  return "floor-neutral";
+}
+function v23LocationText(m){
+  const p=[m.entryDirection||"진입방면 미지정",m.activityFloor||"활동층 미지정",m.detailLocation||""].filter(Boolean);
+  return p.join(" · ");
+}
+function toggleExtraFloors(btn){
+  document.querySelectorAll("#activityFloorChoices .v2Choice").forEach(b=>b.classList.remove("active"));
+  btn.classList.add("active");
+  activityFloor="";
+  const box=document.getElementById("extraFloorBox");
+  if(box) box.classList.toggle("show");
+  updateTeamPreview();
+}
+function chooseExtraFloor(btn){
+  const box=document.getElementById("extraFloorBox");
+  if(box) box.querySelectorAll(".v2Choice").forEach(b=>b.classList.remove("active"));
+  btn.classList.add("active");
+  activityFloor=btn.dataset.value||"";
+  updateTeamPreview();
+}
+function editMemberLocation(memberId, memberName){
+  const meta=v23LoadMeta(), key=String(memberId), old=meta[key]||{};
+  const team=prompt("조 명칭 (없으면 비워두세요)",old.teamName||"");
+  if(team===null)return;
+  const dir=prompt("진입방면 (A방면/B방면/C방면/D방면, 미지정 가능)",old.entryDirection||"");
+  if(dir===null)return;
+  const floor=prompt("활동층 (화점층/직상층/직하층/상층부/하층부/지하층/옥상)",old.activityFloor||"");
+  if(floor===null)return;
+  const detail=prompt("세부위치 (선택)",old.detailLocation||"");
+  if(detail===null)return;
+  const history=Array.isArray(old.history)?old.history:[];
+  history.push({time:new Date().toLocaleTimeString("ko-KR",{hour:"2-digit",minute:"2-digit"}),activityFloor:floor.trim(),detailLocation:detail.trim()});
+  v23SetMemberMeta(key,{teamName:team.trim(),entryDirection:dir.trim(),activityFloor:floor.trim(),detailLocation:detail.trim(),history:history});
+  loadInsideMembers();
+}
+function updateV23Summary(members){
+  const el=document.getElementById("v23InsideSummary"); if(!el)return;
+  const meta=v23LoadMeta(), teams=new Set(), floors={};
+  (members||[]).forEach(m=>{
+    const x=meta[String(m.memberId)]||{};
+    if(x.teamName)teams.add(x.teamName);
+    const f=x.activityFloor||"미지정";
+    floors[f]=(floors[f]||0)+1;
+  });
+  const parts=Object.keys(floors).map(f=>f+" "+floors[f]+"명");
+  el.textContent="활동 중 "+teams.size+"개조 / "+(members||[]).length+"명"+(parts.length?" · "+parts.join(" · "):"");
+}
+
+/* =====================================================
+V2 조 편성 / 투입위치
+===================================================== */
+function isPPEComplete(){
+  return ["ppe1","ppe2","ppe3"].every(id=>{const el=document.getElementById(id);return el&&el.checked;});
+}
+function updateTeamSetupState(){
+  const ready=entryQueue.length>0 && isPPEComplete();
+  const quick=document.getElementById("quickEntryButton");
+  const team=document.getElementById("teamModeButton");
+  const card=document.getElementById("teamSetupCard");
+
+  if(quick) quick.disabled=!ready;
+  if(team) team.disabled=!ready;
+
+  if(!ready && card){
+    card.classList.remove("modeOpen");
   }
 }
 
+function openTeamSetup(){
+  if(entryQueue.length===0){
+    alert("먼저 QR 또는 검색으로 투입대원을 등록하세요.");
+    return;
+  }
+  if(!isPPEComplete()){
+    alert("PPE 3개 항목을 모두 확인하세요.");
+    return;
+  }
+  const card=document.getElementById("teamSetupCard");
+  if(!card)return;
+  card.classList.add("modeOpen");
+  renderTeamMembers();
+  v31UpdateTeamPreviewAuto();
+  setTimeout(()=>card.scrollIntoView({behavior:"smooth",block:"start"}),50);
+}
 
-function logChangeIfNeeded_(
-  siteId,
-  memberId,
-  name,
-  item,
-  before,
-  after,
-  now
-) {
+function closeTeamSetup(){
+  const card=document.getElementById("teamSetupCard");
+  if(card) card.classList.remove("modeOpen");
+}
 
-  if (
-    String(before) ===
-    String(after)
-  ) {
+function toggleTeamSetup(){
+  const card=document.getElementById("teamSetupCard");
+  if(card && card.classList.contains("modeOpen")) closeTeamSetup();
+  else openTeamSetup();
+}
+
+function renderTeamMembers(){
+  const area=document.getElementById("teamMemberList");
+  if(!area) return;
+  const validIds=new Set(entryQueue.map(m=>String(m.id)));
+  selectedTeamMemberIds=new Set([...selectedTeamMemberIds].filter(id=>validIds.has(String(id))));
+  if(entryQueue.length===0){area.innerHTML='<div class="empty">투입대기 대원을 먼저 등록하세요.</div>'; updateTeamPreview(); return;}
+  area.innerHTML="";
+  entryQueue.forEach(member=>{
+    const label=document.createElement("label"); label.className="teamMember";
+    const cb=document.createElement("input"); cb.type="checkbox"; cb.checked=selectedTeamMemberIds.has(String(member.id));
+    cb.onchange=()=>{ if(cb.checked) selectedTeamMemberIds.add(String(member.id)); else selectedTeamMemberIds.delete(String(member.id)); updateTeamPreview(); };
+    const name=document.createElement("span"); name.className="tmName"; name.textContent=getMemberDisplay(member.id,member.name);
+    label.appendChild(cb); label.appendChild(name); area.appendChild(label);
+  });
+  updateTeamPreview();
+}
+function chooseV2(btn,type){
+  const parent=btn.parentElement; parent.querySelectorAll('.v2Choice').forEach(b=>b.classList.remove('active')); btn.classList.add('active');
+  if(type==='entryDirection') entryDirection=btn.dataset.value||'';
+  if(type==='activityFloor') activityFloor=btn.dataset.value||'';
+  updateTeamPreview();
+}
+
+
+/* ===== V2.11 조 = 대원구성 / 활동차수 = 재진입 ===== */
+function v31TeamRegistryKey(){
+  const site=(document.getElementById("site")||{}).value||"default";
+  return "fireV2OnlyTeamRegistry:"+site;
+}
+function v31LoadTeams(){
+  try{return JSON.parse(localStorage.getItem(v31TeamRegistryKey())||"[]");}
+  catch(e){return [];}
+}
+function v31SaveTeams(arr){
+  localStorage.setItem(v31TeamRegistryKey(),JSON.stringify(arr||[]));
+}
+function v31MemberSignature(members){
+  return (members||[]).map(m=>String(m.id)).sort().join("|");
+}
+function v31FindTeamByMembers(members){
+  const sig=v31MemberSignature(members);
+  return v31LoadTeams().find(t=>t.signature===sig)||null;
+}
+function v31NextNewTeamNo(){
+  const teams=v31LoadTeams();
+  return teams.reduce((mx,t)=>Math.max(mx,Number(t.number)||0),0)+1;
+}
+function v31ResolveTeam(members){
+  const found=v31FindTeamByMembers(members);
+  if(found)return {teamName:found.number+"조",activityNo:(Number(found.activityCount)||0)+1,isNew:false,record:found};
+  const n=v31NextNewTeamNo();
+  return {teamName:n+"조",activityNo:1,isNew:true,record:{number:n,signature:v31MemberSignature(members),memberIds:(members||[]).map(m=>String(m.id)),activityCount:0}};
+}
+function v31CommitTeam(members){
+  const resolved=v31ResolveTeam(members);
+  const teams=v31LoadTeams();
+  let rec=teams.find(t=>t.signature===resolved.record.signature);
+  if(!rec){
+    rec=resolved.record;
+    teams.push(rec);
+  }
+  rec.activityCount=(Number(rec.activityCount)||0)+1;
+  rec.memberIds=(members||[]).map(m=>String(m.id));
+  v31SaveTeams(teams);
+  return {teamName:rec.number+"조",activityNo:rec.activityCount};
+}
+function v31UpdateTeamPreviewAuto(){
+  const selected=getSelectedTeamMembers();
+  const sel=document.getElementById("teamName");
+  const hint=document.getElementById("nextTeamHint");
+  if(!selected.length){
+    if(sel){sel.innerHTML='<option value="">대원 선택 후 자동 결정</option>';}
+    if(hint)hint.textContent="같은 대원 구성은 기존 조 · 새로운 구성은 새 조로 자동 편성";
+    return;
+  }
+  const r=v31ResolveTeam(selected);
+  if(sel){
+    sel.innerHTML='<option value="'+r.teamName+'" selected>'+r.teamName+'</option>';
+    sel.value=r.teamName;
+  }
+  if(hint)hint.textContent=r.isNew
+    ? "새로운 대원 구성 → "+r.teamName+" · 1차 활동"
+    : "기존 대원 구성 확인 → "+r.teamName+" · "+r.activityNo+"차 활동";
+}
+function getSelectedTeamMembers(){ return entryQueue.filter(m=>selectedTeamMemberIds.has(String(m.id))); }
+function updateTeamPreview(){
+  v31UpdateTeamPreviewAuto();
+  const count=document.getElementById('teamSelectedCount'); const preview=document.getElementById('teamPreview'); if(!preview) return;
+  const selected=getSelectedTeamMembers(); if(count) count.textContent=selected.length+'명';
+  const team=(document.getElementById('teamName')||{}).value||'1조'; const detail=(document.getElementById('detailLocation')||{}).value||'';
+  const names=selected.map(m=>m.name).join(' · ')||'대원 미선택';
+  const pos=[entryDirection||'진입방면 미선택',activityFloor||'활동층 미선택',detail.trim()].filter(Boolean).join(' → ');
+  preview.innerHTML='<b>'+escapeHtml(team)+' · '+selected.length+'명</b><br>'+escapeHtml(names)+'<br>📍 '+escapeHtml(pos);
+}
+function resetV2Team(){
+  selectedTeamMemberIds.clear(); entryDirection=''; activityFloor='';
+  document.querySelectorAll('#entryDirectionChoices .v2Choice,#activityFloorChoices .v2Choice,#extraFloorBox .v2Choice').forEach(b=>b.classList.remove('active'));
+  const ex=document.getElementById('extraFloorBox'); if(ex)ex.classList.remove('show');
+  const d=document.getElementById('detailLocation'); if(d)d.value='';
+  renderTeamMembers();
+}
+
+/* =====================================================
+QR ON/OFF
+===================================================== */
+
+async function toggleScanner(){
+
+  if(
+    scanning
+  ){
+
+    await stopScanner();
+
+    return;
+
+  }
+
+
+  await startScanner();
+
+}
+
+
+/* =====================================================
+QR 연속 스캔
+===================================================== */
+
+async function startScanner(){
+
+  initScanAudio();
+
+
+  const button =
+    document.getElementById(
+      "scanButton"
+    );
+
+
+  try{
+
+    scanner =
+      new Html5Qrcode(
+        "reader"
+      );
+
+
+    const cameras =
+      await Html5Qrcode
+        .getCameras();
+
+
+    if(
+      !cameras.length
+    ){
+
+      alert(
+        "카메라를 찾을 수 없습니다."
+      );
+
+      scanner =
+        null;
+
+      return;
+
+    }
+
+
+    const cameraId =
+      cameras[
+        cameras.length - 1
+      ].id;
+
+
+    scanning =
+      true;
+
+
+    button.innerText =
+      "❌ QR 연속 스캔 종료";
+
+
+    await scanner.start(
+
+      cameraId,
+
+      {
+        fps:10,
+
+        qrbox:{
+          width:250,
+          height:250
+        }
+      },
+
+      decodedText => {
+
+        const id =
+          String(
+            decodedText || ""
+          ).trim();
+
+
+        const now =
+          Date.now();
+
+
+        if(
+          id === lastScannedId &&
+          now - lastScannedAt <
+          1800
+        ){
+
+          return;
+
+        }
+
+
+        lastScannedId =
+          id;
+
+        lastScannedAt =
+          now;
+
+
+        const member =
+          members.find(
+            item =>
+              String(
+                item.id
+              ).trim()
+              ===
+              id
+          );
+
+
+        if(
+          !member
+        ){
+
+          showTemporaryMessage(
+            "등록되지 않은 대원 QR입니다."
+          );
+
+          return;
+
+        }
+
+
+        if(
+          addMemberToQueue(
+            member
+          )
+        ){
+
+          showTemporaryMessage(
+
+            "✅ " +
+            member.name +
+            " 대원 추가 · 현재 " +
+            entryQueue.length +
+            "명"
+
+          );
+
+
+          playScanBeep();
+
+
+          if(
+            navigator.vibrate
+          ){
+
+            navigator.vibrate(
+              80
+            );
+
+          }
+
+        }
+
+      },
+
+      () => {}
+
+    );
+
+  }catch(error){
+
+    console.error(
+      error
+    );
+
+
+    scanning =
+      false;
+
+    scanner =
+      null;
+
+
+    button.innerText =
+      "📷 QR 연속 스캔 시작";
+
+
+    alert(
+      "카메라 실행 오류"
+    );
+
+  }
+
+}
+
+
+/* =====================================================
+카메라 종료
+===================================================== */
+
+async function stopScanner(){
+
+  const button =
+    document.getElementById(
+      "scanButton"
+    );
+
+
+  try{
+
+    if(
+      scanner
+    ){
+
+      try{
+
+        if(
+          scanner.isScanning
+        ){
+
+          await scanner.stop();
+
+        }
+
+      }catch(error){}
+
+
+      try{
+
+        scanner.clear();
+
+      }catch(error){}
+
+    }
+
+  }finally{
+
+    scanner =
+      null;
+
+    scanning =
+      false;
+
+
+    document
+      .getElementById(
+        "reader"
+      )
+      .innerHTML =
+      "";
+
+
+    button.innerText =
+      "📷 QR 연속 스캔 시작";
+
+  }
+
+}
+
+
+/* =====================================================
+QR 큰 성공음
+===================================================== */
+
+function initScanAudio(){
+
+  try{
+
+    const AudioContextClass =
+      window.AudioContext ||
+      window.webkitAudioContext;
+
+
+    if(
+      !AudioContextClass
+    ){
+
+      return;
+
+    }
+
+
+    if(
+      !scanAudioContext
+    ){
+
+      scanAudioContext =
+        new AudioContextClass();
+
+    }
+
+
+    if(
+      scanAudioContext.state ===
+      "suspended"
+    ){
+
+      scanAudioContext.resume();
+
+    }
+
+  }catch(error){
+
+    console.log(
+      "오디오 준비 실패",
+      error
+    );
+
+  }
+
+}
+
+
+function playScanBeep(){
+
+  try{
+
+    initScanAudio();
+
+
+    if(
+      !scanAudioContext
+    ){
+
+      return;
+
+    }
+
+
+    const now =
+      scanAudioContext
+        .currentTime;
+
+
+    const oscillator =
+      scanAudioContext
+        .createOscillator();
+
+
+    const gainNode =
+      scanAudioContext
+        .createGain();
+
+
+    oscillator.type =
+      "square";
+
+
+    oscillator.frequency
+      .setValueAtTime(
+        1350,
+        now
+      );
+
+
+    gainNode.gain
+      .setValueAtTime(
+        0.85,
+        now
+      );
+
+
+    gainNode.gain
+      .exponentialRampToValueAtTime(
+        0.05,
+        now + 0.22
+      );
+
+
+    oscillator.connect(
+      gainNode
+    );
+
+
+    gainNode.connect(
+      scanAudioContext.destination
+    );
+
+
+    oscillator.start(
+      now
+    );
+
+
+    oscillator.stop(
+      now + 0.22
+    );
+
+  }catch(error){
+
+    console.log(
+      "QR 스캔음 재생 실패",
+      error
+    );
+
+  }
+
+}
+
+
+/* =====================================================
+QR 메시지
+===================================================== */
+
+function showTemporaryMessage(
+  text
+){
+
+  const old =
+    document.getElementById(
+      "scanToast"
+    );
+
+
+  if(
+    old
+  ){
+
+    old.remove();
+
+  }
+
+
+  const box =
+    document.createElement(
+      "div"
+    );
+
+
+  box.id =
+    "scanToast";
+
+  box.className =
+    "info";
+
+  box.style.fontWeight =
+    "bold";
+
+  box.innerText =
+    text;
+
+
+  document
+    .getElementById(
+      "reader"
+    )
+    .insertAdjacentElement(
+      "afterend",
+      box
+    );
+
+
+  setTimeout(
+
+    () => {
+
+      if(
+        box.parentNode
+      ){
+
+        box.remove();
+
+      }
+
+    },
+
+    1700
+
+  );
+
+}
+
+
+/* =====================================================
+PPE
+===================================================== */
+
+function togglePPEAll(
+  master
+){
+
+  document
+    .querySelectorAll(
+      ".ppeItem"
+    )
+    .forEach(
+      item =>
+        item.checked =
+        master.checked
+    );
+
+
+  checkPPE();
+
+}
+
+
+function checkPPE(){
+
+  const complete =
+    [
+      "ppe1",
+      "ppe2",
+      "ppe3"
+    ]
+    .every(
+      id =>
+        document
+          .getElementById(
+            id
+          )
+          .checked
+    );
+
+
+  document
+    .getElementById(
+      "ppeAll"
+    )
+    .checked =
+    complete;
+
+
+  const status =
+    document.getElementById(
+      "ppeStatus"
+    );
+
+
+  if(
+    complete
+  ){
+
+    status.innerText =
+      "✅ PPE 점검완료 · 투입 가능";
+
+    status.style.background =
+      "#e6f4ea";
+
+    status.style.color =
+      "#188038";
+
+  }else{
+
+    status.innerText =
+      "⚠️ PPE 점검 미완료 · 투입 보류";
+
+    status.style.background =
+      "#fce8e6";
+
+    status.style.color =
+      "#d93025";
+
+  }
+
+  const qbtn=document.getElementById("quickEntryButton");
+  if(qbtn) qbtn.disabled=!complete || entryQueue.length===0;
+  updateTeamSetupState();
+}
+
+
+function resetPPE(){
+
+  [
+    "ppe1",
+    "ppe2",
+    "ppe3",
+    "ppeAll"
+  ]
+  .forEach(
+    id => {
+
+      document
+        .getElementById(
+          id
+        )
+        .checked =
+        false;
+
+    }
+  );
+
+
+  const status =
+    document.getElementById(
+      "ppeStatus"
+    );
+
+
+  status.innerText =
+    "PPE 점검 대기";
+
+  status.style.background =
+    "#eee";
+
+  status.style.color =
+    "#333";
+
+
+  updateTeamSetupState();
+}
+
+
+/* =====================================================
+일괄 진입
+===================================================== */
+
+
+async function quickEntryMembers(){
+  if(entrySubmitting)return;
+  const site=(document.getElementById("site")||{}).value||"";
+  const officer=((document.getElementById("officer")||{}).value||"").trim();
+  if(!site){alert("화재현장을 선택하세요.");return;}
+  if(!officer){alert("안전점검관 성명을 입력하세요.");return;}
+  if(entryQueue.length===0){alert("투입대기 명단에 대원을 추가하세요.");return;}
+  if(!isPPEComplete()){alert("PPE 3개 항목을 모두 확인하세요.");return;}
+  if(!confirm("PPE 완료 대원 "+entryQueue.length+"명을 조·위치정보 없이 즉시 투입하시겠습니까?"))return;
+
+  entrySubmitting=true;
+  const qbtn=document.getElementById("quickEntryButton");
+  if(qbtn){qbtn.disabled=true;qbtn.innerText="⏳ 투입 처리중...";}
+  const members=[...entryQueue];
+  const form=new URLSearchParams();
+  form.append("action","batchEntry"); form.append("site",site); form.append("officer",officer);
+  form.append("teamName",""); form.append("entryDirection",""); form.append("activityFloor",""); form.append("detailLocation","");
+  form.append("members",JSON.stringify(members.map(m=>({id:m.id,name:m.name}))));
+  try{
+    const response=await fetch(API,{method:"POST",body:form});
+    const data=await response.json();
+    alert(data.message||"처리 완료");
+    if(data.successCount>0){
+      const successIds=new Set((data.succeeded||[]).map(x=>String(x.id)));
+      members.forEach(m=>{if(successIds.size===0||successIds.has(String(m.id)))v23SetMemberMeta(m.id,{teamName:"",entryDirection:"",activityFloor:"",detailLocation:"",history:[]});});
+      entryQueue=entryQueue.filter(m=>!successIds.has(String(m.id)));
+      renderQueue();
+      if(entryQueue.length===0) resetPPE(); else { checkPPE(); renderTeamMembers(); }
+      void loadInsideMembers();
+    }
+  }catch(e){console.error(e);alert("즉시 투입 기록 오류");}
+  finally{entrySubmitting=false;if(qbtn){qbtn.innerText="⚡ 즉시 투입";qbtn.disabled=!(entryQueue.length>0&&isPPEComplete());} updateTeamSetupState();}
+}
+
+async function batchEntryMembers(){
+
+  if(
+    entrySubmitting
+  ){
+
+    return;
+
+  }
+
+
+  const site =
+    document
+      .getElementById(
+        "site"
+      )
+      .value;
+
+
+  const officer =
+    document
+      .getElementById(
+        "officer"
+      )
+      .value
+      .trim();
+
+
+  if(
+    !site
+  ){
+
+    alert(
+      "화재현장을 선택하세요."
+    );
+
+    return;
+
+  }
+
+
+  if(
+    !officer
+  ){
+
+    alert(
+      "안전점검관 성명을 입력하세요."
+    );
+
+    return;
+
+  }
+
+
+  if(
+    entryQueue.length === 0
+  ){
+
+    alert(
+      "투입대기 명단에 대원을 추가하세요."
+    );
+
+    return;
+
+  }
+
+
+  const ppeOK =
+    [
+      "ppe1",
+      "ppe2",
+      "ppe3"
+    ]
+    .every(
+      id =>
+        document
+          .getElementById(
+            id
+          )
+          .checked
+    );
+
+
+  if(
+    !ppeOK
+  ){
+
+    alert(
+      "투입대기 대원 전체의 PPE를 확인한 후 3개 항목을 모두 체크하세요."
+    );
+
+    return;
+
+  }
+
+
+  const selectedTeamMembers = getSelectedTeamMembers();
+  const resolvedTeam = v31ResolveTeam(selectedTeamMembers);
+  const teamName = resolvedTeam.teamName;
+  const activityNo = resolvedTeam.activityNo;
+  const detailLocation = document.getElementById("detailLocation").value.trim();
+
+  if(selectedTeamMembers.length < 2){ alert("조 편성을 위해 투입 대원을 2명 이상 선택하세요."); return; }
+  if(!entryDirection){ alert("진입 방면(A/B/C/D)을 선택하세요."); return; }
+  if(!activityFloor){ alert("활동층(화점층/직상층/직하층/기타)을 선택하세요."); return; }
+
+  if(
+    !confirm(
+      teamName + " · " + activityNo + "차 활동 · " + selectedTeamMembers.length + "명을 투입하시겠습니까?\n" +
+      entryDirection + " → " + activityFloor + (detailLocation ? " → " + detailLocation : "")
+    )
+  ){
+
+    return;
+
+  }
+
+
+  entrySubmitting =
+    true;
+
+
+  const button =
+    document.getElementById(
+      "batchEntryButton"
+    );
+
+
+  const progress =
+    document.getElementById(
+      "entryProgress"
+    );
+
+
+  button.disabled =
+    true;
+
+  button.innerText =
+    "⏳ 일괄 진입 처리중...";
+
+  progress.innerText =
+    "⏳ 일괄 진입 기록 중...";
+
+
+  const form =
+    new URLSearchParams();
+
+
+  form.append(
+    "action",
+    "batchEntry"
+  );
+
+
+  form.append(
+    "site",
+    site
+  );
+
+
+  form.append(
+    "officer",
+    officer
+  );
+
+  // V2 메타데이터: 서버가 지원하면 저장, 미지원 시 기존 V1 진입기록은 그대로 처리
+  form.append("teamName", teamName);
+  form.append("activityNo", activityNo);
+  form.append("entryDirection", entryDirection);
+  form.append("activityFloor", activityFloor);
+  form.append("detailLocation", detailLocation);
+
+
+  form.append(
+
+    "members",
+
+    JSON.stringify(
+
+      selectedTeamMembers.map(
+        member => ({
+
+          id:
+            member.id,
+
+          name:
+            member.name
+
+        })
+      )
+
+    )
+
+  );
+
+
+  try{
+
+    const response =
+      await fetch(
+
+        API,
+
+        {
+          method:"POST",
+          body:form
+        }
+
+      );
+
+
+    const data =
+      await response.json();
+
+
+    let message =
+      data.message ||
+      "처리 완료";
+
+
+    if(
+      data.failed &&
+      data.failed.length
+    ){
+
+      message +=
+        "\n\n처리 제외:";
+
+
+      data.failed.forEach(
+        item => {
+
+          message +=
+            "\n- " +
+            item.name +
+            ": " +
+            item.message;
+
+        }
+      );
+
+    }
+
+
+    alert(
+      message
+    );
+
+
+    if(
+      data.successCount > 0
+    ){
+
+      const successIds =
+        new Set(
+
+          (data.succeeded || [])
+            .map(
+              item =>
+                String(
+                  item.id
+                )
+            )
+
+        );
+
+
+      entryQueue =
+        entryQueue.filter(
+          member =>
+            !successIds.has(
+              String(
+                member.id
+              )
+            )
+        );
+
+
+      selectedTeamMembers.forEach(member=>{
+        if(successIds.has(String(member.id))){
+          v23SetMemberMeta(member.id,{
+            teamName:teamName,
+            teamActivityNo:activityNo,
+            entryDirection:entryDirection,
+            activityFloor:activityFloor,
+            detailLocation:detailLocation,
+            history:[{time:new Date().toLocaleTimeString("ko-KR",{hour:"2-digit",minute:"2-digit"}),activityFloor:activityFloor,detailLocation:detailLocation}]
+          });
+        }
+      });
+
+      renderQueue();
+
+      // V2.11: 성공한 경우에만 조 활동차수를 확정
+      const committedTeam=v31CommitTeam(selectedTeamMembers);
+
+      // 성공 대원의 조/활동차수 메타데이터 갱신
+      selectedTeamMembers.forEach(member=>{
+        if(successIds.has(String(member.id))){
+          const oldMeta=v23LoadMeta()[String(member.id)]||{};
+          v23SetMemberMeta(member.id,{
+            teamName:committedTeam.teamName,
+            teamActivityNo:committedTeam.activityNo,
+            entryDirection:entryDirection,
+            activityFloor:activityFloor,
+            detailLocation:detailLocation,
+            history:Array.isArray(oldMeta.history)?oldMeta.history:[]
+          });
+        }
+      });
+
+      // V2.3: 남은 대원은 PPE 완료 상태를 유지하여 다음 조를 바로 편성
+      if(entryQueue.length===0){
+        resetPPE();
+      }else{
+        selectedTeamMemberIds.clear();
+        entryDirection=""; activityFloor="";
+        document.querySelectorAll('#entryDirectionChoices .v2Choice,#activityFloorChoices .v2Choice,#extraFloorBox .v2Choice').forEach(b=>b.classList.remove('active'));
+        const ex=document.getElementById('extraFloorBox'); if(ex) ex.classList.remove('show');
+        const dl=document.getElementById('detailLocation'); if(dl) dl.value='';
+        checkPPE();
+        renderTeamMembers();
+        v31UpdateTeamPreviewAuto();
+      }
+
+      closeTeamSetup();
+      void loadInsideMembers();
+
+    }
+
+  }catch(error){
+
+    console.error(
+      error
+    );
+
+    alert(
+      "일괄 진입 기록 오류"
+    );
+
+  }finally{
+
+    entrySubmitting =
+      false;
+
+
+    button.disabled =
+      false;
+
+
+    button.innerText = "🔴 조 투입 승인";
+
+
+    progress.innerText =
+      "";
+
+  }
+
+}
+
+
+/* =====================================================
+체류시간 색상
+===================================================== */
+
+function getStayStatus(
+  minutes
+){
+
+  minutes =
+    Number(
+      minutes
+    ) || 0;
+
+
+  if(
+    minutes <= 20
+  ){
+
+    return{
+
+      className:
+        "stayNormal",
+
+      icon:
+        "🟢",
+
+      text:
+        "정상"
+
+    };
+
+  }
+
+
+  if(
+    minutes <= 25
+  ){
+
+    return{
+
+      className:
+        "stayCaution",
+
+      icon:
+        "🟠",
+
+      text:
+        "주의"
+
+    };
+
+  }
+
+
+  if(
+    minutes <= 30
+  ){
+
+    return{
+
+      className:
+        "stayWarning",
+
+      icon:
+        "🔴",
+
+      text:
+        "경고"
+
+    };
+
+  }
+
+
+  return{
+
+    className:
+      "stayCritical",
+
+    icon:
+      "⚠️",
+
+    text:
+      "장시간 체류 - 즉시 확인"
+
+  };
+
+}
+
+
+/* =====================================================
+현재 내부대원
+===================================================== */
+
+
+function v19TeamInfo(member){
+  const vm=v23LoadMeta()[String(member.memberId)]||{};
+  const team=vm.teamName||"조 미지정";
+  const activityNo=Number(vm.teamActivityNo)||1;
+  return {team,activityNo};
+}
+function v19TeamNumber(team){
+  const m=String(team||"").match(/^(\d+)조$/);
+  return m?Number(m[1]):999999;
+}
+function v19TeamColorClass(team){
+  const n=v19TeamNumber(team);
+  return n===999999 ? "teamC0" : "teamC"+(((n-1)%8)+1);
+}
+function v20TeamLocation(members,team){
+  const vals=(members||[]).filter(m=>v19TeamInfo(m).team===team).map(m=>{
+    const vm=v23LoadMeta()[String(m.memberId)]||{};
+    return {
+      dir:vm.entryDirection||"미지정",
+      floor:vm.activityFloor||"미지정",
+      detail:vm.detailLocation||"세부장소 미지정"
+    };
+  });
+  if(!vals.length)return "위치 미지정";
+  const one=(key,mixed)=>{
+    const u=[...new Set(vals.map(v=>v[key]))];
+    return u.length===1?u[0]:mixed;
+  };
+  return one("dir","방면 혼재")+" / "+one("floor","활동층 혼재")+" / "+one("detail","세부장소 혼재");
+}
+function v19AddTeamDivider(target,team,activityNo,count,locationText){
+  const d=document.createElement("div");
+  d.className="teamDividerV19 "+v19TeamColorClass(team);
+  d.dataset.team=team;
+  d.innerHTML=
+    '<span class="teamBadgeV19">'+escapeHtml(team)+'</span>'+
+    '<span class="teamMetaV19">'+Number(activityNo||1)+'차 활동 · '+Number(count||0)+'명</span>'+
+    '<span class="teamLocationV20">'+escapeHtml(locationText||"위치 미지정")+'</span>'+
+    '<label class="teamSelectV20" onclick="event.stopPropagation()">'+
+      '<input type="checkbox" class="teamSelectCheckV20"> 전체선택'+
+    '</label>';
+  const chk=d.querySelector(".teamSelectCheckV20");
+  chk.addEventListener("change",function(){
+    const root=target;
+    let active=false;
+    [...root.children].forEach(el=>{
+      if(el===d){ active=true; return; }
+      if(active && el.classList && el.classList.contains("teamDividerV19")) active=false;
+      if(active){
+        const c=el.querySelector && el.querySelector("input.insideCheck");
+        if(c){
+          c.checked=this.checked;
+          c.dispatchEvent(new Event("change",{bubbles:true}));
+        }
+      }
+    });
+  });
+  target.appendChild(d);
+}
+
+async function loadInsideMembers(){
+
+  if(
+    insideLoading
+  ){
+
+    return;
+
+  }
+
+
+  insideLoading =
+    true;
+
+
+  const refreshButton =
+    document.getElementById(
+      "insideRefreshBtn"
+    );
+
+
+  if(
+    refreshButton
+  ){
+
+    refreshButton.disabled =
+      true;
+
+    const refreshMain =
+      refreshButton.querySelector(".refreshMainV22");
+    if(refreshMain){
+      refreshMain.textContent = "⏳ 처리중...";
+    }
+
+  }
+
+
+  const site =
+    document
+      .getElementById(
+        "site"
+      )
+      .value;
+
+
+  const list =
+    document.getElementById(
+      "insideList"
+    );
+
+
+  list.innerHTML =
+    "";
+
+
+  if(
+    !site
+  ){
+
+    document
+      .getElementById(
+        "insideCount"
+      )
+      .innerText =
+      "🔴 현재 현장 내부 0명";
+
+
+    updateSelectedCount();
+
+
+    insideLoading =
+      false;
+
+
+    if(
+      refreshButton
+    ){
+
+      refreshButton.disabled =
+        false;
+
+      const refreshMain =
+        refreshButton.querySelector(".refreshMainV22");
+      if(refreshMain){
+        refreshMain.textContent = "🔄 현황 새로고침";
+      }
+
+    }
+
+
+    return;
+
+  }
+
+
+  try{
+
+    const response =
+      await fetch(
+
+        API +
+        "?action=inside&site=" +
+        encodeURIComponent(
+          site
+        ) +
+        "&t=" +
+        Date.now()
+
+      );
+
+
+    const data =
+      await response.json();
+
+
+    if(
+      !data.success
+    ){
+
+      return;
+
+    }
+
+
+    document
+      .getElementById(
+        "insideCount"
+      )
+      .innerText =
+      "🔴 현재 현장 내부 " +
+      data.members.length +
+      "명";
+
+
+    const v19Members=[...data.members].sort((a,b)=>{
+      const at=v19TeamInfo(a).team, bt=v19TeamInfo(b).team;
+      const an=v19TeamNumber(at), bn=v19TeamNumber(bt);
+      if(an!==bn)return an-bn;
+      return 0;
+    });
+    const v19Counts={};
+    v19Members.forEach(m=>{
+      const ti=v19TeamInfo(m);
+      v19Counts[ti.team]=(v19Counts[ti.team]||0)+1;
+    });
+    let v19LastTeam=null;
+
+    v19Members.forEach(
+      member => {
+        const v19Info=v19TeamInfo(member);
+        if(v19Info.team!==v19LastTeam){
+          v19LastTeam=v19Info.team;
+          v19AddTeamDivider(list,v19Info.team,v19Info.activityNo,v19Counts[v19Info.team],v20TeamLocation(v19Members,v19Info.team));
+        }
+
+        const row =
+          document.createElement(
+            "div"
+          );
+
+
+        const stay =
+          getStayStatus(
+            member.currentMinutes
+          );
+
+
+        row.className =
+          "memberRow " +
+          stay.className;
+
+
+        row.innerHTML =
+
+          '<input type="checkbox" class="insideCheck" ' +
+
+          'data-id="' +
+          escapeAttr(
+            member.memberId
+          ) +
+          '" ' +
+
+          'data-name="' +
+          escapeAttr(
+            member.memberName
+          ) +
+          '" ' +
+
+          'onchange="updateSelectedCount()">' +
+
+          '<div class="memberDetail">' +
+
+          '<div class="memberLine">' +
+
+          escapeHtml(
+            getMemberDisplay(
+              member.memberId,
+              member.memberName
+            )
+          ) +
+
+          '</div>' +
+
+          '<span class="memberId compactId">' +
+          escapeHtml(member.memberId) +
+          '</span>' +
+
+          (function(){
+            const vm=v23LoadMeta()[String(member.memberId)]||{};
+            const floor=vm.activityFloor||'미지정';
+            const team=vm.teamName||'미지정';
+            const dir=vm.entryDirection||'미지정';
+            const detail=vm.detailLocation||'세부장소 미지정';
+            return '<div class="insideCompactLocation">'+
+              '<span class="insideLocText">'+escapeHtml(team)+(vm.teamActivityNo?' · '+Number(vm.teamActivityNo)+'차':'')+' · '+escapeHtml(dir)+' / </span>'+
+              '<span class="floorMini '+v23FloorClass(floor)+'">'+escapeHtml(floor)+'</span>'+
+              '<span class="insideLocText"> / '+escapeHtml(detail)+'</span>'+
+              '</div>';
+          })() +
+
+          '<div class="insideCompactBottom">' +
+            '<span>진입 '+escapeHtml(member.entryTime)+' · 현재 '+Number(member.currentMinutes)+'분 · '+Number(member.entryCount)+'회차</span>'+
+            '<span class="insideStatus '+stay.className+'">'+stay.icon+' '+stay.text+'</span>'+
+          '</div>' +
+
+          '</div>';
+
+
+        list.appendChild(
+          row
+        );
+
+      }
+    );
+
+
+    updateV23Summary(data.members);
+
+    selectAllState =
+      false;
+
+
+    updateSelectedCount();
+
+  }catch(error){
+
+    console.error(
+      error
+    );
+
+
+    alert(
+      "현황을 불러오는 중 오류가 발생했습니다."
+    );
+
+  }finally{
+
+    insideLoading =
+      false;
+
+
+    if(
+      refreshButton
+    ){
+
+      refreshButton.disabled =
+        false;
+
+      const refreshMain =
+        refreshButton.querySelector(".refreshMainV22");
+      if(refreshMain){
+        refreshMain.textContent = "🔄 현황 새로고침";
+      }
+
+    }
+
+  }
+
+}
+
+
+/* =====================================================
+전체 선택
+===================================================== */
+
+function toggleSelectAll(){
+
+  selectAllState =
+    !selectAllState;
+
+
+  document
+    .querySelectorAll(
+      ".insideCheck"
+    )
+    .forEach(
+      item =>
+        item.checked =
+        selectAllState
+    );
+
+
+  updateSelectedCount();
+
+}
+
+
+function updateSelectedCount(){
+
+  const count =
+    document
+      .querySelectorAll(
+        ".insideCheck:checked"
+      )
+      .length;
+
+
+  document
+    .getElementById(
+      "selectedCount"
+    )
+    .innerText =
+    "선택 대원 " +
+    count +
+    "명";
+
+}
+
+
+/* =====================================================
+일괄 철수
+===================================================== */
+
+async function batchExitMembers(){
+
+  if(
+    exitSubmitting
+  ){
+
+    return;
+
+  }
+
+
+  const site =
+    document
+      .getElementById(
+        "site"
+      )
+      .value;
+
+
+  const officer =
+    document
+      .getElementById(
+        "officer"
+      )
+      .value
+      .trim();
+
+
+  if(
+    !site
+  ){
+
+    alert(
+      "화재현장을 선택하세요."
+    );
+
+    return;
+
+  }
+
+
+  if(
+    !officer
+  ){
+
+    alert(
+      "안전점검관 성명을 입력하세요."
+    );
+
+    return;
+
+  }
+
+
+  const checked =
+    Array.from(
+
+      document
+        .querySelectorAll(
+          ".insideCheck:checked"
+        )
+
+    );
+
+
+  if(
+    !checked.length
+  ){
+
+    alert(
+      "철수할 대원을 선택하세요."
+    );
+
+    return;
+
+  }
+
+
+  if(
+    !confirm(
+      checked.length +
+      "명을 철수 처리하시겠습니까?"
+    )
+  ){
+
+    return;
+
+  }
+
+
+  exitSubmitting =
+    true;
+
+
+  const form =
+    new URLSearchParams();
+
+
+  form.append(
+    "action",
+    "batchExit"
+  );
+
+
+  form.append(
+    "site",
+    site
+  );
+
+
+  form.append(
+    "officer",
+    officer
+  );
+
+
+  form.append(
+
+    "members",
+
+    JSON.stringify(
+
+      checked.map(
+        item => ({
+
+          id:
+            item.dataset.id,
+
+          name:
+            item.dataset.name
+
+        })
+      )
+
+    )
+
+  );
+
+
+  try{
+
+    const response =
+      await fetch(
+
+        API,
+
+        {
+          method:"POST",
+          body:form
+        }
+
+      );
+
+
+    const data =
+      await response.json();
+
+
+    let message =
+      data.message ||
+      "처리 완료";
+
+
+    if(
+      data.failed &&
+      data.failed.length
+    ){
+
+      message +=
+        "\n\n처리 제외:";
+
+
+      data.failed.forEach(
+        item => {
+
+          message +=
+            "\n- " +
+            item.name +
+            ": " +
+            item.message;
+
+        }
+      );
+
+    }
+
+
+    alert(
+      message
+    );
+
+
+    void loadInsideMembers();
+
+  }catch(error){
+
+    console.error(
+      error
+    );
+
+
+    alert(
+      "일괄 철수 처리 오류"
+    );
+
+  }finally{
+
+    exitSubmitting =
+      false;
+
+  }
+
+}
+
+
+/* =====================================================
+현장 활동 현황 열기
+===================================================== */
+
+async function openDashboard(){
+
+  const site =
+    document
+      .getElementById(
+        "site"
+      )
+      .value;
+
+
+  if(
+    !site
+  ){
+
+    alert(
+      "먼저 화재현장을 선택하세요."
+    );
+
+    return;
+
+  }
+
+
+  if(
+    scanning
+  ){
+
+    await stopScanner();
+
+  }
+
+
+  document
+    .getElementById(
+      "mainPage"
+    )
+    .style.display =
+    "none";
+
+
+  document
+    .getElementById(
+      "dashboardPage"
+    )
+    .style.display =
+    "block";
+
+
+  window.scrollTo(
+    0,
+    0
+  );
+
+
+  // 현황 화면에 들어오자마자 1회 조회
+  await loadDashboard(
+    false
+  );
+
+
+  // 그 다음부터 60초마다 자동갱신
+  startDashboardAutoRefresh();
+
+}
+
+
+/* =====================================================
+현장 활동 현황 닫기
+===================================================== */
+
+function closeDashboard(){
+
+  // 화면을 나가면 자동갱신 중지
+  stopDashboardAutoRefresh();
+
+
+  document
+    .getElementById(
+      "dashboardPage"
+    )
+    .style.display =
+    "none";
+
+
+  document
+    .getElementById(
+      "mainPage"
+    )
+    .style.display =
+    "block";
+
+
+  window.scrollTo(
+    0,
+    0
+  );
+
+}
+
+
+/* =====================================================
+60초 자동갱신 시작
+===================================================== */
+
+function startDashboardAutoRefresh(){
+
+  stopDashboardAutoRefresh();
+
+
+  dashboardAutoRefreshTimer =
+    setInterval(
+
+      function(){
+
+        const dashboardPage =
+          document.getElementById(
+            "dashboardPage"
+          );
+
+
+        if(
+          dashboardPage &&
+          dashboardPage.style.display !==
+          "none" &&
+          !document.hidden
+        ){
+
+          loadDashboard(
+            true
+          );
+
+        }
+
+      },
+
+      DASHBOARD_AUTO_REFRESH_MS
+
+    );
+
+}
+
+
+/* =====================================================
+60초 자동갱신 중지
+===================================================== */
+
+function stopDashboardAutoRefresh(){
+
+  if(
+    dashboardAutoRefreshTimer
+  ){
+
+    clearInterval(
+      dashboardAutoRefreshTimer
+    );
+
+
+    dashboardAutoRefreshTimer =
+      null;
+
+  }
+
+}
+
+
+/* =====================================================
+화면을 다시 켰을 때 즉시 최신화
+===================================================== */
+
+document.addEventListener(
+
+  "visibilitychange",
+
+  function(){
+
+    if(
+      !document.hidden
+    ){
+
+      const dashboardPage =
+        document.getElementById(
+          "dashboardPage"
+        );
+
+
+      if(
+        dashboardPage &&
+        dashboardPage.style.display !==
+        "none"
+      ){
+
+        loadDashboard(
+          true
+        );
+
+      }
+
+    }
+
+  }
+
+);
+
+
+/* =====================================================
+지휘관 현장 활동 현황
+isAutoRefresh = true이면
+자동갱신이므로 버튼을 처리중으로 바꾸지 않음
+===================================================== */
+
+async function loadDashboard(
+  isAutoRefresh = false
+){
+
+  if(
+    dashboardLoading
+  ){
+
+    return;
+
+  }
+
+
+  dashboardLoading =
+    true;
+
+
+  const refreshButton =
+    document.getElementById(
+      "dashboardRefreshBtn"
+    );
+
+
+  // 직접 눌렀을 때만 처리중 표시
+  if(
+    refreshButton &&
+    !isAutoRefresh
+  ){
+
+    refreshButton.disabled =
+      true;
+
+    const refreshMain =
+      refreshButton.querySelector(".refreshMainV22");
+    if(refreshMain){
+      refreshMain.textContent = "⏳ 처리중...";
+    }
+
+  }
+
+
+  const site =
+    document
+      .getElementById(
+        "site"
+      )
+      .value;
+
+
+  if(
+    !site
+  ){
+
+    dashboardLoading =
+      false;
+
+
+    if(
+      refreshButton
+    ){
+
+      refreshButton.disabled =
+        false;
+
+      const refreshMain =
+        refreshButton.querySelector(".refreshMainV22");
+      if(refreshMain){
+        refreshMain.textContent = "🔄 현황 새로고침";
+      }
+
+    }
+
+
+    return;
+
+  }
+
+
+  document
+    .getElementById(
+      "dashboardSiteName"
+    )
+    .innerText =
+    site;
+
+
+  try{
+
+    const response =
+      await fetch(
+
+        API +
+        "?action=dashboard&site=" +
+        encodeURIComponent(
+          site
+        ) +
+        "&t=" +
+        Date.now()
+
+      );
+
+
+    const data =
+      await response.json();
+
+
+    if(
+      !data.success
+    ){
+
+      if(
+        !isAutoRefresh
+      ){
+
+        alert(
+          "현장 현황을 불러오지 못했습니다."
+        );
+
+      }
+
+      return;
+
+    }
+
+
+    const dashboard =
+      data.dashboard;
+
+
+    document
+      .getElementById(
+        "dashInside"
+      )
+      .innerText =
+      dashboard.insideCount;
+
+
+    document
+      .getElementById(
+        "dashUnique"
+      )
+      .innerText =
+      dashboard.uniqueMemberCount;
+
+
+    document
+      .getElementById(
+        "dashExited"
+      )
+      .innerText =
+      dashboard.exitedCount;
+
+
+    let green = 0;
+    let orange = 0;
+    let red = 0;
+    let critical = 0;
+
+
+    (
+      dashboard.insideMembers ||
+      []
+    )
+    .forEach(
+      member => {
+
+        const minutes =
+          Number(
+            member.currentMinutes
+          ) || 0;
+
+
+        if(
+          minutes <= 20
+        ){
+
+          green++;
+
+        }else if(
+          minutes <= 25
+        ){
+
+          orange++;
+
+        }else if(
+          minutes <= 30
+        ){
+
+          red++;
+
+        }else{
+
+          critical++;
+
+        }
+
+      }
+    );
+
+
+    document
+      .getElementById(
+        "stayGreenCount"
+      )
+      .innerText =
+      green +
+      "명";
+
+
+    document
+      .getElementById(
+        "stayOrangeCount"
+      )
+      .innerText =
+      orange +
+      "명";
+
+
+    document
+      .getElementById(
+        "stayRedCount"
+      )
+      .innerText =
+      red +
+      "명";
+
+    const stayCriticalCount =
+      document.getElementById("stayCriticalCount");
+    if(stayCriticalCount){
+      stayCriticalCount.innerText = critical + "명";
+    }
+
+    updateCriticalSummary(
+      critical
+    );
+
+
+    window.__dashboardInsideMembers =
+      dashboard.insideMembers || [];
+
+    drawDashboardInside(
+      window.__dashboardInsideMembers
+    );
+
+
+    // 2번째 창에는 철수대원 명단을 표시하지 않는다.
+    // 3번째 창을 열 때만 렌더링하기 위해 데이터만 보관한다.
+    window.__dashboardExitedMembers =
+      dashboard.exitedMembers || [];
+
+
+    // 자동갱신 안내에 마지막 갱신시각 표시
+    const autoInfo =
+      document.getElementById(
+        "dashboardAutoRefreshInfo"
+      );
+
+
+    if(
+      autoInfo
+    ){
+
+      const now =
+        new Date();
+
+
+      autoInfo.innerText =
+        "60초 자동갱신 · 마지막 갱신 " +
+        now.toLocaleTimeString(
+          "ko-KR",
+          {
+            hour:"2-digit",
+            minute:"2-digit",
+            second:"2-digit",
+            hour12:false
+          }
+        );
+
+    }
+
+  }catch(error){
+
+    console.error(
+      error
+    );
+
+
+    // 자동갱신 실패 시 팝업 반복 방지
+    if(
+      !isAutoRefresh
+    ){
+
+      alert(
+        "현장 현황 통신 오류"
+      );
+
+    }
+
+  }finally{
+
+    dashboardLoading =
+      false;
+
+
+    if(
+      refreshButton
+    ){
+
+      refreshButton.disabled =
+        false;
+
+      const refreshMain =
+        refreshButton.querySelector(".refreshMainV22");
+      if(refreshMain){
+        refreshMain.textContent = "🔄 현황 새로고침";
+      }
+
+    }
+
+  }
+
+}
+
+
+/* =====================================================
+31분 이상
+===================================================== */
+
+function updateCriticalSummary(
+  count
+){
+
+  const box =
+    document.getElementById(
+      "criticalSummary"
+    );
+
+
+  if(
+    count > 0
+  ){
+
+    box.classList.add(
+      "hasCritical"
+    );
+
+
+    box.innerText =
+      "⚠️ 31분 이상 즉시 확인 대상 " +
+      count +
+      "명";
+
+  }else{
+
+    box.classList.remove(
+      "hasCritical"
+    );
+
+
+    box.innerText =
+      "✅ 31분 이상 즉시 확인 대상 0명";
+
+  }
+
+}
+
+
+/* =====================================================
+현장 내부 대원 표시
+===================================================== */
+
+
+function v28TeamNo(name){
+  const m=String(name||"").match(/^(\d+)조$/);
+  return m?Number(m[1]):999999;
+}
+function v28DrawTeamStatus(list){
+  const area=document.getElementById("teamStatusV28");
+  if(!area)return;
+  const meta=v23LoadMeta(), groups={};
+  (list||[]).forEach(m=>{
+    const vm=meta[String(m.memberId)]||{};
+    const k=vm.teamName||"조 미지정";
+    (groups[k]||(groups[k]=[])).push({m,vm});
+  });
+  let out='<div class="v28TeamTitle">👥 조별 현황</div><div class="v28TeamList">';
+  const keys=Object.keys(groups).sort((a,b)=>v28TeamNo(a)-v28TeamNo(b));
+  if(!keys.length) out+='<div class="empty">활동 중인 조가 없습니다.</div>';
+  keys.forEach(k=>{
+    const g=groups[k];
+    const dirs=[...new Set(g.map(x=>x.vm.entryDirection||"미지정"))];
+    const floors=[...new Set(g.map(x=>x.vm.activityFloor||"미지정"))];
+    const details=[...new Set(g.map(x=>x.vm.detailLocation||"세부장소 미지정"))];
+    const dispersed=dirs.length>1||floors.length>1||details.length>1;
+    const maxMin=Math.max(...g.map(x=>Number(x.m.currentMinutes)||0));
+    const actNo=Math.max(...g.map(x=>Number(x.vm.teamActivityNo)||1));
+    out+='<div class="v28TeamRow"><span class="v28TeamName">'+escapeHtml(k)+' · '+actNo+'차 활동 · '+g.length+'명</span>'+
+      '<span class="v28TeamLoc">'+(dispersed?'⚠ 활동위치 분산':escapeHtml(dirs[0])+' / '+escapeHtml(floors[0])+' / '+escapeHtml(details[0]))+'</span>'+
+      '<span class="v28TeamTime">⏱ '+maxMin+'분</span></div>';
+  });
+  area.innerHTML=out+'</div>';
+}
+function v28NextTeamName(){
+  const meta=v23LoadMeta();
+  let max=0;
+  Object.values(meta).forEach(v=>{
+    const n=v28TeamNo(v&&v.teamName);
+    if(n<999999)max=Math.max(max,n);
+  });
+  return (max+1)+"조";
+}
+
+function drawDashboardInside(list){
+  const area=document.getElementById("dashboardInside");
+  if(!area)return;
+  area.innerHTML="";
+  const selectedBox=document.getElementById("dashboardSelectedCount");
+  if(selectedBox)selectedBox.textContent="선택 대원 0명";
+
+  const c=document.getElementById("v28ActiveCount");
+  if(c)c.textContent=(list||[]).length+"명";
+
+  if(!list || !list.length){
+    area.innerHTML='<div class="empty">현재 현장 활동 대원이 없습니다.</div>';
     return;
   }
 
-  sheet_(SHEETS.CHANGES)
-    .appendRow([
-      "CHG-" +
-        Utilities.getUuid(),
+  const sorted=[...list].sort((a,b)=>{
+    const an=v19TeamNumber(v19TeamInfo(a).team);
+    const bn=v19TeamNumber(v19TeamInfo(b).team);
+    return an-bn;
+  });
 
-      siteId,
-      memberId,
-      name,
-      item,
-      before,
-      after,
-      now
-    ]);
-}
+  const counts={};
+  sorted.forEach(m=>{
+    const ti=v19TeamInfo(m);
+    counts[ti.team]=(counts[ti.team]||0)+1;
+  });
 
+  let lastTeam=null;
 
-function getCurrentData_(siteId) {
+  sorted.forEach(member=>{
+    const info=v19TeamInfo(member);
 
-  const sh =
-    sheet_(SHEETS.CURRENT);
-
-  const values =
-    sh
-      .getDataRange()
-      .getValues();
-
-  const result = [];
-
-  for (
-    let i = 1;
-    i < values.length;
-    i++
-  ) {
-
-    const r = values[i];
-
-    if (
-      clean_(r[0]) !== siteId
-    ) {
-      continue;
+    if(info.team!==lastTeam){
+      lastTeam=info.team;
+      v19AddTeamDivider(area,info.team,info.activityNo,counts[info.team],v20TeamLocation(sorted,info.team));
     }
 
-    result.push({
-      siteId:
-        clean_(r[0]),
+    const row=document.createElement("div");
+    const stay=getStayStatus(member.currentMinutes);
+    row.className="memberRow "+stay.className;
 
-      memberId:
-        clean_(r[1]),
+    row.innerHTML =
+      '<input type="checkbox" class="insideCheck" '+
+      'data-id="'+escapeAttr(member.memberId)+'" '+
+      'data-name="'+escapeAttr(member.memberName)+'">'+
+      '<div class="memberDetail">'+
+        '<div class="memberLine">'+
+          escapeHtml(getMemberDisplay(member.memberId,member.memberName))+
+        '</div>'+
+        '<span class="memberId compactId">'+escapeHtml(member.memberId)+'</span>'+
+        (function(){
+          const vm=v23LoadMeta()[String(member.memberId)]||{};
+          const floor=vm.activityFloor||'미지정';
+          const team=vm.teamName||'미지정';
+          const dir=vm.entryDirection||'미지정';
+          const detail=vm.detailLocation||'세부장소 미지정';
+          return '<div class="insideCompactLocation">'+
+            '<span class="insideLocText">'+escapeHtml(team)+(vm.teamActivityNo?' · '+Number(vm.teamActivityNo)+'차':'')+' · '+escapeHtml(dir)+' / </span>'+
+            '<span class="floorMini '+v23FloorClass(floor)+'">'+escapeHtml(floor)+'</span>'+
+            '<span class="insideLocText"> / '+escapeHtml(detail)+'</span>'+
+          '</div>';
+        })()+
+        '<div class="insideCompactBottom">'+
+          '<span>진입 '+escapeHtml(member.entryTime)+' · 현재 '+Number(member.currentMinutes)+'분 · '+Number(member.entryCount)+'회차</span>'+
+          '<span class="insideStatus '+stay.className+'">'+stay.icon+' '+stay.text+'</span>'+
+        '</div>'+
+      '</div>';
 
-      name:
-        clean_(r[2]),
-
-      rank:
-        clean_(r[3]),
-
-      department:
-        clean_(r[4]),
-
-      team:
-        clean_(r[5]),
-
-      activityNo:
-        Number(r[6]) || 1,
-
-      direction:
-        clean_(r[7]),
-
-      floor:
-        clean_(r[8]),
-
-      detail:
-        clean_(r[9]),
-
-      entryTime:
-        formatDate_(r[10]),
-
-      status:
-        clean_(r[11]),
-
-      updatedAt:
-        formatDate_(r[12])
+    row.addEventListener("click",e=>{
+      if(e.target && e.target.matches('input[type="checkbox"]'))return;
+      openDashboardMemberDetail(member.memberId,member.memberName);
     });
+
+    area.appendChild(row);
+  });
+}
+function findDashboardInsideMember(memberId){
+  return (window.__dashboardInsideMembers||[]).find(m=>String(m.memberId)===String(memberId));
+}
+
+function openDashboardMemberDetail(memberId,memberName){
+  const member=findDashboardInsideMember(memberId);
+  if(!member)return;
+  const meta=v23LoadMeta(), vm=meta[String(memberId)]||{};
+  const display=getMemberDisplay(memberId,memberName);
+  const parts=String(display||"").split(" / ");
+  const name=parts[0]||memberName||"-";
+  const rank=parts[1]||"-";
+  const dept=parts.slice(2).join(" / ")||"-";
+  const floor=vm.activityFloor||"미지정";
+
+  let overlay=document.getElementById("dashboardDetailOverlay");
+  if(!overlay){
+    overlay=document.createElement("div");
+    overlay.id="dashboardDetailOverlay";
+    overlay.className="dashboardDetailOverlay";
+    overlay.onclick=e=>{if(e.target===overlay)closeDashboardMemberDetail();};
+    document.body.appendChild(overlay);
+  }
+  overlay.innerHTML=
+    '<div class="dashboardDetailSheet">'+
+      '<div class="sheetHeader"><b>대원 상세정보</b><button class="sheetClose" onclick="closeDashboardMemberDetail()">✕</button></div>'+
+      '<div class="sheetMemberTitle">🟢 '+escapeHtml(name)+' '+escapeHtml(rank)+' / '+escapeHtml(dept)+'</div>'+
+      '<div class="sheetLocation">'+escapeHtml(vm.teamName||"미지정")+' · '+escapeHtml(vm.entryDirection||"미지정")+
+        ' / <span class="floorMini '+v23FloorClass(floor)+'">'+escapeHtml(floor)+'</span> / '+escapeHtml(vm.detailLocation||"세부장소 미지정")+'</div>'+
+      '<div class="sheetInfo">'+
+        '진입시각 : <b>'+escapeHtml(member.entryTime||"-")+'</b><br>'+
+        '현재 체류 : <b>'+Number(member.currentMinutes)+'분</b><br>'+
+        '활동차수 : <b>'+Number(member.entryCount)+'회차</b><br>'+
+        '누적 활동시간 : <b>'+Number(member.totalMinutes)+'분</b>'+
+      '</div>'+
+      '<div class="sheetActions">'+
+        '<button class="sheetEdit" onclick="closeDashboardMemberDetail();editDashboardMemberLocation(\''+escapeAttr(memberId)+'\',\''+escapeAttr(memberName)+'\')">✏️ 위치정보 수정</button>'+
+        '<button class="sheetExit" onclick="closeDashboardMemberDetail()"></button>'+
+      '</div>'+
+    '</div>';
+  overlay.classList.add("show");
+}
+
+function closeDashboardMemberDetail(){
+  const overlay=document.getElementById("dashboardDetailOverlay");
+  if(overlay)overlay.classList.remove("show");
+}
+
+function editDashboardMemberLocation(memberId,memberName){
+  const meta=v23LoadMeta(), old=meta[String(memberId)]||{};
+  let overlay=document.getElementById("dashboardDetailOverlay");
+  if(!overlay){
+    overlay=document.createElement("div");
+    overlay.id="dashboardDetailOverlay";
+    overlay.className="dashboardDetailOverlay";
+    document.body.appendChild(overlay);
+  }
+  const floor=old.activityFloor||"";
+  const opts=["","화점층","직상층","직하층","상층부","하층부","지하층","옥상"];
+  const floorOptions=opts.map(v=>'<option value="'+escapeAttr(v)+'" '+(v===floor?'selected':'')+'>'+(v||"선택")+'</option>').join("");
+  overlay.innerHTML=
+    '<div class="dashboardDetailSheet">'+
+      '<div class="sheetHeader"><b>위치정보 수정</b><button class="sheetClose" onclick="closeDashboardMemberDetail()">✕</button></div>'+
+      '<div class="sheetMemberTitle">🟢 '+escapeHtml(getMemberDisplay(memberId,memberName))+'</div>'+
+      '<div class="locationEditForm">'+
+        '<label>조 편성<select id="editTeam"><option value="">미지정</option>'+
+          Array.from({length:Math.max(1,v28TeamNo(v28NextTeamName()))},(_,i)=>(i+1)+"조").map(v=>'<option '+(old.teamName===v?'selected':'')+'>'+v+'</option>').join("")+
+        '</select></label>'+
+        '<label>진입방면<select id="editDirection"><option value="">미지정</option>'+
+          ["A방면","B방면","C방면","D방면"].map(v=>'<option '+(old.entryDirection===v?'selected':'')+'>'+v+'</option>').join("")+
+        '</select></label>'+
+        '<label>활동층<select id="editFloor">'+floorOptions+'</select></label>'+
+        '<label>세부장소<input id="editDetail" value="'+escapeAttr(old.detailLocation||"")+'" placeholder="예: 기계실 / 1203호 / 계단실"></label>'+
+      '</div>'+
+      '<button class="sheetSave" onclick="saveDashboardMemberLocation(\''+escapeAttr(memberId)+'\')">저장</button>'+
+    '</div>';
+  overlay.classList.add("show");
+}
+
+function saveDashboardMemberLocation(memberId){
+  const key=String(memberId), meta=v23LoadMeta(), old=meta[key]||{};
+  const team=(document.getElementById("editTeam")||{}).value||"";
+  const dir=(document.getElementById("editDirection")||{}).value||"";
+  const floor=(document.getElementById("editFloor")||{}).value||"";
+  const detail=(document.getElementById("editDetail")||{}).value||"";
+  const history=Array.isArray(old.history)?old.history:[];
+  history.push({time:new Date().toLocaleTimeString("ko-KR",{hour:"2-digit",minute:"2-digit"}),teamName:team,entryDirection:dir,activityFloor:floor,detailLocation:detail});
+  v23SetMemberMeta(key,{teamName:team,entryDirection:dir,activityFloor:floor,detailLocation:detail,history});
+  closeDashboardMemberDetail();
+  loadDashboard(false);
+}
+
+
+/* =====================================================
+두번째 화면 선택대원 표시 / 일괄철수
+===================================================== */
+function updateDashboardSelectedCount(){
+  const box=document.getElementById("dashboardSelectedCount");
+  if(!box)return;
+  const count=document.querySelectorAll("#dashboardInside .insideCheck:checked").length;
+  box.textContent="선택 대원 "+count+"명";
+}
+
+async function dashboardBatchExit(){
+  const checked=Array.from(document.querySelectorAll("#dashboardInside .insideCheck:checked"));
+  if(!checked.length){
+    alert("철수할 대원을 선택하세요.");
+    return;
   }
 
-  return result;
+  // 메인화면에 혹시 남아 있는 선택은 해제하여 두번째 화면 선택만 처리한다.
+  document.querySelectorAll("#insideList .insideCheck").forEach(x=>x.checked=false);
+
+  await batchExitMembers();
+
+  // 서버 저장 후 두번째 화면을 최신 상태로 갱신
+  setTimeout(()=>loadDashboard(true),350);
 }
 
-
-function assertSiteActive_(siteId) {
-
-  const sh =
-    sheet_(SHEETS.SITES);
-
-  const values =
-    sh
-      .getDataRange()
-      .getValues();
-
-  for (
-    let i = 1;
-    i < values.length;
-    i++
-  ) {
-
-    if (
-      clean_(values[i][0]) ===
-      siteId
-    ) {
-
-      if (
-        clean_(values[i][4]) ===
-        "종료"
-      ) {
-        throw new Error(
-          "이미 종료된 현장입니다."
-        );
-      }
-
-      return;
-    }
+document.addEventListener("change",function(e){
+  if(e.target && e.target.matches("#dashboardInside .insideCheck")){
+    updateDashboardSelectedCount();
   }
+});
 
-  throw new Error(
-    "현장을 찾을 수 없습니다."
-  );
+
+/* =====================================================
+철수 대원 표시
+===================================================== */
+
+function openExitedPage(){
+  const dashboardPage=document.getElementById("dashboardPage");
+  const exitedPage=document.getElementById("exitedPageV23");
+  if(!dashboardPage || !exitedPage)return;
+
+  const siteName=document.getElementById("dashboardSiteName");
+  const exitSiteName=document.getElementById("exitedPageSiteName");
+  if(exitSiteName && siteName) exitSiteName.textContent=siteName.textContent;
+
+  dashboardPage.style.display="none";
+  exitedPage.style.display="block";
+
+  // 철수대원은 3번째 창을 클릭해 들어왔을 때만 화면에 생성한다.
+  drawDashboardExited(window.__dashboardExitedMembers || []);
+  window.scrollTo({top:0,behavior:"smooth"});
 }
 
-
-function uniqueMemberCount_(
-  history
-) {
-
-  const set = {};
-
-  history.forEach(
-    function(h) {
-      set[h.memberId] = true;
-    }
-  );
-
-  return Object.keys(set).length;
+function closeExitedPage(){
+  const dashboardPage=document.getElementById("dashboardPage");
+  const exitedPage=document.getElementById("exitedPageV23");
+  if(exitedPage) exitedPage.style.display="none";
+  if(dashboardPage) dashboardPage.style.display="block";
+  window.scrollTo({top:0,behavior:"smooth"});
 }
 
+function drawDashboardExited(
+  list
+){
 
-/* =========================================================
-   현장ID 자동 생성
-
-   예:
-   20260827-001
-   20260827-002
-========================================================= */
-
-function makeSiteId_() {
-
-  const tz =
-    Session
-      .getScriptTimeZone() ||
-    "Asia/Seoul";
-
-  const today =
-    Utilities.formatDate(
-      new Date(),
-      tz,
-      "yyyyMMdd"
+  const area =
+    document.getElementById(
+      "dashboardExited"
     );
 
-  const sh =
-    sheet_(SHEETS.SITES);
 
-  const values =
-    sh
-      .getDataRange()
-      .getValues();
+  area.innerHTML =
+    "";
 
-  let max = 0;
 
-  for (
-    let i = 1;
-    i < values.length;
-    i++
-  ) {
+  if(
+    !list.length
+  ){
 
-    const id =
-      clean_(values[i][0]);
+    area.innerHTML =
+      '<div class="empty">철수 완료 대원이 없습니다.</div>';
 
-    if (
-      id.indexOf(
-        today + "-"
-      ) !== 0
-    ) {
-      continue;
-    }
+    return;
 
-    const n =
-      Number(
-        id.split("-")[1]
+  }
+
+
+  list.forEach(
+    member => {
+
+      const div =
+        document.createElement(
+          "div"
+        );
+
+
+      div.className =
+        "commandMember exited";
+
+
+      const historyId =
+        "history_" +
+        sanitizeId(
+          member.memberId
+        ) +
+        "_exit";
+
+
+      div.innerHTML =
+
+        '<div class="commandName">🟢 ' +
+
+        escapeHtml(
+          getMemberDisplay(
+            member.memberId,
+            member.memberName
+          )
+        ) +
+
+        '</div>' +
+
+        '<div class="memberId">' +
+        escapeHtml(
+          member.memberId
+        ) +
+        '</div>' +
+
+        '<div class="commandInfo">' +
+
+        '현재 상태 : <b>철수</b><br>' +
+
+        '총 진입 : ' +
+        Number(
+          member.entryCount
+        ) +
+        '회<br>' +
+
+        '누적 활동 : <b>' +
+        Number(
+          member.totalMinutes
+        ) +
+        '분</b>' +
+
+        '</div>' +
+
+        '<button class="detailBtn" onclick="toggleHistory(\'' +
+        historyId +
+        '\')">' +
+
+        '📋 전체 활동이력 보기' +
+
+        '</button>' +
+
+        '<div id="' +
+        historyId +
+        '" class="history">' +
+
+        makeHistoryHTML(
+          member.records
+        ) +
+
+        '</div>';
+
+
+      area.appendChild(
+        div
       );
 
-    if (
-      !isNaN(n)
-    ) {
-      max =
-        Math.max(
-          max,
-          n
-        );
     }
-  }
-
-  return (
-    today +
-    "-" +
-    String(max + 1)
-      .padStart(3, "0")
   );
+
 }
 
 
-/* =========================================================
-   공통 함수
-========================================================= */
+/* =====================================================
+활동이력
+===================================================== */
 
-function sheet_(name) {
+function makeHistoryHTML(
+  records
+){
 
-  const sh =
-    SpreadsheetApp
-      .getActiveSpreadsheet()
-      .getSheetByName(name);
+  if(
+    !records ||
+    !records.length
+  ){
 
-  if (!sh) {
-    throw new Error(
-      "'" +
-      name +
-      "' 시트를 찾을 수 없습니다."
+    return(
+      "활동이력이 없습니다."
     );
+
   }
 
-  return sh;
-}
+
+  return records
+    .map(
+      record => {
+
+        const state =
+          record.status ===
+          "진입중"
+
+          ?
+
+          "🔴 현재 내부"
+
+          :
+
+          "🟢 철수완료";
 
 
-function clean_(value) {
+        return(
 
-  if (
-    value === null ||
-    value === undefined
-  ) {
-    return "";
-  }
+          '<div class="historyRow">' +
 
-  return String(value).trim();
-}
+          '<b>' +
+          Number(
+            record.sequence
+          ) +
+          '차 진입</b><br>' +
 
+          escapeHtml(
+            record.entryTime
+          ) +
 
-function bool_(value) {
+          ' → ' +
 
-  if (
-    value === true ||
-    value === 1
-  ) {
-    return true;
-  }
+          escapeHtml(
+            record.exitTime
+          ) +
 
-  const v =
-    clean_(value)
-      .toLowerCase();
+          '<br>' +
 
-  return [
-    "true",
-    "1",
-    "y",
-    "yes",
-    "완료",
-    "확인"
-  ].includes(v);
-}
+          '활동 ' +
 
+          Number(
+            record.minutes
+          ) +
 
-function formatDate_(value) {
+          '분 / ' +
 
-  if (!value) {
-    return "";
-  }
+          state +
 
-  let d = value;
+          '</div>'
 
-  if (
-    !(d instanceof Date)
-  ) {
-    d = new Date(value);
-  }
+        );
 
-  if (
-    isNaN(d.getTime())
-  ) {
-    return clean_(value);
-  }
-
-  return Utilities.formatDate(
-    d,
-    Session.getScriptTimeZone() ||
-      "Asia/Seoul",
-    "yyyy-MM-dd HH:mm:ss"
-  );
-}
-
-
-function getPostData_(e) {
-
-  const result = {};
-
-  if (
-    e &&
-    e.parameter
-  ) {
-    Object.keys(
-      e.parameter
-    ).forEach(
-      function(k) {
-        result[k] =
-          e.parameter[k];
       }
-    );
-  }
-
-  if (
-    e &&
-    e.postData &&
-    e.postData.contents
-  ) {
-
-    const type =
-      clean_(
-        e.postData.type
-      );
-
-    if (
-      type.indexOf(
-        "application/json"
-      ) >= 0
-    ) {
-
-      const obj =
-        JSON.parse(
-          e.postData.contents
-        );
-
-      Object.keys(obj)
-        .forEach(
-          function(k) {
-            result[k] =
-              obj[k];
-          }
-        );
-    }
-  }
-
-  return result;
-}
-
-
-function json_(obj) {
-
-  return ContentService
-    .createTextOutput(
-      JSON.stringify(obj)
     )
-    .setMimeType(
-      ContentService
-        .MimeType
-        .JSON
+    .join("");
+
+}
+
+
+/* =====================================================
+활동이력 열기
+===================================================== */
+
+function toggleHistory(
+  id
+){
+
+  const box =
+    document.getElementById(
+      id
     );
+
+
+  box.style.display =
+    box.style.display ===
+    "block"
+
+    ?
+
+    "none"
+
+    :
+
+    "block";
+
 }
 
 
-function error_(err) {
+/* =====================================================
+문자 안전처리
+===================================================== */
 
-  return json_({
-    ok: false,
-    error:
-      err &&
-      err.message
-        ? err.message
-        : String(err)
-  });
+function escapeHtml(
+  value
+){
+
+  return String(
+    value == null
+    ? ""
+    : value
+  )
+
+  .replace(
+    /&/g,
+    "&amp;"
+  )
+
+  .replace(
+    /</g,
+    "&lt;"
+  )
+
+  .replace(
+    />/g,
+    "&gt;"
+  )
+
+  .replace(
+    /"/g,
+    "&quot;"
+  )
+
+  .replace(
+    /'/g,
+    "&#039;"
+  );
+
 }
 
-function testV2Server() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
 
-  Logger.log("=== V2 서버 점검 시작 ===");
-  Logger.log("스프레드시트: " + ss.getName());
+function escapeAttr(
+  value
+){
 
-  Object.values(SHEETS).forEach(function(name) {
-    const sh = ss.getSheetByName(name);
-    Logger.log(name + " : " + (sh ? "정상" : "없음"));
-  });
+  return escapeHtml(
+    value
+  );
 
-  Logger.log("=== V2 서버 점검 완료 ===");
 }
+
+
+function sanitizeId(
+  value
+){
+
+  return String(
+    value == null
+    ? ""
+    : value
+  )
+
+  .replace(
+    /[^a-zA-Z0-9_-]/g,
+    "_"
+  );
+
+}
+
+</script>
+
+</body>
+</html>
