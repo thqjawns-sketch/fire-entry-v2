@@ -941,6 +941,53 @@ button:disabled{
   .v29BoardDetail{min-width:0}
 }
 
+
+/* ===== V2.30 조별현황 아래 조 활동상태판 독립 영역 ===== */
+.v30BoardLaunchBox{
+  margin-top:14px;
+  padding:13px 14px;
+  border:1px solid #cbd9e7;
+  border-radius:12px;
+  background:#f5f9fd;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+}
+.v30BoardLaunchText{min-width:0}
+.v30BoardLaunchTitle{
+  color:#173d67;
+  font-size:16px;
+  line-height:1.25;
+  font-weight:950;
+}
+.v30BoardLaunchSub{
+  margin-top:4px;
+  color:#607387;
+  font-size:12px;
+  line-height:1.35;
+  font-weight:800;
+}
+.v30BoardLaunchBtn{
+  width:auto!important;
+  min-width:112px;
+  margin:0!important;
+  padding:10px 12px!important;
+  border:0!important;
+  border-radius:9px!important;
+  background:#1764cf!important;
+  color:#fff!important;
+  font-size:13px!important;
+  font-weight:950!important;
+  white-space:nowrap;
+}
+@media(max-width:520px){
+  .v30BoardLaunchBox{padding:11px 10px;gap:8px}
+  .v30BoardLaunchTitle{font-size:15px}
+  .v30BoardLaunchSub{font-size:11px}
+  .v30BoardLaunchBtn{min-width:96px;padding:9px 9px!important;font-size:12px!important}
+}
+
 </style>
 </head>
 
@@ -1356,10 +1403,17 @@ PPE 점검 대기
 
 <div class="v29TeamHeader">
   <div class="v29TeamHeaderTitle">👥 2. 조별현황</div>
-  <button type="button" class="v29BoardOpenBtn" onclick="openTeamBoardV29()">🗺️ 조 활동상태판 보기</button>
 </div>
 
 <div id="teamStatusV28"></div>
+
+<div class="v30BoardLaunchBox">
+  <div class="v30BoardLaunchText">
+    <div class="v30BoardLaunchTitle">🗺️ 조 활동상태판</div>
+    <div class="v30BoardLaunchSub">조의 현재 위치를 층 · 방면 기준으로 한눈에 확인</div>
+  </div>
+  <button type="button" class="v30BoardLaunchBtn" onclick="openTeamBoardV29()">상태판 열기 〉</button>
+</div>
 
 </div>
 
