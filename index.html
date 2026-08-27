@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>소방현장 진입·철수 태그 관리앱 V2 - V2 전용 서버 안정화판</title>
+<title>소방현장 진입·철수 태그 관리앱 <span class="v2Badge">V2</span> V2 - V2.23 현장현황·철수화면 분리</title>
 
 <script src="https://unpkg.com/html5-qrcode" type="text/javascript">
 document.addEventListener("DOMContentLoaded",function(){v31UpdateTeamPreviewAuto();});
@@ -770,6 +770,9 @@ button:disabled{
 #dashboardRefreshBtn{display:flex!important;flex-direction:column;align-items:center;justify-content:center;gap:4px}
 .refreshMainV22{font-size:18px;font-weight:900;line-height:1.2}
 .refreshSubV22{font-size:11px;font-weight:700;opacity:.9;line-height:1.2}
+#dashboardPage.showExitedOnlyV22 > .dashboardWrap > *{display:none!important}
+#dashboardPage.showExitedOnlyV22 > .dashboardWrap > #exitedHistoryCard{display:block!important}
+.exitedPageV22{margin-top:0}
 @media(max-width:560px){
   .staySummaryGridV22{column-gap:8px}
   .staySummaryGridV22 .staySummaryRow{font-size:10.5px}
@@ -777,6 +780,50 @@ button:disabled{
 
 /* ===== V2.23 2번째창/3번째창 완전 분리 ===== */
 #exitedPageV23{display:none;max-width:700px;margin:0 auto;padding-bottom:28px}
+
+/* ===== 두번째 화면 - 인원현황 최소 수정본 ===== */
+.personnelStatusCardV2{
+  padding-top:16px;
+}
+.personnelStatusTitleV2{
+  margin:0 0 14px 2px;
+  color:#173d67;
+  font-size:22px;
+  line-height:1.2;
+  font-weight:950;
+  letter-spacing:-0.4px;
+}
+.personnelStatusCardV2 .summaryLabel,
+.personnelStatusCardV2 .staySummaryTitle{
+  font-size:15px;
+  font-weight:900;
+  color:#111827;
+}
+.personnelStatusCardV2 .summaryNumber{
+  font-size:31px;
+  line-height:1;
+  font-weight:950;
+}
+.personnelStatusCardV2 .summaryUnit{
+  font-size:14px;
+  font-weight:900;
+  color:#111827;
+}
+.personnelStatusCardV2 .staySummaryRow{
+  font-weight:850;
+}
+.personnelStatusCardV2 .criticalSummary{
+  font-size:15px;
+  font-weight:900;
+}
+@media(max-width:480px){
+  .personnelStatusTitleV2{font-size:20px;margin-bottom:12px}
+  .personnelStatusCardV2 .summaryLabel,
+  .personnelStatusCardV2 .staySummaryTitle{font-size:14px}
+  .personnelStatusCardV2 .summaryNumber{font-size:29px}
+  .personnelStatusCardV2 .summaryUnit{font-size:13px}
+}
+
 </style>
 </head>
 
@@ -1107,7 +1154,9 @@ PPE 점검 대기
 <img src="wanju-logo.png" alt="완주소방서 WANJU FIRE STATION">
 </div>
 
-<div class="card">
+<div class="card personnelStatusCardV2">
+
+<div class="personnelStatusTitleV2">👥 1. 인원현황</div>
 
 <div class="summaryGrid">
 
@@ -1116,10 +1165,9 @@ PPE 점검 대기
 <div class="summaryValueLine"><span id="dashInside" class="summaryNumber red">0</span><span class="summaryUnit">명</span></div>
 </div>
 
-<div class="summaryBox">
-현장 참여대원
-<div id="dashUnique" class="summaryNumber blue">0</div>
-명
+<div class="summaryBox compactSummaryBox">
+<div class="summaryLabel">현장 참여대원</div>
+<div class="summaryValueLine"><span id="dashUnique" class="summaryNumber blue">0</span><span class="summaryUnit">명</span></div>
 </div>
 
 <div class="summaryBox compactSummaryBox exitedSummaryBox">
@@ -1236,7 +1284,7 @@ Apps Script 주소
 ===================================================== */
 
 const API =
-"https://script.google.com/macros/s/AKfycbzdAvlTM8i3GoH-zh7Gep_ekif0ohY75ykPanCSutoNm7Yo2EMd6i9qgZpH1a39zq0B6A/exec";
+"https://script.google.com/macros/s/AKfycbxTKCw24jpy-A2Z262fE005EXYBPohAWpjaw9NDcGE2RJhO6UGNs-LZrMzZTAVnE8zu/exec";
 
 
 /* =====================================================
@@ -1244,230 +1292,16 @@ const API =
 ===================================================== */
 
 const SITE_CACHE_KEY =
-"fire_app_v2_only_sites_20260827";
+"fire_app_sites_v3";
 
 const MEMBER_CACHE_KEY =
-"fire_app_v2_only_members_20260827";
+"fire_app_members_v3";
 
 const SITE_CACHE_TIME_KEY =
-"fire_app_v2_only_sites_time_20260827";
+"fire_app_sites_time_v3";
 
 const MEMBER_CACHE_TIME_KEY =
-"fire_app_v2_only_members_time_20260827";
-
-/* =====================================================
-V2 전용 서버 호환 계층
-- V1 캐시/서버와 완전 분리
-- 기존 화면 디자인과 조작 방식은 유지
-- 새 V2 Apps Script의 ok 응답을 기존 화면 형식으로 변환
-- PPE / 진입 / 철수 / 조·방면·층·세부장소를 V2 시트에 기록
-===================================================== */
-
-const V2_NATIVE_FETCH = window.fetch.bind(window);
-const V2_SITE_ID_BY_NAME = new Map();
-
-function v2JsonResponse(obj){
-  return new Response(
-    JSON.stringify(obj),
-    {status:200, headers:{"Content-Type":"application/json"}}
-  );
-}
-
-function v2SiteId(site){
-  const s=String(site||"").trim();
-  return V2_SITE_ID_BY_NAME.get(s)||s;
-}
-
-function v2MinutesBetween(start,end){
-  if(!start)return 0;
-  const a=new Date(String(start).replace(" ","T"));
-  const b=end?new Date(String(end).replace(" ","T")):new Date();
-  if(isNaN(a.getTime())||isNaN(b.getTime()))return 0;
-  return Math.max(0,Math.floor((b-a)/60000));
-}
-
-function v2SyncServerMeta(m){
-  try{
-    if(typeof v23SetMemberMeta!=="function" || !m || !m.memberId)return;
-    v23SetMemberMeta(m.memberId,{
-      teamName:m.team||"미지정",
-      teamActivityNo:Number(m.activityNo)||1,
-      entryDirection:m.direction||"미지정",
-      activityFloor:m.floor||"미지정",
-      detailLocation:m.detail||"세부장소 미지정"
-    });
-  }catch(e){
-    console.log("V2 서버 메타 동기화 참고",e);
-  }
-}
-
-function v2OldInsideMember(m){
-  v2SyncServerMeta(m);
-  return {
-    memberId:m.memberId||"",
-    memberName:m.name||"",
-    entryTime:m.entryTime||"",
-    currentMinutes:v2MinutesBetween(m.entryTime,""),
-    entryCount:Number(m.activityNo)||1,
-    team:m.team||"미지정",
-    activityNo:Number(m.activityNo)||1,
-    direction:m.direction||"미지정",
-    floor:m.floor||"미지정",
-    detail:m.detail||"세부장소 미지정"
-  };
-}
-
-function v2AggregateExited(rows){
-  const map=new Map();
-  (rows||[]).forEach(r=>{
-    if(!r || r.status!=="철수완료")return;
-    const id=String(r.memberId||"");
-    if(!map.has(id)){
-      map.set(id,{
-        memberId:id,
-        memberName:r.name||"",
-        entryCount:0,
-        totalMinutes:0,
-        records:[]
-      });
-    }
-    const x=map.get(id);
-    const mins=v2MinutesBetween(r.entryTime,r.exitTime);
-    x.entryCount++;
-    x.totalMinutes+=mins;
-    x.records.push({
-      sequence:Number(r.activityNo)||x.entryCount,
-      entryTime:r.entryTime||"",
-      exitTime:r.exitTime||"",
-      minutes:mins,
-      status:"철수완료"
-    });
-  });
-  return [...map.values()];
-}
-
-async function v2CallPost(params){
-  const res=await V2_NATIVE_FETCH(API,{method:"POST",body:params});
-  return await res.json();
-}
-
-window.fetch = async function(input, init){
-  const url=typeof input==="string" ? input : (input&&input.url)||"";
-  if(!url.startsWith(API)){
-    return V2_NATIVE_FETCH(input,init);
-  }
-
-  const method=String((init&&init.method)||"GET").toUpperCase();
-
-  if(method==="GET"){
-    const u=new URL(url);
-    const action=u.searchParams.get("action")||"";
-
-    if(action==="sites"){
-      const res=await V2_NATIVE_FETCH(url,init);
-      const d=await res.json();
-      const sites=(d.sites||[]).map(s=>{
-        if(s.siteName&&s.siteId)V2_SITE_ID_BY_NAME.set(String(s.siteName),String(s.siteId));
-        return s;
-      });
-      return v2JsonResponse({success:!!d.ok,sites:sites,message:d.error||""});
-    }
-
-    if(action==="members"){
-      const res=await V2_NATIVE_FETCH(url,init);
-      const d=await res.json();
-      const members=(d.members||[]).map(m=>({
-        id:m.memberId||"",
-        name:m.name||"",
-        rank:m.rank||"",
-        dept:m.department||""
-      }));
-      return v2JsonResponse({success:!!d.ok,members:members,message:d.error||""});
-    }
-
-    if(action==="inside"){
-      const siteId=v2SiteId(u.searchParams.get("site"));
-      const res=await V2_NATIVE_FETCH(
-        API+"?action=current&siteId="+encodeURIComponent(siteId)+"&t="+Date.now()
-      );
-      const d=await res.json();
-      const active=(d.members||[])
-        .filter(m=>m.status==="활동중")
-        .map(v2OldInsideMember);
-      return v2JsonResponse({success:!!d.ok,members:active,message:d.error||""});
-    }
-
-    if(action==="dashboard"){
-      const siteId=v2SiteId(u.searchParams.get("site"));
-      const res=await V2_NATIVE_FETCH(
-        API+"?action=dashboard&siteId="+encodeURIComponent(siteId)+"&t="+Date.now()
-      );
-      const d=await res.json();
-
-      const inside=(d.insideMembers||[]).map(v2OldInsideMember);
-      const exited=v2AggregateExited(d.exitedMembers||[]);
-
-      return v2JsonResponse({
-        success:!!d.ok,
-        dashboard:{
-          insideCount:Number(d.insideCount)||0,
-          uniqueMemberCount:Number(d.participantCount)||0,
-          exitedCount:exited.length,
-          insideMembers:inside,
-          exitedMembers:exited
-        },
-        message:d.error||""
-      });
-    }
-
-    return V2_NATIVE_FETCH(input,init);
-  }
-
-  if(method==="POST" && init && init.body instanceof URLSearchParams){
-    const old=init.body;
-    const action=old.get("action")||"";
-
-    if(action==="batchEntry"){
-      const p=new URLSearchParams();
-      p.set("action","batchEntry");
-      p.set("siteId",v2SiteId(old.get("site")));
-      p.set("members",old.get("members")||"[]");
-      p.set("teamName",old.get("teamName")||"");
-      p.set("activityNo",old.get("activityNo")||"");
-      p.set("entryDirection",old.get("entryDirection")||"");
-      p.set("activityFloor",old.get("activityFloor")||"");
-      p.set("detailLocation",old.get("detailLocation")||"");
-
-      const d=await v2CallPost(p);
-      return v2JsonResponse({
-        success:!!(d.ok || d.success),
-        successCount:Number(d.successCount)||0,
-        succeeded:d.succeeded||[],
-        failed:d.failed||[],
-        message:d.message||""
-      });
-    }
-
-    if(action==="batchExit"){
-      const p=new URLSearchParams();
-      p.set("action","batchExit");
-      p.set("siteId",v2SiteId(old.get("site")));
-      p.set("members",old.get("members")||"[]");
-
-      const d=await v2CallPost(p);
-      return v2JsonResponse({
-        success:!!(d.ok || d.success),
-        successCount:Number(d.successCount)||0,
-        succeeded:d.succeeded||[],
-        failed:d.failed||[],
-        message:d.message||""
-      });
-    }
-  }
-
-  return V2_NATIVE_FETCH(input,init);
-};
-
+"fire_app_members_time_v3";
 
 
 /* =====================================================
@@ -1547,11 +1381,24 @@ function loadLocalCache(){
       );
 
     if(siteCache){
-      const cachedSites = JSON.parse(siteCache);
-      if(Array.isArray(cachedSites) && cachedSites.length){
-        // V2 전용 캐시만 즉시 표시하고, 뒤에서 최신 V2 서버값으로 갱신
-        renderSites(cachedSites, true);
+
+      const cachedSites =
+        JSON.parse(
+          siteCache
+        );
+
+      if(
+        Array.isArray(cachedSites) &&
+        cachedSites.length
+      ){
+
+        renderSites(
+          cachedSites,
+          true
+        );
+
       }
+
     }
 
   }catch(error){
@@ -1699,8 +1546,7 @@ async function loadSites(){
       await fetch(
         API +
         "?action=sites&t=" +
-        Date.now(),
-        {cache:"no-store"}
+        Date.now()
       );
 
     const data =
@@ -1800,8 +1646,7 @@ async function loadMembers(){
       await fetch(
         API +
         "?action=members&t=" +
-        Date.now(),
-        {cache:"no-store"}
+        Date.now()
       );
 
     const data =
@@ -1809,34 +1654,11 @@ async function loadMembers(){
 
 
     if(
-      data.success || data.ok
+      data.success
     ){
 
-      // V2 서버 응답 형식 통일
-      // 서버: memberId / department
-      // 앱 내부: id / dept
       members =
-        (data.members || [])
-          .filter(member =>
-            String(member.use || "Y").toUpperCase() !== "N"
-          )
-          .map(member => ({
-            ...member,
-            id:
-              member.id ||
-              member.memberId ||
-              "",
-            name:
-              member.name ||
-              "",
-            rank:
-              member.rank ||
-              "",
-            dept:
-              member.dept ||
-              member.department ||
-              ""
-          }));
+        data.members || [];
 
 
       try{
@@ -2459,7 +2281,7 @@ function renderQueue(){
 /* ===== V2.3 위치 메타데이터(브라우저 저장) ===== */
 function v23SiteKey(){
   const s=(document.getElementById("site")||{}).value||"";
-  return "fire-v2-only-entry-meta-"+s;
+  return "fire-entry-v23-meta-"+s;
 }
 function v23LoadMeta(){
   try{return JSON.parse(localStorage.getItem(v23SiteKey())||"{}");}catch(e){return {};}
@@ -2603,7 +2425,7 @@ function chooseV2(btn,type){
 /* ===== V2.11 조 = 대원구성 / 활동차수 = 재진입 ===== */
 function v31TeamRegistryKey(){
   const site=(document.getElementById("site")||{}).value||"default";
-  return "fireV2OnlyTeamRegistry:"+site;
+  return "fireAppTeamRegistry:"+site;
 }
 function v31LoadTeams(){
   try{return JSON.parse(localStorage.getItem(v31TeamRegistryKey())||"[]");}
@@ -3330,7 +3152,7 @@ async function quickEntryMembers(){
       entryQueue=entryQueue.filter(m=>!successIds.has(String(m.id)));
       renderQueue();
       if(entryQueue.length===0) resetPPE(); else { checkPPE(); renderTeamMembers(); }
-      void loadInsideMembers();
+      await loadInsideMembers();
     }
   }catch(e){console.error(e);alert("즉시 투입 기록 오류");}
   finally{entrySubmitting=false;if(qbtn){qbtn.innerText="⚡ 즉시 투입";qbtn.disabled=!(entryQueue.length>0&&isPPEComplete());} updateTeamSetupState();}
@@ -3503,7 +3325,6 @@ async function batchEntryMembers(){
 
   // V2 메타데이터: 서버가 지원하면 저장, 미지원 시 기존 V1 진입기록은 그대로 처리
   form.append("teamName", teamName);
-  form.append("activityNo", activityNo);
   form.append("entryDirection", entryDirection);
   form.append("activityFloor", activityFloor);
   form.append("detailLocation", detailLocation);
@@ -3662,7 +3483,7 @@ async function batchEntryMembers(){
       }
 
       closeTeamSetup();
-      void loadInsideMembers();
+      await loadInsideMembers();
 
     }
 
@@ -3880,11 +3701,8 @@ async function loadInsideMembers(){
     refreshButton.disabled =
       true;
 
-    const refreshMain =
-      refreshButton.querySelector(".refreshMainV22");
-    if(refreshMain){
-      refreshMain.textContent = "⏳ 처리중...";
-    }
+    refreshButton.innerText =
+      "⏳ 처리중...";
 
   }
 
@@ -3933,11 +3751,7 @@ async function loadInsideMembers(){
       refreshButton.disabled =
         false;
 
-      const refreshMain =
-        refreshButton.querySelector(".refreshMainV22");
-      if(refreshMain){
-        refreshMain.textContent = "🔄 현황 새로고침";
-      }
+      // 성공 시 갱신된 시간 표시를 그대로 유지한다.
 
     }
 
@@ -4120,11 +3934,7 @@ async function loadInsideMembers(){
       refreshButton.disabled =
         false;
 
-      const refreshMain =
-        refreshButton.querySelector(".refreshMainV22");
-      if(refreshMain){
-        refreshMain.textContent = "🔄 현황 새로고침";
-      }
+      // 성공 시 갱신된 시간 표시를 그대로 유지한다.
 
     }
 
@@ -4377,7 +4187,7 @@ async function batchExitMembers(){
     );
 
 
-    void loadInsideMembers();
+    await loadInsideMembers();
 
   }catch(error){
 
@@ -4646,11 +4456,8 @@ async function loadDashboard(
     refreshButton.disabled =
       true;
 
-    const refreshMain =
-      refreshButton.querySelector(".refreshMainV22");
-    if(refreshMain){
-      refreshMain.textContent = "⏳ 처리중...";
-    }
+    refreshButton.innerText =
+      "⏳ 처리중...";
 
   }
 
@@ -4678,11 +4485,7 @@ async function loadDashboard(
       refreshButton.disabled =
         false;
 
-      const refreshMain =
-        refreshButton.querySelector(".refreshMainV22");
-      if(refreshMain){
-        refreshMain.textContent = "🔄 현황 새로고침";
-      }
+      // 성공 시 갱신된 시간 표시를 그대로 유지한다.
 
     }
 
@@ -4925,11 +4728,7 @@ async function loadDashboard(
       refreshButton.disabled =
         false;
 
-      const refreshMain =
-        refreshButton.querySelector(".refreshMainV22");
-      if(refreshMain){
-        refreshMain.textContent = "🔄 현황 새로고침";
-      }
+      // 성공 시 갱신된 시간 표시를 그대로 유지한다.
 
     }
 
@@ -5219,6 +5018,10 @@ function closeExitedPage(){
   if(exitedPage) exitedPage.style.display="none";
   if(dashboardPage) dashboardPage.style.display="block";
   window.scrollTo({top:0,behavior:"smooth"});
+}
+
+function toggleExitedHistory(){
+  openExitedPage();
 }
 
 function drawDashboardExited(
