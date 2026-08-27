@@ -1846,7 +1846,8 @@ async function loadMembers(){
       await fetch(
         API +
         "?action=members&t=" +
-        Date.now()
+        Date.now(),
+        {cache:"no-store"}
       );
 
     const data =
@@ -1854,11 +1855,34 @@ async function loadMembers(){
 
 
     if(
-      data.success
+      data.success || data.ok
     ){
 
+      // V2 서버 응답 형식 통일
+      // 서버: memberId / department
+      // 앱 내부: id / dept
       members =
-        data.members || [];
+        (data.members || [])
+          .filter(member =>
+            String(member.use || "Y").toUpperCase() !== "N"
+          )
+          .map(member => ({
+            ...member,
+            id:
+              member.id ||
+              member.memberId ||
+              "",
+            name:
+              member.name ||
+              "",
+            rank:
+              member.rank ||
+              "",
+            dept:
+              member.dept ||
+              member.department ||
+              ""
+          }));
 
 
       try{
