@@ -1594,24 +1594,10 @@ function loadLocalCache(){
       );
 
     if(siteCache){
-
-      const cachedSites =
-        JSON.parse(
-          siteCache
-        );
-
-      if(
-        Array.isArray(cachedSites) &&
-        cachedSites.length
-      ){
-
-        renderSites(
-          cachedSites,
-          true
-        );
-
-      }
-
+      // V2 전용: 예전 현장목록이 먼저 보이는 것을 방지
+      // 현장목록은 항상 현재 V2 서버에서 새로 불러온다.
+      localStorage.removeItem(SITE_CACHE_KEY);
+      localStorage.removeItem(SITE_CACHE_TIME_KEY);
     }
 
   }catch(error){
@@ -1759,7 +1745,8 @@ async function loadSites(){
       await fetch(
         API +
         "?action=sites&t=" +
-        Date.now()
+        Date.now(),
+        {cache:"no-store"}
       );
 
     const data =
