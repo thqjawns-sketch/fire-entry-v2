@@ -1017,6 +1017,56 @@ button:disabled{
  .v32TeamBadge{min-width:38px;padding:7px 6px;font-size:12px}
 }
 
+
+/* ===== V2.33 조 활동상태판 : 3번 기본 + 6번 활동이력 전환 ===== */
+.v33BoardToolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
+.v33ModeTitle{font-size:16px;font-weight:950;color:#173d67}
+.v33ModeBtn{width:auto!important;margin:0!important;padding:9px 13px!important;border:1px solid #1764cf!important;border-radius:9px!important;background:#fff!important;color:#1764cf!important;font-size:12px!important;font-weight:950!important}
+.v33BoardLayout{display:grid;grid-template-columns:150px minmax(360px,1fr) 210px;gap:14px;align-items:stretch}
+.v33SidePanel{border:1px solid #dce5ee;border-radius:12px;background:#fbfcfe;overflow:hidden}
+.v33PanelTitle{padding:10px 11px;background:#eef4fa;color:#173d67;font-size:13px;font-weight:950;border-bottom:1px solid #dce5ee}
+.v33FloorBtn{width:100%!important;margin:0!important;padding:11px 10px!important;border:0!important;border-bottom:1px solid #e5ebf1!important;border-radius:0!important;background:#fff!important;color:#263b50!important;font-size:13px!important;font-weight:900!important;text-align:left}
+.v33FloorBtn:last-child{border-bottom:0!important}
+.v33FloorBtn.active{background:#edf5ff!important;color:#1764cf!important;box-shadow:inset 4px 0 #1764cf}
+.v33FloorBtn.fire.active{background:#fff1f1!important;color:#b42318!important;box-shadow:inset 4px 0 #d93025}
+.v33FloorCount{float:right;padding:2px 6px;border-radius:999px;background:#e8eef5;color:#536579;font-size:10px}
+.v33PlanWrap{min-height:440px;display:flex;align-items:center;justify-content:center;padding:30px 50px;box-sizing:border-box;border:1px solid #dce5ee;border-radius:14px;background:#fff}
+.v33Plan{position:relative;width:min(440px,72vw);aspect-ratio:1.18/1;border:2px solid #b8c5d3;border-radius:5px;background:linear-gradient(90deg,#f8fafc 0 8%,#fff 8% 92%,#f8fafc 92% 100%);box-shadow:inset 0 0 0 28px #f7f9fb}
+.v33PlanInner{position:absolute;inset:28px;border:1px solid #d5dee8;background:#fff;display:flex;align-items:center;justify-content:center;text-align:center}
+.v33FloorCenter{font-size:21px;font-weight:950;color:#263b50}
+.v33FloorCenter.fire{color:#b42318}
+.v33DirLabel{position:absolute;font-size:13px;font-weight:950;white-space:nowrap}
+.v33DirA{top:-26px;left:50%;transform:translateX(-50%);color:#1764cf}
+.v33DirB{right:-48px;top:50%;transform:translateY(-50%);color:#16834b}
+.v33DirC{bottom:-26px;left:50%;transform:translateX(-50%);color:#e37400}
+.v33DirD{left:-48px;top:50%;transform:translateY(-50%);color:#7b3fc1}
+.v33Face{position:absolute;display:flex;gap:5px;flex-wrap:wrap;justify-content:center;z-index:3}
+.v33FaceA{top:-14px;left:12%;right:12%}
+.v33FaceB{right:-22px;top:18%;bottom:18%;width:74px;align-content:center;flex-direction:column}
+.v33FaceC{bottom:-14px;left:12%;right:12%}
+.v33FaceD{left:-22px;top:18%;bottom:18%;width:74px;align-content:center;flex-direction:column}
+.v33FaceChip{display:inline-flex;align-items:center;gap:4px;padding:6px 8px;border-radius:8px;color:#fff;font-size:12px;font-weight:950;box-shadow:0 2px 5px rgba(0,0,0,.12);cursor:pointer;white-space:nowrap}
+.v33C1{background:#2563eb}.v33C2{background:#159447}.v33C3{background:#ef7d00}.v33C4{background:#7b3fc1}.v33C5{background:#0f9588}.v33C6{background:#d64c72}.v33C0{background:#64748b}
+.v33SummaryRow{display:flex;align-items:center;gap:6px;padding:9px 9px;border-bottom:1px solid #e5ebf1;font-size:11px;font-weight:850}
+.v33SummaryRow:last-child{border-bottom:0}
+.v33SummaryBadge{flex:0 0 auto;color:#fff;border-radius:6px;padding:4px 6px;font-weight:950}
+.v33SummaryLoc{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.v33HistoryPanel{display:none}
+.v33HistoryPanel.show{display:block}
+.v33FloorPanel.hide{display:none}
+.v33TimelineRow{padding:10px;border-bottom:1px solid #e5ebf1}
+.v33TimelineRow:last-child{border-bottom:0}
+.v33TimelineTime{font-size:11px;font-weight:950;color:#526274}
+.v33TimelineMain{margin-top:4px;font-size:12px;font-weight:900;color:#263b50;line-height:1.45}
+.v33TimelineEmpty{padding:16px 10px;color:#718096;font-size:12px;font-weight:800;text-align:center}
+.v33BoardStats{display:flex;justify-content:center;gap:18px;flex-wrap:wrap;margin-top:12px;padding-top:10px;border-top:1px solid #e3eaf1;font-size:12px;font-weight:900;color:#526274}
+.v33Unresolved{margin-top:10px;padding:9px 10px;border-radius:8px;background:#fff7e6;color:#8a5a00;font-size:12px;font-weight:850}
+@media(max-width:799px){
+  .v33BoardLayout{grid-template-columns:110px minmax(330px,1fr) 170px;width:760px}
+  .v33PlanWrap{min-height:390px;padding:28px 42px}
+  .v33BoardCardScroll{overflow-x:auto}
+}
+
 </style>
 </head>
 
@@ -1491,15 +1541,28 @@ PPE 점검 대기
       </div>
     </div>
 
-    <div id="v29LocationBoard" class="v29LocationBoard"></div>
+    <div class="v33BoardToolbar">
+      <div id="v33ModeTitle" class="v33ModeTitle">현재 위치 보기</div>
+      <button id="v33ModeBtn" type="button" class="v33ModeBtn" onclick="toggleTeamBoardModeV33()">📋 활동이력 보기</button>
+    </div>
+
+    <div class="v33BoardCardScroll">
+      <div class="v33BoardLayout">
+        <div id="v33FloorPanel" class="v33SidePanel v33FloorPanel"></div>
+        <div id="v29LocationBoard" class="v33PlanWrap"></div>
+        <div id="v33SummaryPanel" class="v33SidePanel"></div>
+      </div>
+    </div>
 
     <div id="v29BoardDetail" class="v29BoardDetail">
       <div class="v29DetailEmpty">조를 누르면 현재 위치 상세정보가 표시됩니다.</div>
     </div>
 
+    <div id="v33BoardStats" class="v33BoardStats"></div>
+
     <div class="v29BoardFoot">
-      ※ 조의 체류시간은 해당 조에서 가장 오래 활동 중인 대원을 기준으로 표시합니다.
-      위치가 서로 다르게 등록된 조는 상태판에서 ‘위치 분산’으로 별도 표시합니다.
+      ※ 기본 화면은 선택한 층의 A/B/C/D 실제 사면에 현재 조 위치를 표시합니다.
+      ‘활동이력 보기’로 전환하면 최근 위치 변경 이력과 현재 평면도를 함께 확인할 수 있습니다.
     </div>
   </div>
 
@@ -5401,47 +5464,150 @@ function v29DirectionKey(value){
   return m?m[1]+"방면":"";
 }
 
+let v33SelectedFloor="화점층";
+let v33BoardMode="current";
+
+function v33TeamClass(team){
+  const n=v28TeamNo(team);
+  if(!Number.isFinite(n)||n>=999999)return "v33C0";
+  return "v33C"+(((n-1)%6)+1);
+}
+
+function v33FloorTeams(teams,floor){
+  return teams.filter(t=>!t.dispersed && v29FloorKey(t.floor)===floor && v29DirectionKey(t.direction));
+}
+
+function v33HistoryRows(){
+  const meta=v23LoadMeta();
+  const teams=v29GroupTeams(window.__dashboardInsideMembers||[]);
+  const rows=[];
+  teams.forEach(t=>{
+    const members=(window.__dashboardInsideMembers||[]).filter(m=>{
+      const vm=meta[String(m.memberId)]||{};
+      return (vm.teamName||"조 미지정")===t.team;
+    });
+    const seen=new Set();
+    members.forEach(m=>{
+      const vm=meta[String(m.memberId)]||{};
+      (Array.isArray(vm.history)?vm.history:[]).forEach(h=>{
+        const floor=v29FloorKey(h.activityFloor||"");
+        const dir=v29DirectionKey(h.entryDirection||vm.entryDirection||"");
+        if(!floor)return;
+        const key=[h.time||"",floor,dir,h.detailLocation||""].join("|");
+        if(seen.has(key))return;
+        seen.add(key);
+        rows.push({
+          team:t.team,time:h.time||"-",floor:floor,direction:dir||"방면 미기록",
+          detail:h.detailLocation||"",activityNo:t.activityNo
+        });
+      });
+    });
+  });
+  return rows.sort((a,b)=>String(b.time).localeCompare(String(a.time))).slice(0,12);
+}
+
+function selectTeamBoardFloorV33(floor){
+  v33SelectedFloor=floor;
+  drawTeamBoardV29();
+}
+
+function toggleTeamBoardModeV33(){
+  v33BoardMode=v33BoardMode==="current"?"history":"current";
+  drawTeamBoardV29();
+}
+
 function drawTeamBoardV29(){
   const board=document.getElementById("v29LocationBoard");
   const detail=document.getElementById("v29BoardDetail");
-  if(!board)return;
+  const floorPanel=document.getElementById("v33FloorPanel");
+  const summary=document.getElementById("v33SummaryPanel");
+  const stats=document.getElementById("v33BoardStats");
+  const modeBtn=document.getElementById("v33ModeBtn");
+  const modeTitle=document.getElementById("v33ModeTitle");
+  if(!board||!floorPanel||!summary)return;
 
   const teams=v29GroupTeams(window.__dashboardInsideMembers||[]);
   const floors=["옥상","상층","직상층","화점층","직하층","하층","지하층"];
-  const dirs=["A방면","B방면","C방면","D방면"];
+  const occupied=floors.filter(f=>v33FloorTeams(teams,f).length);
+  if(!floors.includes(v33SelectedFloor))v33SelectedFloor="화점층";
+  if(!v33FloorTeams(teams,v33SelectedFloor).length && occupied.length && v33SelectedFloor!=="화점층"){
+    v33SelectedFloor=occupied[0];
+  }
 
-  let html='<div class="v29Corner">층 / 방면</div>';
-  dirs.forEach(d=>html+='<div class="v29DirHead">'+d+'</div>');
+  const selected=v33FloorTeams(teams,v33SelectedFloor);
+  const isHistory=v33BoardMode==="history";
 
-  floors.forEach(f=>{
-    const fire=f==="화점층";
-    html+='<div class="v29FloorHead '+(fire?'fire':'')+'">'+(fire?'🔥 ':'')+f+'</div>';
-    dirs.forEach(d=>{
-      const here=teams.filter(t=>!t.dispersed && v29FloorKey(t.floor)===f && v29DirectionKey(t.direction)===d);
-      html+='<div class="v29Cell '+(fire?'fire':'')+'">';
-      here.forEach(t=>{
-        const st=v29StayState(t.minutes);
-        html+='<div class="v29TeamChip '+st.cls+'" onclick="showTeamBoardDetailV29(\''+escapeAttr(t.team)+'\')">'+
-          '<div class="v29TeamChipTop"><span class="v29TeamChipName">'+escapeHtml(t.team)+'</span>'+
-          '<span class="v29TeamChipNo">'+Number(t.activityNo)+'차</span></div>'+
-          '<div class="v29TeamChipTime">'+st.icon+' '+Number(t.minutes)+'분</div>'+
-          '</div>';
-      });
-      html+='</div>';
-    });
-  });
+  if(modeBtn)modeBtn.textContent=isHistory?"← 현재위치 보기":"📋 활동이력 보기";
+  if(modeTitle)modeTitle.textContent=isHistory?"최근 활동이력 + 현재 평면도":"현재 위치 보기";
 
-  board.innerHTML=html;
+  if(!isHistory){
+    floorPanel.classList.remove("hide");
+    floorPanel.innerHTML='<div class="v33PanelTitle">층 선택</div>'+
+      floors.map(f=>{
+        const cnt=v33FloorTeams(teams,f).length;
+        return '<button type="button" class="v33FloorBtn '+(f===v33SelectedFloor?'active ':'')+(f==="화점층"?'fire':'')+
+          '" onclick="selectTeamBoardFloorV33(\''+f+'\')">'+(f==="화점층"?'🔥 ':'')+f+
+          (cnt?'<span class="v33FloorCount">'+cnt+'개조</span>':'')+'</button>';
+      }).join("");
+  }else{
+    floorPanel.classList.remove("hide");
+    const history=v33HistoryRows();
+    floorPanel.innerHTML='<div class="v33PanelTitle">최근 활동이력</div>'+
+      (history.length?history.map(h=>
+        '<div class="v33TimelineRow">'+
+          '<div class="v33TimelineTime">'+escapeHtml(h.time)+'</div>'+
+          '<div class="v33TimelineMain"><span class="v33SummaryBadge '+v33TeamClass(h.team)+'">'+escapeHtml(h.team)+'</span> '+
+          escapeHtml(h.floor)+' · '+escapeHtml(h.direction)+
+          (h.detail?' · '+escapeHtml(h.detail):'')+'</div>'+
+        '</div>'
+      ).join(""):'<div class="v33TimelineEmpty">기록된 위치 변경 이력이 없습니다.</div>');
+  }
 
-  // 위치가 분산/미지정인 조는 상세영역에 별도 안내
-  const unresolved=teams.filter(t=>t.dispersed || !v29FloorKey(t.floor) || !v29DirectionKey(t.direction));
-  if(unresolved.length && detail){
-    detail.innerHTML=
-      '<div class="v29DetailTeam">⚠ 위치 확인 필요</div>'+
-      '<div class="v29DetailMeta">'+
-      unresolved.map(t=>escapeHtml(t.team)+' · '+escapeHtml(t.floor)+' · '+escapeHtml(t.direction)).join('　|　')+
+  function faceHtml(dir,cls){
+    const here=selected.filter(t=>v29DirectionKey(t.direction)===dir);
+    return '<div class="v33Face '+cls+'">'+here.map(t=>{
+      const st=v29StayState(t.minutes);
+      return '<div class="v33FaceChip '+v33TeamClass(t.team)+'" onclick="showTeamBoardDetailV29(\''+escapeAttr(t.team)+'\')" title="'+escapeAttr(st.text+' '+t.minutes+'분')+'">'+
+        escapeHtml(t.team)+' <span>'+Number(t.activityNo)+'차</span>'+
       '</div>';
-  }else if(detail){
+    }).join("")+'</div>';
+  }
+
+  board.innerHTML=
+    '<div class="v33Plan">'+
+      '<div class="v33DirLabel v33DirA">A 방면</div>'+
+      '<div class="v33DirLabel v33DirB">B 방면</div>'+
+      '<div class="v33DirLabel v33DirC">C 방면</div>'+
+      '<div class="v33DirLabel v33DirD">D 방면</div>'+
+      faceHtml("A방면","v33FaceA")+
+      faceHtml("B방면","v33FaceB")+
+      faceHtml("C방면","v33FaceC")+
+      faceHtml("D방면","v33FaceD")+
+      '<div class="v33PlanInner"><div class="v33FloorCenter '+(v33SelectedFloor==="화점층"?'fire':'')+'">'+
+        (v33SelectedFloor==="화점층"?'🔥 ':'')+escapeHtml(v33SelectedFloor)+'</div></div>'+
+    '</div>';
+
+  summary.innerHTML='<div class="v33PanelTitle">층별 요약 (현재 위치)</div>'+
+    floors.map(f=>{
+      const here=v33FloorTeams(teams,f);
+      return '<div class="v33SummaryRow"><b style="min-width:42px">'+(f==="화점층"?'🔥 ':'')+escapeHtml(f)+'</b>'+
+        '<div class="v33SummaryLoc">'+(here.length?here.map(t=>
+          '<span class="v33SummaryBadge '+v33TeamClass(t.team)+'">'+escapeHtml(t.team)+'</span> '+escapeHtml(v29DirectionKey(t.direction))
+        ).join('　'):'-')+'</div></div>';
+    }).join("");
+
+  const unresolved=teams.filter(t=>t.dispersed || !v29FloorKey(t.floor) || !v29DirectionKey(t.direction));
+  if(unresolved.length){
+    summary.innerHTML+='<div class="v33Unresolved">⚠ 위치 확인 필요<br>'+unresolved.map(t=>escapeHtml(t.team)).join(", ")+'</div>';
+  }
+
+  if(stats){
+    const total=teams.reduce((s,t)=>s+Number(t.count||0),0);
+    const maxMin=teams.length?Math.max(...teams.map(t=>Number(t.minutes)||0)):0;
+    stats.innerHTML='<span>현재 활동 '+teams.length+'개조 · '+total+'명</span><span>선택 층 '+escapeHtml(v33SelectedFloor)+' · '+selected.length+'개조</span><span>최장 체류 '+maxMin+'분</span>';
+  }
+
+  if(detail){
     detail.innerHTML='<div class="v29DetailEmpty">조를 누르면 현재 위치 상세정보가 표시됩니다.</div>';
   }
 }
