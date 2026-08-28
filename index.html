@@ -1192,6 +1192,21 @@ button:disabled{
   .dashboardDetailSheet{padding:17px 14px 15px!important}
 }
 
+
+/* ===== V2.40 조 활동상태판: 대원 위치는 조회 전용 ===== */
+#teamBoardPageV29 .memberRow{
+  cursor:default!important;
+}
+#teamBoardPageV29 .memberRow:hover{
+  transform:none!important;
+}
+
+
+/* ===== V2.41 조 활동상태판: 대원 상세/개별 위치수정 다시 사용 ===== */
+#teamBoardPageV29 .memberRow{
+  cursor:pointer!important;
+}
+
 </style>
 </head>
 
@@ -1649,7 +1664,7 @@ PPE 점검 대기
 
   <div class="v29BoardHeader">
     <div class="v29BoardHeaderMain">
-      <div class="v29BoardTitle">🗺️ 조 활동상태판 <span style="font-size:11px;opacity:.75">V2.39</span></div>
+      <div class="v29BoardTitle">🗺️ 조 활동상태판 <span style="font-size:11px;opacity:.75">V2.42</span></div>
       <div id="v29BoardSite" class="v29BoardSite">-</div>
     </div>
     <div class="v29BoardHeaderBtns">
@@ -3098,6 +3113,34 @@ function v31TeamRegistryKey(){
   const site=(document.getElementById("site")||{}).value||"default";
   return "fireV2OnlyTeamRegistry:"+site;
 }
+
+function v242ClearSiteTeamState(){
+  try{localStorage.removeItem(v31TeamRegistryKey());}catch(e){}
+  try{localStorage.removeItem(v23SiteKey());}catch(e){}
+}
+function v242DashboardIsCompletelyEmpty(dashboard){
+  if(!dashboard)return false;
+  return Number(dashboard.insideCount||0)===0 &&
+         Number(dashboard.uniqueMemberCount||0)===0 &&
+         Number(dashboard.exitedCount||0)===0 &&
+         (dashboard.insideMembers||[]).length===0 &&
+         (dashboard.exitedMembers||[]).length===0;
+}
+function v242SyncIncidentStateFromDashboard(dashboard){
+  const site=(document.getElementById("site")||{}).value||"";
+  if(!site)return;
+  const emptyKey="fireV2OnlyEmptyState:"+site;
+  if(v242DashboardIsCompletelyEmpty(dashboard)){
+    /* 서버 시트에 해당 현장 기록이 완전히 0건이면 새 현장/초기화 상태로 판단 */
+    if(localStorage.getItem(emptyKey)!=="1"){
+      v242ClearSiteTeamState();
+      localStorage.setItem(emptyKey,"1");
+    }
+  }else{
+    localStorage.removeItem(emptyKey);
+  }
+}
+
 function v31LoadTeams(){
   try{return JSON.parse(localStorage.getItem(v31TeamRegistryKey())||"[]");}
   catch(e){return [];}
@@ -3926,6 +3969,21 @@ async function batchEntryMembers(){
 
 
   const selectedTeamMembers = getSelectedTeamMembers();
+  /* V2.42: 투입 직전 서버 현황이 완전 초기화 상태인지 확인.
+     시트를 전부 지운 뒤에는 이전 2조/3조 기록을 새 투입에 재사용하지 않는다. */
+  try{
+    const __site=(document.getElementById("site")||{}).value||"";
+    if(__site){
+      const __r=await fetch(API+"?action=dashboard&site="+encodeURIComponent(__site)+"&t="+Date.now());
+      const __j=await __r.json();
+      if(__j && __j.success && __j.dashboard){
+        v242SyncIncidentStateFromDashboard(__j.dashboard);
+      }
+    }
+  }catch(e){
+    console.warn("현장 초기상태 확인 실패",e);
+  }
+
   const resolvedTeam = v31ResolveTeam(selectedTeamMembers);
   const teamName = resolvedTeam.teamName;
   const activityNo = resolvedTeam.activityNo;
@@ -5235,6 +5293,9 @@ async function loadDashboard(
     const dashboard =
       data.dashboard;
 
+    /* V2.42: 시트가 완전히 비워진 현장은 이전 조 편성/위치정보를 이어받지 않음 */
+    v242SyncIncidentStateFromDashboard(dashboard);
+
 
     document
       .getElementById(
@@ -5770,9 +5831,7 @@ function drawTeamBoardV29(){
             '</div>'+
           '</div>';
 
-        row.addEventListener("click",()=>{
-          openDashboardMemberDetail(member.memberId,member.memberName);
-        });
+        
         roster.appendChild(row);
       });
     }
