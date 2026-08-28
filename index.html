@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>QR-기반 진·출입 안전관리앱 V2 - V2 전용 서버 안정화판</title>
+<title>소방현장 진입·철수 태그 관리앱 V2 - V2 전용 서버 안정화판</title>
 
 <script src="https://unpkg.com/html5-qrcode" type="text/javascript">
 document.addEventListener("DOMContentLoaded",function(){v31UpdateTeamPreviewAuto();});
@@ -1220,7 +1220,7 @@ button:disabled{
 <div id="mainPage">
 
 <div class="title">
-🚒 QR-기반 진·출입 안전관리앱
+🚒 소방현장 진입·철수 태그 관리앱
 </div>
 
 <div class="stationLogo">
@@ -1239,12 +1239,12 @@ button:disabled{
 저장된 현장정보를 확인 중입니다.
 </div>
 
-<label>지휘관 또는 안전점검관</label>
+<label>안전점검관</label>
 
 <input
   type="text"
   id="officer"
-  placeholder="지휘관 또는 안전점검관 성명"
+  placeholder="안전점검관 성명"
 >
 
 <button
@@ -1783,7 +1783,7 @@ function v2MinutesBetween(start,end){
 function v2SyncServerMeta(m){
   try{
     if(typeof v23LoadMeta!=="function" || typeof v23SaveMeta!=="function" || !m || !m.memberId)return;
-    /* V2.45: 조/차수/현재위치는 서버(구글시트)가 최종 기준.
+    /* V2.46: 조/차수/현재위치는 서버(구글시트)가 최종 기준.
        브라우저에 과거 값이 남아 있어도 서버값으로 무조건 덮어쓴다. */
     const meta=v23LoadMeta(), key=String(m.memberId), old=meta[key]||{};
     meta[key]=Object.assign({},old,{
@@ -1839,7 +1839,12 @@ function v2AggregateExited(rows){
       entryTime:r.entryTime||"",
       exitTime:r.exitTime||"",
       minutes:mins,
-      status:"철수완료"
+      status:"철수완료",
+      team:r.team||"",
+      activityNo:Number(r.activityNo)||x.entryCount,
+      direction:r.direction||"",
+      floor:r.floor||"",
+      detail:r.detail||""
     });
   });
   return [...map.values()];
@@ -3071,13 +3076,21 @@ function updateTeamSetupState(){
   }
 }
 
-function openTeamSetup(){
+async function openTeamSetup(){
   if(entryQueue.length===0){
     alert("먼저 QR 또는 검색으로 투입대원을 등록하세요.");
     return;
   }
   if(!isPPEComplete()){
     alert("PPE 3개 항목을 모두 확인하세요.");
+    return;
+  }
+  try{
+    /* 조편성 화면을 열 때마다 시트를 먼저 읽어 조/회차를 확정 */
+    await v246RefreshTeamRegistryFromServer();
+  }catch(e){
+    console.error(e);
+    alert("시트의 현장정보를 확인하지 못했습니다. 다시 시도해주세요.");
     return;
   }
   const card=document.getElementById("teamSetupCard");
@@ -3147,7 +3160,7 @@ function v242SyncIncidentStateFromDashboard(dashboard){
   const emptyKey="fireV2OnlyEmptyState:"+site;
 
   if(v242DashboardIsCompletelyEmpty(dashboard)){
-    /* V2.45: 서버가 비어 있으면 브라우저의 이전 조/차수/위치정보를 항상 폐기 */
+    /* V2.46: 서버가 비어 있으면 브라우저의 이전 조/차수/위치정보를 항상 폐기 */
     v242ClearSiteTeamState();
     localStorage.setItem(emptyKey,"1");
   }else{
@@ -3158,6 +3171,68 @@ function v242SyncIncidentStateFromDashboard(dashboard){
 function v31LoadTeams(){
   try{return JSON.parse(localStorage.getItem(v31TeamRegistryKey())||"[]");}
   catch(e){return [];}
+}
+
+/* ===== V2.46 시트 기준 조/회차 재구성 =====
+   localStorage는 화면 캐시일 뿐이며, 조 번호/활동차수의 원본은 서버 dashboard이다. */
+function v246TeamNo(teamName){
+  const m=String(teamName||"").match(/(\d+)\s*조/);
+  return m?Number(m[1]):0;
+}
+function v246SyncTeamRegistryFromDashboard(dashboard){
+  const groups=new Map();
+
+  function add(memberId,teamName,activityNo){
+    const no=v246TeamNo(teamName);
+    const act=Number(activityNo)||0;
+    if(!no || !act || !memberId)return;
+    const k=no+"|"+act;
+    if(!groups.has(k))groups.set(k,{number:no,activityNo:act,memberIds:new Set()});
+    groups.get(k).memberIds.add(String(memberId));
+  }
+
+  (dashboard&&dashboard.insideMembers||[]).forEach(m=>{
+    add(m.memberId,m.team,m.activityNo||m.entryCount);
+  });
+
+  (dashboard&&dashboard.exitedMembers||[]).forEach(m=>{
+    (m.records||[]).forEach(r=>add(m.memberId,r.team,r.activityNo||r.sequence));
+  });
+
+  const latestByTeam=new Map();
+  groups.forEach(g=>{
+    const prev=latestByTeam.get(g.number);
+    if(!prev || g.activityNo>prev.activityNo)latestByTeam.set(g.number,g);
+  });
+
+  const registry=[...latestByTeam.values()]
+    .sort((a,b)=>a.number-b.number)
+    .map(g=>{
+      const ids=[...g.memberIds].sort();
+      return {
+        number:g.number,
+        signature:ids.join("|"),
+        memberIds:ids,
+        activityCount:g.activityNo
+      };
+    });
+
+  v31SaveTeams(registry);
+  return registry;
+}
+async function v246RefreshTeamRegistryFromServer(){
+  const site=(document.getElementById("site")||{}).value||"";
+  if(!site)return null;
+  const r=await fetch(API+"?action=dashboard&site="+encodeURIComponent(site)+"&t="+Date.now());
+  const j=await r.json();
+  if(!j || !j.success || !j.dashboard)throw new Error((j&&j.message)||"현장정보 조회 실패");
+
+  if(v242DashboardIsCompletelyEmpty(j.dashboard)){
+    v242ClearSiteTeamState();
+  }else{
+    v246SyncTeamRegistryFromDashboard(j.dashboard);
+  }
+  return j.dashboard;
 }
 function v31SaveTeams(arr){
   localStorage.setItem(v31TeamRegistryKey(),JSON.stringify(arr||[]));
@@ -3983,26 +4058,14 @@ async function batchEntryMembers(){
 
 
   const selectedTeamMembers = getSelectedTeamMembers();
-  /* V2.45: 투입 직전 서버 현황이 완전 초기화 상태인지 확인.
-     시트를 전부 지운 뒤에는 이전 2조/3조 기록을 새 투입에 재사용하지 않는다. */
+  /* V2.46: 승인 직전에도 시트를 다시 읽는다.
+     브라우저에 남아 있는 조/회차는 계산 기준으로 사용하지 않는다. */
   try{
-    const __site=(document.getElementById("site")||{}).value||"";
-    if(__site){
-      const __r=await fetch(API+"?action=dashboard&site="+encodeURIComponent(__site)+"&t="+Date.now());
-      const __j=await __r.json();
-      if(__j && __j.success && __j.dashboard){
-        /* V2.45: 투입 직전 서버가 완전히 비어 있으면 무조건 새 현장 상태로 초기화.
-           emptyState 플래그가 과거에 남아 있어도 이전 조/차수를 재사용하지 않는다. */
-        if(v242DashboardIsCompletelyEmpty(__j.dashboard)){
-          v242ClearSiteTeamState();
-          localStorage.setItem("fireV2OnlyEmptyState:"+__site,"1");
-        }else{
-          localStorage.removeItem("fireV2OnlyEmptyState:"+__site);
-        }
-      }
-    }
+    await v246RefreshTeamRegistryFromServer();
   }catch(e){
-    console.warn("현장 초기상태 확인 실패",e);
+    console.error("시트 조/회차 확인 실패",e);
+    alert("시트의 조/회차 정보를 확인하지 못했습니다. 투입을 중단합니다.");
+    return;
   }
 
   const resolvedTeam = v31ResolveTeam(selectedTeamMembers);
@@ -4201,16 +4264,20 @@ async function batchEntryMembers(){
 
       renderQueue();
 
-      // V2.11: 성공한 경우에만 조 활동차수를 확정
-      const committedTeam=v31CommitTeam(selectedTeamMembers);
+      /* V2.46: 저장 성공 후에도 서버를 다시 읽어 다음 조 번호/회차를 결정 */
+      try{
+        await v246RefreshTeamRegistryFromServer();
+      }catch(e){
+        console.warn("투입 후 시트 조/회차 재동기화 실패",e);
+      }
 
-      // 성공 대원의 조/활동차수 메타데이터 갱신
+      // 성공 대원의 화면 캐시는 서버에 저장한 값과 동일하게만 기록
       selectedTeamMembers.forEach(member=>{
         if(successIds.has(String(member.id))){
           const oldMeta=v23LoadMeta()[String(member.id)]||{};
           v23SetMemberMeta(member.id,{
-            teamName:committedTeam.teamName,
-            teamActivityNo:committedTeam.activityNo,
+            teamName:teamName,
+            teamActivityNo:activityNo,
             entryDirection:entryDirection,
             activityFloor:activityFloor,
             detailLocation:detailLocation,
@@ -4219,9 +4286,12 @@ async function batchEntryMembers(){
         }
       });
 
-      // V2.3: 남은 대원은 PPE 완료 상태를 유지하여 다음 조를 바로 편성
+      /* V2.46 연속 조편성:
+         처음 투입대기 명단의 조편성이 끝날 때까지 화면을 유지한다.
+         새 대원이 대기명단에 추가돼도 renderQueue()가 즉시 이 화면에 반영한다. */
       if(entryQueue.length===0){
         resetPPE();
+        closeTeamSetup();
       }else{
         selectedTeamMemberIds.clear();
         entryDirection=""; activityFloor="";
@@ -4231,9 +4301,10 @@ async function batchEntryMembers(){
         checkPPE();
         renderTeamMembers();
         v31UpdateTeamPreviewAuto();
+        const card=document.getElementById("teamSetupCard");
+        if(card)card.classList.add("modeOpen");
       }
 
-      closeTeamSetup();
       void loadInsideMembers();
 
     }
