@@ -1736,10 +1736,10 @@ PPE 점검 대기
 
 <script>
 /*
-  V2.48 코드정리 기준
+  V2.49 점검수정 기준
   - 구글시트/Code.gs: 조·활동차수·현재위치의 최종 원본
   - localStorage: 화면 캐시/최근 지휘관·안전점검관 등 편의정보만 사용
-  - 기능 변경 없이 V2.47 안정 기능 유지
+  - V2.48 기능 유지 + 점검 중 발견된 실제 오류만 수정
 */
 
 
@@ -2837,8 +2837,6 @@ function removeQueueMember(
 
   renderQueue();
 
-
-  v247RememberOfficer(officer);
 
   if(
     entryQueue.length === 0
@@ -4096,6 +4094,8 @@ async function batchEntryMembers(){
   if(selectedTeamMembers.length < 2){ alert("조 편성을 위해 투입 대원을 2명 이상 선택하세요."); return; }
   if(!entryDirection){ alert("진입 방면(A/B/C/D)을 선택하세요."); return; }
   if(!activityFloor){ alert("활동층(화점층/직상층/직하층/기타)을 선택하세요."); return; }
+
+  v247RememberOfficer(officer);
 
   if(
     !confirm(
