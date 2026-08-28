@@ -1067,6 +1067,14 @@ button:disabled{
   .v33BoardCardScroll{overflow-x:auto}
 }
 
+
+/* ===== V2.34 상태판 단순화 + 선택층 대원목록 ===== */
+.v34FloorMembers{margin-top:12px;border:1px solid #dce5ee;border-radius:12px;background:#fff;overflow:hidden}
+.v34FloorMembersHead{padding:11px 13px;background:#eef5fb;color:#173d67;font-size:15px;font-weight:950;border-bottom:1px solid #dce5ee}
+.v34FloorMembersSub{margin-top:3px;color:#607387;font-size:11px;font-weight:800}
+.v34FloorMemberEmpty{padding:16px;text-align:center;color:#718096;font-size:13px;font-weight:800}
+.v34FloorMembers .dashMemberCompact{cursor:pointer}
+
 </style>
 </head>
 
@@ -1541,11 +1549,6 @@ PPE 점검 대기
       </div>
     </div>
 
-    <div class="v33BoardToolbar">
-      <div id="v33ModeTitle" class="v33ModeTitle">현재 위치 보기</div>
-      <button id="v33ModeBtn" type="button" class="v33ModeBtn" onclick="toggleTeamBoardModeV33()">📋 활동이력 보기</button>
-    </div>
-
     <div class="v33BoardCardScroll">
       <div class="v33BoardLayout">
         <div id="v33FloorPanel" class="v33SidePanel v33FloorPanel"></div>
@@ -1558,11 +1561,15 @@ PPE 점검 대기
       <div class="v29DetailEmpty">조를 누르면 현재 위치 상세정보가 표시됩니다.</div>
     </div>
 
+    <div id="v34FloorMembers" class="v34FloorMembers">
+      <div class="v34FloorMembersHead">선택 층 활동대원</div>
+      <div class="v34FloorMemberEmpty">층을 선택하면 해당 층의 활동대원이 표시됩니다.</div>
+    </div>
+
     <div id="v33BoardStats" class="v33BoardStats"></div>
 
     <div class="v29BoardFoot">
-      ※ 기본 화면은 선택한 층의 A/B/C/D 실제 사면에 현재 조 위치를 표시합니다.
-      ‘활동이력 보기’로 전환하면 최근 위치 변경 이력과 현재 평면도를 함께 확인할 수 있습니다.
+      ※ 층을 선택하면 해당 층의 현재 활동 조와 대원을 확인할 수 있습니다. 방면은 아래쪽 A방면을 기준으로 시계방향 B → C → D 순서입니다.
     </div>
   </div>
 
@@ -5465,7 +5472,6 @@ function v29DirectionKey(value){
 }
 
 let v33SelectedFloor="화점층";
-let v33BoardMode="current";
 
 function v33TeamClass(team){
   const n=v28TeamNo(team);
@@ -5477,44 +5483,11 @@ function v33FloorTeams(teams,floor){
   return teams.filter(t=>!t.dispersed && v29FloorKey(t.floor)===floor && v29DirectionKey(t.direction));
 }
 
-function v33HistoryRows(){
-  const meta=v23LoadMeta();
-  const teams=v29GroupTeams(window.__dashboardInsideMembers||[]);
-  const rows=[];
-  teams.forEach(t=>{
-    const members=(window.__dashboardInsideMembers||[]).filter(m=>{
-      const vm=meta[String(m.memberId)]||{};
-      return (vm.teamName||"조 미지정")===t.team;
-    });
-    const seen=new Set();
-    members.forEach(m=>{
-      const vm=meta[String(m.memberId)]||{};
-      (Array.isArray(vm.history)?vm.history:[]).forEach(h=>{
-        const floor=v29FloorKey(h.activityFloor||"");
-        const dir=v29DirectionKey(h.entryDirection||vm.entryDirection||"");
-        if(!floor)return;
-        const key=[h.time||"",floor,dir,h.detailLocation||""].join("|");
-        if(seen.has(key))return;
-        seen.add(key);
-        rows.push({
-          team:t.team,time:h.time||"-",floor:floor,direction:dir||"방면 미기록",
-          detail:h.detailLocation||"",activityNo:t.activityNo
-        });
-      });
-    });
-  });
-  return rows.sort((a,b)=>String(b.time).localeCompare(String(a.time))).slice(0,12);
-}
-
 function selectTeamBoardFloorV33(floor){
   v33SelectedFloor=floor;
   drawTeamBoardV29();
 }
 
-function toggleTeamBoardModeV33(){
-  v33BoardMode=v33BoardMode==="current"?"history":"current";
-  drawTeamBoardV29();
-}
 
 function drawTeamBoardV29(){
   const board=document.getElementById("v29LocationBoard");
@@ -5522,46 +5495,24 @@ function drawTeamBoardV29(){
   const floorPanel=document.getElementById("v33FloorPanel");
   const summary=document.getElementById("v33SummaryPanel");
   const stats=document.getElementById("v33BoardStats");
-  const modeBtn=document.getElementById("v33ModeBtn");
-  const modeTitle=document.getElementById("v33ModeTitle");
+  const memberArea=document.getElementById("v34FloorMembers");
   if(!board||!floorPanel||!summary)return;
 
-  const teams=v29GroupTeams(window.__dashboardInsideMembers||[]);
+  const members=window.__dashboardInsideMembers||[];
+  const teams=v29GroupTeams(members);
   const floors=["옥상","상층","직상층","화점층","직하층","하층","지하층"];
   const occupied=floors.filter(f=>v33FloorTeams(teams,f).length);
+
   if(!floors.includes(v33SelectedFloor))v33SelectedFloor="화점층";
-  if(!v33FloorTeams(teams,v33SelectedFloor).length && occupied.length && v33SelectedFloor!=="화점층"){
-    v33SelectedFloor=occupied[0];
-  }
-
   const selected=v33FloorTeams(teams,v33SelectedFloor);
-  const isHistory=v33BoardMode==="history";
 
-  if(modeBtn)modeBtn.textContent=isHistory?"← 현재위치 보기":"📋 활동이력 보기";
-  if(modeTitle)modeTitle.textContent=isHistory?"최근 활동이력 + 현재 평면도":"현재 위치 보기";
-
-  if(!isHistory){
-    floorPanel.classList.remove("hide");
-    floorPanel.innerHTML='<div class="v33PanelTitle">층 선택</div>'+
-      floors.map(f=>{
-        const cnt=v33FloorTeams(teams,f).length;
-        return '<button type="button" class="v33FloorBtn '+(f===v33SelectedFloor?'active ':'')+(f==="화점층"?'fire':'')+
-          '" onclick="selectTeamBoardFloorV33(\''+f+'\')">'+(f==="화점층"?'🔥 ':'')+f+
-          (cnt?'<span class="v33FloorCount">'+cnt+'개조</span>':'')+'</button>';
-      }).join("");
-  }else{
-    floorPanel.classList.remove("hide");
-    const history=v33HistoryRows();
-    floorPanel.innerHTML='<div class="v33PanelTitle">최근 활동이력</div>'+
-      (history.length?history.map(h=>
-        '<div class="v33TimelineRow">'+
-          '<div class="v33TimelineTime">'+escapeHtml(h.time)+'</div>'+
-          '<div class="v33TimelineMain"><span class="v33SummaryBadge '+v33TeamClass(h.team)+'">'+escapeHtml(h.team)+'</span> '+
-          escapeHtml(h.floor)+' · '+escapeHtml(h.direction)+
-          (h.detail?' · '+escapeHtml(h.detail):'')+'</div>'+
-        '</div>'
-      ).join(""):'<div class="v33TimelineEmpty">기록된 위치 변경 이력이 없습니다.</div>');
-  }
+  floorPanel.innerHTML='<div class="v33PanelTitle">층 선택</div>'+
+    floors.map(f=>{
+      const cnt=v33FloorTeams(teams,f).length;
+      return '<button type="button" class="v33FloorBtn '+(f===v33SelectedFloor?'active ':'')+(f==="화점층"?'fire':'')+
+        '" onclick="selectTeamBoardFloorV33(\''+f+'\')">'+(f==="화점층"?'🔥 ':'')+f+
+        (cnt?'<span class="v33FloorCount">'+cnt+'개조</span>':'')+'</button>';
+    }).join("");
 
   function faceHtml(dir,cls){
     const here=selected.filter(t=>v29DirectionKey(t.direction)===dir);
@@ -5573,16 +5524,17 @@ function drawTeamBoardV29(){
     }).join("")+'</div>';
   }
 
+  /* 방면 배치: 맨 아래 A, 시계방향 B(왼쪽) → C(위) → D(오른쪽) */
   board.innerHTML=
     '<div class="v33Plan">'+
-      '<div class="v33DirLabel v33DirA">A 방면</div>'+
-      '<div class="v33DirLabel v33DirB">B 방면</div>'+
       '<div class="v33DirLabel v33DirC">C 방면</div>'+
       '<div class="v33DirLabel v33DirD">D 방면</div>'+
-      faceHtml("A방면","v33FaceA")+
-      faceHtml("B방면","v33FaceB")+
-      faceHtml("C방면","v33FaceC")+
-      faceHtml("D방면","v33FaceD")+
+      '<div class="v33DirLabel v33DirA">A 방면</div>'+
+      '<div class="v33DirLabel v33DirB">B 방면</div>'+
+      faceHtml("C방면","v33FaceA")+
+      faceHtml("D방면","v33FaceB")+
+      faceHtml("A방면","v33FaceC")+
+      faceHtml("B방면","v33FaceD")+
       '<div class="v33PlanInner"><div class="v33FloorCenter '+(v33SelectedFloor==="화점층"?'fire':'')+'">'+
         (v33SelectedFloor==="화점층"?'🔥 ':'')+escapeHtml(v33SelectedFloor)+'</div></div>'+
     '</div>';
@@ -5610,8 +5562,48 @@ function drawTeamBoardV29(){
   if(detail){
     detail.innerHTML='<div class="v29DetailEmpty">조를 누르면 현재 위치 상세정보가 표시됩니다.</div>';
   }
-}
 
+  /* 선택한 층에서 활동하는 대원: 기존 현장 활동대원과 동일한 카드 렌더링 사용 */
+  if(memberArea){
+    const meta=v23LoadMeta();
+    const floorMembers=members.filter(m=>{
+      const vm=meta[String(m.memberId)]||{};
+      return v29FloorKey(vm.activityFloor)===v33SelectedFloor;
+    });
+
+    memberArea.innerHTML=
+      '<div class="v34FloorMembersHead">'+
+        (v33SelectedFloor==="화점층"?'🔥 ':'')+escapeHtml(v33SelectedFloor)+' 활동대원 '+floorMembers.length+'명'+
+        '<div class="v34FloorMembersSub">현재 선택한 층에서 활동 중인 대원</div>'+
+      '</div>'+
+      '<div id="v34FloorMemberRoster"></div>';
+
+    const roster=document.getElementById("v34FloorMemberRoster");
+    if(!floorMembers.length){
+      roster.innerHTML='<div class="v34FloorMemberEmpty">현재 이 층에서 활동 중인 대원이 없습니다.</div>';
+    }else{
+      /* 기존 3. 현장 활동대원 렌더링 결과를 그대로 재사용하기 위해 동일 데이터 구조로 그린다 */
+      roster.innerHTML=floorMembers.map(m=>{
+        const vm=meta[String(m.memberId)]||{};
+        const team=vm.teamName||"조 미지정";
+        const actNo=Number(vm.teamActivityNo)||1;
+        const dir=vm.entryDirection||"방면 미지정";
+        const floor=vm.activityFloor||"층 미지정";
+        const detailLoc=vm.detailLocation||"세부장소 미지정";
+        const mins=Number(m.currentMinutes)||0;
+        const st=v29StayState(mins);
+        return '<div class="dashMemberCompact" onclick="openDashboardMemberDetail(\''+escapeAttr(String(m.memberId))+'\')">'+
+          '<div class="dashTopLine"><span class="liveDot"></span><span class="dashNameDept">'+
+            escapeHtml(m.memberName||"이름 미상")+
+          '</span><span class="dashTime">'+mins+'분</span><span class="dashChevron">›</span></div>'+
+          '<div class="dashLocationLine"><span class="floorMini '+floorClass(floor)+'">'+escapeHtml(floor)+'</span>'+
+            '<span class="dashLocText">'+escapeHtml(team)+' · '+actNo+'차 · '+escapeHtml(dir)+' · '+escapeHtml(detailLoc)+'</span>'+
+            '<span class="dashTime">'+escapeHtml(st.icon+' '+st.text)+'</span></div>'+
+        '</div>';
+      }).join("");
+    }
+  }
+}
 function showTeamBoardDetailV29(teamName){
   const detail=document.getElementById("v29BoardDetail");
   if(!detail)return;
