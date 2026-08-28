@@ -1782,14 +1782,19 @@ function v2MinutesBetween(start,end){
 
 function v2SyncServerMeta(m){
   try{
-    if(typeof v23SetMemberMeta!=="function" || !m || !m.memberId)return;
-    v23SetMemberMeta(m.memberId,{
+    if(typeof v23LoadMeta!=="function" || typeof v23SaveMeta!=="function" || !m || !m.memberId)return;
+    /* V2.45: 조/차수/현재위치는 서버(구글시트)가 최종 기준.
+       브라우저에 과거 값이 남아 있어도 서버값으로 무조건 덮어쓴다. */
+    const meta=v23LoadMeta(), key=String(m.memberId), old=meta[key]||{};
+    meta[key]=Object.assign({},old,{
       teamName:m.team||"미지정",
       teamActivityNo:Number(m.activityNo)||1,
       entryDirection:m.direction||"미지정",
       activityFloor:m.floor||"미지정",
-      detailLocation:m.detail||"세부장소 미지정"
+      detailLocation:m.detail||"세부장소 미지정",
+      locationEdited:false
     });
+    v23SaveMeta(meta);
   }catch(e){
     console.log("V2 서버 메타 동기화 참고",e);
   }
@@ -2986,20 +2991,6 @@ function v23SaveMeta(meta){
   try{localStorage.setItem(v23SiteKey(),JSON.stringify(meta));}catch(e){}
 }
 function v23SetMemberMeta(id, patch){
-  /* V2.39: 사용자가 수정한 현재 위치는 자동갱신/재렌더링으로 덮어쓰지 않음 */
-  try{
-    const __args=arguments;
-    const __id=String(__args[0]);
-    const __patch=__args[1]||{};
-    const __all=v23LoadMeta();
-    const __prev=__all[__id]||{};
-    if(__prev.locationEdited===true && __patch.locationEdited!==true){
-      if(Object.prototype.hasOwnProperty.call(__patch,"activityFloor")) delete __patch.activityFloor;
-      if(Object.prototype.hasOwnProperty.call(__patch,"entryDirection")) delete __patch.entryDirection;
-      if(Object.prototype.hasOwnProperty.call(__patch,"detailLocation")) delete __patch.detailLocation;
-    }
-  }catch(e){}
-
   const meta=v23LoadMeta(), key=String(id);
   meta[key]=Object.assign({},meta[key]||{},patch||{});
   v23SaveMeta(meta);
@@ -3154,12 +3145,11 @@ function v242SyncIncidentStateFromDashboard(dashboard){
   const site=(document.getElementById("site")||{}).value||"";
   if(!site)return;
   const emptyKey="fireV2OnlyEmptyState:"+site;
+
   if(v242DashboardIsCompletelyEmpty(dashboard)){
-    /* 서버 시트에 해당 현장 기록이 완전히 0건이면 새 현장/초기화 상태로 판단 */
-    if(localStorage.getItem(emptyKey)!=="1"){
-      v242ClearSiteTeamState();
-      localStorage.setItem(emptyKey,"1");
-    }
+    /* V2.45: 서버가 비어 있으면 브라우저의 이전 조/차수/위치정보를 항상 폐기 */
+    v242ClearSiteTeamState();
+    localStorage.setItem(emptyKey,"1");
   }else{
     localStorage.removeItem(emptyKey);
   }
@@ -3993,7 +3983,7 @@ async function batchEntryMembers(){
 
 
   const selectedTeamMembers = getSelectedTeamMembers();
-  /* V2.43: 투입 직전 서버 현황이 완전 초기화 상태인지 확인.
+  /* V2.45: 투입 직전 서버 현황이 완전 초기화 상태인지 확인.
      시트를 전부 지운 뒤에는 이전 2조/3조 기록을 새 투입에 재사용하지 않는다. */
   try{
     const __site=(document.getElementById("site")||{}).value||"";
@@ -4001,7 +3991,14 @@ async function batchEntryMembers(){
       const __r=await fetch(API+"?action=dashboard&site="+encodeURIComponent(__site)+"&t="+Date.now());
       const __j=await __r.json();
       if(__j && __j.success && __j.dashboard){
-        v242SyncIncidentStateFromDashboard(__j.dashboard);
+        /* V2.45: 투입 직전 서버가 완전히 비어 있으면 무조건 새 현장 상태로 초기화.
+           emptyState 플래그가 과거에 남아 있어도 이전 조/차수를 재사용하지 않는다. */
+        if(v242DashboardIsCompletelyEmpty(__j.dashboard)){
+          v242ClearSiteTeamState();
+          localStorage.setItem("fireV2OnlyEmptyState:"+__site,"1");
+        }else{
+          localStorage.removeItem("fireV2OnlyEmptyState:"+__site);
+        }
       }
     }
   }catch(e){
