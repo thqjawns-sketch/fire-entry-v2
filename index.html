@@ -1258,6 +1258,12 @@ button:disabled{
 }
 
 </style>
+
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#d71920">
+<link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
+<link rel="apple-touch-icon" href="./icon-192.png">
+
 </head>
 
 <body>
@@ -6820,6 +6826,17 @@ window.addEventListener("scroll",v249UpdateFloatNav,{passive:true});
 window.addEventListener("resize",v249UpdateFloatNav);
 document.addEventListener("DOMContentLoaded",v249UpdateFloatNav);
 
+</script>
+
+
+<script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", function () {
+    navigator.serviceWorker.register("./service-worker.js").catch(function (err) {
+      console.warn("Service Worker registration failed:", err);
+    });
+  });
+}
 </script>
 
 </body>
