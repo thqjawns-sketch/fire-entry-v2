@@ -1240,21 +1240,21 @@ button:disabled{
 
 /* V2.49L5 긴 화면 스크롤 이동 보조 */
 .v249FloatNav{
-  display:none;position:fixed;bottom:18px;z-index:9998;
-  width:auto!important;min-width:108px;margin:0!important;padding:11px 15px!important;
-  border:0!important;border-radius:999px!important;
-  background:#173d67!important;color:#fff!important;
-  box-shadow:0 5px 16px rgba(0,0,0,.22)!important;
-  font-size:14px!important;font-weight:900!important;line-height:1.1!important;
+  display:none;position:fixed;right:18px;bottom:18px;z-index:9998;
+  width:auto!important;min-width:210px;margin:0!important;padding:20px 28px!important;
+  border:2px solid #d7a800!important;border-radius:999px!important;
+  background:#ffc928!important;color:#171717!important;
+  box-shadow:0 6px 18px rgba(0,0,0,.24)!important;
+  font-size:22px!important;font-weight:900!important;line-height:1.15!important;
 }
 .v249FloatNav.show{display:block}
-.v249FloatRight{right:18px}
-.v249FloatLeft{left:18px}
+.v249FloatRight,.v249FloatLeft{right:18px!important;left:auto!important}
 .v249ExitedTopBack{margin-top:0!important;margin-bottom:14px!important}
 @media(max-width:480px){
-  .v249FloatNav{bottom:14px;min-width:96px;padding:10px 13px!important;font-size:13px!important}
-  .v249FloatRight{right:12px}
-  .v249FloatLeft{left:12px}
+  .v249FloatNav{
+    right:12px!important;bottom:14px;left:auto!important;
+    min-width:180px;padding:17px 23px!important;font-size:19px!important;
+  }
 }
 
 </style>
@@ -1659,6 +1659,12 @@ PPE 점검 대기
 <span class="refreshMainV22">🔄 현황 새로고침</span>
 <span id="dashboardAutoRefreshInfo" class="refreshSubV22">60초 자동갱신 · 마지막 갱신 --:--:--</span>
 </button>
+<button
+  class="back"
+  onclick="closeDashboard()"
+>
+⬅ 안전관리 화면으로 돌아가기
+</button>
 
 
 
@@ -1694,12 +1700,7 @@ PPE 점검 대기
 </div>
 
 
-<button
-  class="back"
-  onclick="closeDashboard()"
->
-⬅ 안전관리 화면으로 돌아가기
-</button>
+
 
 </div>
 
@@ -1771,14 +1772,13 @@ PPE 점검 대기
     <div class="sectionTitle">철수 완료 대원</div>
     <div id="dashboardExited"></div>
   </div>
-  <button type="button" class="back" onclick="closeExitedPage()">⬅ 현장 활동 현황으로 돌아가기</button>
 </div>
 
 
 <!-- V2.49L5 스크롤 이동 보조 버튼 -->
 <button type="button" id="v249MainFloatDashboard" class="v249FloatNav v249FloatRight" onclick="openDashboard()" aria-label="현장 현황 열기">📊 현황</button>
-<button type="button" id="v249DashboardFloatBack" class="v249FloatNav v249FloatLeft" onclick="closeDashboard()" aria-label="안전관리 화면으로 돌아가기">⬅ 안전관리</button>
-<button type="button" id="v249ExitedFloatBack" class="v249FloatNav v249FloatLeft" onclick="closeExitedPage()" aria-label="현장 활동 현황으로 돌아가기">⬅ 현장현황</button>
+<button type="button" id="v249DashboardFloatBack" class="v249FloatNav v249FloatRight" onclick="closeDashboard()" aria-label="안전관리 화면으로 돌아가기">⬅ 안전관리</button>
+<button type="button" id="v249ExitedFloatBack" class="v249FloatNav v249FloatRight" onclick="closeExitedPage()" aria-label="현장 활동 현황으로 돌아가기">⬅ 현장현황</button>
 
 <script>
 /*
