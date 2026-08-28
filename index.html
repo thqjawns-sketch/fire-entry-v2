@@ -1257,6 +1257,25 @@ button:disabled{
   }
 }
 
+
+/* V2.49L9 PWA 뒤로가기 + 현황판 닫기 조작성 개선 */
+.v29BoardClose{
+  min-width:132px!important;
+  padding:13px 18px!important;
+  font-size:16px!important;
+  font-weight:950!important;
+  background:#fff!important;
+  color:#b42318!important;
+  border:2px solid #f3b5b0!important;
+}
+@media(max-width:760px){
+  .v29BoardClose{
+    min-width:124px!important;
+    padding:12px 14px!important;
+    font-size:15px!important;
+  }
+}
+
 </style>
 
 <link rel="manifest" href="./manifest.json">
@@ -1726,7 +1745,7 @@ PPE 점검 대기
     </div>
     <div class="v29BoardHeaderBtns">
       <button type="button" class="v29BoardRefresh" onclick="refreshTeamBoardV29()">🔄 새로고침</button>
-      <button type="button" class="v29BoardClose" onclick="closeTeamBoardV29()">✕ 닫기</button>
+      <button type="button" class="v29BoardClose" onclick="closeTeamBoardV29()">✕ 현황판 닫기</button>
     </div>
   </div>
 
@@ -5166,6 +5185,7 @@ async function openDashboard(){
     .style.display =
     "block";
 
+  v249NavPush("dashboard");
 
   window.scrollTo(
     0,
@@ -6024,6 +6044,7 @@ function openTeamBoardV29(){
   if(!board)return;
   if(dashboard)dashboard.style.display="none";
   board.style.display="block";
+  v249NavPush("teamBoard");
 
   const site=document.getElementById("v29BoardSite");
   const dashSite=document.getElementById("dashboardSiteName");
@@ -6452,6 +6473,7 @@ function openExitedPage(){
 
   dashboardPage.style.display="none";
   exitedPage.style.display="block";
+  v249NavPush("exited");
 
   // 철수대원은 3번째 창을 클릭해 들어왔을 때만 화면에 생성한다.
   drawDashboardExited(window.__dashboardExitedMembers || []);
@@ -6837,6 +6859,44 @@ if ("serviceWorker" in navigator) {
     });
   });
 }
+
+/* V2.49L9: PWA/안드로이드 뒤로가기를 앱 내부 화면 이동으로 처리 */
+function v249NavPush(view){
+  try{
+    history.pushState({fireApp:true,view:view},"",location.href);
+  }catch(e){}
+}
+function v249Visible(id){
+  const el=document.getElementById(id);
+  return !!el && getComputedStyle(el).display!=="none";
+}
+function v249CloseOverlayByBack(){
+  if(v249Visible("teamBoardPageV29")){
+    closeTeamBoardV29();
+    return true;
+  }
+  if(v249Visible("exitedPageV23")){
+    closeExitedPage();
+    return true;
+  }
+  if(v249Visible("dashboardPage")){
+    closeDashboard();
+    return true;
+  }
+  return false;
+}
+window.addEventListener("popstate",function(){
+  // 브라우저/PWA 뒤로가기: 현재 열린 하위 화면만 한 단계 닫는다.
+  v249CloseOverlayByBack();
+});
+document.addEventListener("DOMContentLoaded",function(){
+  try{
+    if(!history.state || !history.state.fireApp){
+      history.replaceState({fireApp:true,view:"main"},"",location.href);
+    }
+  }catch(e){}
+});
+
 </script>
 
 </body>
