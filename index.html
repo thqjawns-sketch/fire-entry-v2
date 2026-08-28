@@ -1215,10 +1215,33 @@ button:disabled{
 .v247OfficerChip.current{background:#e0f2fe;border-color:#7dd3fc;color:#075985}
 .v247OfficerHint{width:100%;font-size:11px;color:#64748b;margin-bottom:1px}
 
+
+/* V2.49L 완주소방서 공식 로고 */
+.wanjuBrand{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  margin:2px 0 12px;
+}
+.wanjuBrand img{
+  display:block;
+  width:min(330px, 82vw);
+  height:auto;
+  object-fit:contain;
+}
+@media (max-width:600px){
+  .wanjuBrand{margin:0 0 10px;}
+  .wanjuBrand img{width:min(290px, 86vw);}
+}
+
 </style>
 </head>
 
 <body>
+<div class="wanjuBrand" aria-label="완주소방서">
+  <img src="./wanju-fire-logo.png" alt="완주소방서 WANJU FIRE STATION">
+</div>
+
 
 <div class="container">
 
