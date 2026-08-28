@@ -1532,7 +1532,7 @@ PPE 점검 대기
 
   <div class="v29BoardHeader">
     <div class="v29BoardHeaderMain">
-      <div class="v29BoardTitle">🗺️ 조 활동상태판</div>
+      <div class="v29BoardTitle">🗺️ 조 활동상태판 <span style="font-size:11px;opacity:.75">V2.34</span></div>
       <div id="v29BoardSite" class="v29BoardSite">-</div>
     </div>
     <div class="v29BoardHeaderBtns">
@@ -5596,7 +5596,7 @@ function drawTeamBoardV29(){
           '<div class="dashTopLine"><span class="liveDot"></span><span class="dashNameDept">'+
             escapeHtml(m.memberName||"이름 미상")+
           '</span><span class="dashTime">'+mins+'분</span><span class="dashChevron">›</span></div>'+
-          '<div class="dashLocationLine"><span class="floorMini '+floorClass(floor)+'">'+escapeHtml(floor)+'</span>'+
+          '<div class="dashLocationLine"><span class="floorMini '+v23FloorClass(floor)+'">'+escapeHtml(floor)+'</span>'+
             '<span class="dashLocText">'+escapeHtml(team)+' · '+actNo+'차 · '+escapeHtml(dir)+' · '+escapeHtml(detailLoc)+'</span>'+
             '<span class="dashTime">'+escapeHtml(st.icon+' '+st.text)+'</span></div>'+
         '</div>';
