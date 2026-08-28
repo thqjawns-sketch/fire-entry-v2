@@ -1649,7 +1649,7 @@ PPE 점검 대기
 
   <div class="v29BoardHeader">
     <div class="v29BoardHeaderMain">
-      <div class="v29BoardTitle">🗺️ 조 활동상태판 <span style="font-size:11px;opacity:.75">V2.38</span></div>
+      <div class="v29BoardTitle">🗺️ 조 활동상태판 <span style="font-size:11px;opacity:.75">V2.39</span></div>
       <div id="v29BoardSite" class="v29BoardSite">-</div>
     </div>
     <div class="v29BoardHeaderBtns">
@@ -2947,6 +2947,20 @@ function v23SaveMeta(meta){
   try{localStorage.setItem(v23SiteKey(),JSON.stringify(meta));}catch(e){}
 }
 function v23SetMemberMeta(id, patch){
+  /* V2.39: 사용자가 수정한 현재 위치는 자동갱신/재렌더링으로 덮어쓰지 않음 */
+  try{
+    const __args=arguments;
+    const __id=String(__args[0]);
+    const __patch=__args[1]||{};
+    const __all=v23LoadMeta();
+    const __prev=__all[__id]||{};
+    if(__prev.locationEdited===true && __patch.locationEdited!==true){
+      if(Object.prototype.hasOwnProperty.call(__patch,"activityFloor")) delete __patch.activityFloor;
+      if(Object.prototype.hasOwnProperty.call(__patch,"entryDirection")) delete __patch.entryDirection;
+      if(Object.prototype.hasOwnProperty.call(__patch,"detailLocation")) delete __patch.detailLocation;
+    }
+  }catch(e){}
+
   const meta=v23LoadMeta(), key=String(id);
   meta[key]=Object.assign({},meta[key]||{},patch||{});
   v23SaveMeta(meta);
@@ -6056,7 +6070,8 @@ function saveDashboardTeamLocation(team){
       entryDirection:dir,
       activityFloor:floor,
       detailLocation:detail,
-      history:history
+      history:history,
+      locationEdited:true
     });
   });
   v23SaveMeta(meta);
@@ -6123,7 +6138,7 @@ function saveDashboardMemberLocation(memberId){
     time:new Date().toLocaleTimeString("ko-KR",{hour:"2-digit",minute:"2-digit",hour12:false}),
     teamName:team,entryDirection:dir,activityFloor:floor,detailLocation:detail
   });
-  meta[key]=Object.assign({},old,{teamName:team,entryDirection:dir,activityFloor:floor,detailLocation:detail,history:history});
+  meta[key]=Object.assign({},old,{teamName:team,entryDirection:dir,activityFloor:floor,detailLocation:detail,history:history,locationEdited:true});
   v23SaveMeta(meta);
 
   closeDashboardMemberDetail();
