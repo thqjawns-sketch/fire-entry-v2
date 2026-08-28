@@ -2114,47 +2114,33 @@ let exitSubmitting = false;
 
 let scanAudioContext = null;
 
-/* V2.49L10: 현재 활동중 대원 투입대기 사전 차단 */
-let v249ActiveCheckCache = {
-  site:"",
-  at:0,
-  ids:new Set()
-};
-const V249_ACTIVE_CHECK_CACHE_MS = 5000;
+/* V2.49L11: 활동중 대원 투입대기 원천차단 + 연속클릭 중복방지 */
+const v249QueueAddPending = new Set();
 
 async function v249GetActiveMemberIds(){
   const siteEl=document.getElementById("site");
   const site=siteEl ? String(siteEl.value||"").trim() : "";
   if(!site) throw new Error("NO_SITE");
 
-  const now=Date.now();
-  if(
-    v249ActiveCheckCache.site===site &&
-    now-v249ActiveCheckCache.at < V249_ACTIVE_CHECK_CACHE_MS
-  ){
-    return v249ActiveCheckCache.ids;
-  }
-
+  // 현재상태 시트를 직접 조회하는 inside 경로 사용.
+  // 캐시를 사용하지 않아 철수/진입 직후에도 최신 활동상태를 확인한다.
   const response=await fetch(
-    API+"?action=dashboard&site="+encodeURIComponent(site)+"&t="+Date.now()
+    API+"?action=inside&site="+encodeURIComponent(site)+"&t="+Date.now(),
+    {cache:"no-store"}
   );
   const data=await response.json();
-  if(!data || !data.success || !data.dashboard){
+  if(!data || !data.success || !Array.isArray(data.members)){
     throw new Error("ACTIVE_CHECK_FAILED");
   }
 
-  const ids=new Set(
-    (data.dashboard.insideMembers||[]).map(m=>String(m.id||"").trim())
+  return new Set(
+    data.members.map(m=>String(m.id||"").trim()).filter(Boolean)
   );
-  v249ActiveCheckCache={site:site,at:Date.now(),ids:ids};
-  return ids;
 }
 
 function v249InvalidateActiveCheck(){
-  v249ActiveCheckCache={site:"",at:0,ids:new Set()};
+  // L11부터 활동상태 캐시를 사용하지 않음.
 }
-
-
 /* =====================================================
 현장 현황 60초 자동갱신
 ===================================================== */
@@ -2870,78 +2856,63 @@ async function addMemberToQueue(
   member
 ){
 
-  if(
-    !member ||
-    !member.id
-  ){
-
-    alert(
-      "등록되지 않은 대원입니다."
-    );
-
+  if(!member || !member.id){
+    alert("등록되지 않은 대원입니다.");
     return false;
-
   }
 
+  const memberId=String(member.id).trim();
 
+  // 이미 명단에 있거나 서버 확인 중이면 즉시 차단.
+  // 빠르게 여러 번 눌러도 같은 대원이 중복 추가되지 않는다.
   if(
-    entryQueue.some(
-      item =>
-        String(
-          item.id
-        ) ===
-        String(
-          member.id
-        )
-    )
+    entryQueue.some(item=>String(item.id).trim()===memberId) ||
+    v249QueueAddPending.has(memberId)
   ){
-
     showTemporaryMessage(
-      member.name +
-      " 대원은 이미 투입대기 명단에 있습니다."
+      member.name+" 대원은 이미 투입대기 명단에 있거나 확인 중입니다."
     );
-
     return false;
-
   }
+
+  v249QueueAddPending.add(memberId);
 
   try{
     const activeIds=await v249GetActiveMemberIds();
-    if(activeIds.has(String(member.id).trim())){
+
+    if(activeIds.has(memberId)){
       showTemporaryMessage(
         "⛔ "+member.name+" 대원은 현재 활동중입니다. 투입대기에 추가할 수 없습니다."
       );
       return false;
     }
+
+    // 서버 확인을 기다리는 동안 다른 경로에서 추가됐는지 마지막으로 재확인.
+    if(entryQueue.some(item=>String(item.id).trim()===memberId)){
+      showTemporaryMessage(
+        member.name+" 대원은 이미 투입대기 명단에 있습니다."
+      );
+      return false;
+    }
+
+    entryQueue.push({
+      id:member.id,
+      name:member.name,
+      rank:member.rank || "",
+      dept:member.dept || ""
+    });
+
+    renderQueue();
+    return true;
+
   }catch(e){
     showTemporaryMessage(
-      "⚠️ 현재 활동상태 확인에 실패했습니다. 잠시 후 다시 시도하세요."
+      "⚠️ 현재 활동상태를 확인하지 못했습니다. 투입대기에 추가하지 않았습니다."
     );
     return false;
+  }finally{
+    v249QueueAddPending.delete(memberId);
   }
-
-
-  entryQueue.push({
-
-    id:
-      member.id,
-
-    name:
-      member.name,
-
-    rank:
-      member.rank || "",
-
-    dept:
-      member.dept || ""
-
-  });
-
-
-  renderQueue();
-
-  return true;
-
 }
 
 
@@ -5536,12 +5507,6 @@ async function loadDashboard(
 
     const dashboard =
       data.dashboard;
-
-    v249ActiveCheckCache={
-      site:String(site||""),
-      at:Date.now(),
-      ids:new Set((dashboard.insideMembers||[]).map(m=>String(m.id||"").trim()))
-    };
 
     /* V2.42: 시트가 완전히 비워진 현장은 이전 조 편성/위치정보를 이어받지 않음 */
     v242SyncIncidentStateFromDashboard(dashboard);
