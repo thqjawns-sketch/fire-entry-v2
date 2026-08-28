@@ -1664,7 +1664,7 @@ PPE 점검 대기
 
   <div class="v29BoardHeader">
     <div class="v29BoardHeaderMain">
-      <div class="v29BoardTitle">🗺️ 조 활동상태판 <span style="font-size:11px;opacity:.75">V2.42</span></div>
+      <div class="v29BoardTitle">🗺️ 조 활동상태판 <span style="font-size:11px;opacity:.75">V2.43</span></div>
       <div id="v29BoardSite" class="v29BoardSite">-</div>
     </div>
     <div class="v29BoardHeaderBtns">
@@ -1955,6 +1955,30 @@ window.fetch = async function(input, init){
         succeeded:d.succeeded||[],
         failed:d.failed||[],
         message:d.message||""
+      });
+    }
+
+    if(action==="updateLocation"){
+      const p=new URLSearchParams();
+      p.set("action","updateLocation");
+      p.set("siteId",v2SiteId(old.get("site")));
+      p.set("memberId",old.get("memberId")||"");
+      p.set("teamName",old.get("teamName")||"");
+      p.set("activityNo",old.get("activityNo")||"");
+      p.set("entryDirection",old.get("entryDirection")||"");
+      p.set("activityFloor",old.get("activityFloor")||"");
+      p.set("detailLocation",old.get("detailLocation")||"");
+
+      const d=await v2CallPost(p);
+      return v2JsonResponse({
+        success:!!(d.ok || d.success),
+        memberId:d.memberId||old.get("memberId")||"",
+        team:d.team||old.get("teamName")||"",
+        activityNo:Number(d.activityNo||old.get("activityNo"))||1,
+        direction:d.direction||old.get("entryDirection")||"",
+        floor:d.floor||old.get("activityFloor")||"",
+        detail:d.detail||old.get("detailLocation")||"",
+        message:d.error||d.message||""
       });
     }
   }
@@ -3969,7 +3993,7 @@ async function batchEntryMembers(){
 
 
   const selectedTeamMembers = getSelectedTeamMembers();
-  /* V2.42: 투입 직전 서버 현황이 완전 초기화 상태인지 확인.
+  /* V2.43: 투입 직전 서버 현황이 완전 초기화 상태인지 확인.
      시트를 전부 지운 뒤에는 이전 2조/3조 기록을 새 투입에 재사용하지 않는다. */
   try{
     const __site=(document.getElementById("site")||{}).value||"";
@@ -6106,8 +6130,43 @@ function openDashboardTeamLocationEdit(team){
   });
 }
 
-function saveDashboardTeamLocation(team){
-  const members=(window.__dashboardInsideMembers||[]).filter(m=>v19TeamInfo(m).team===team);
+
+async function v243UpdateServerLocation(memberId,team,activityNo,dir,floor,detail){
+  const site=(document.getElementById("site")||{}).value||"";
+  if(!site)throw new Error("현장이 선택되지 않았습니다.");
+
+  const body=new URLSearchParams();
+  body.set("action","updateLocation");
+  body.set("site",site);
+  body.set("memberId",String(memberId||""));
+  body.set("teamName",team||"");
+  body.set("activityNo",String(Number(activityNo)||1));
+  body.set("entryDirection",dir||"");
+  body.set("activityFloor",floor||"");
+  body.set("detailLocation",detail||"");
+
+  const res=await fetch(API,{method:"POST",body:body});
+  const data=await res.json();
+  if(!data.success)throw new Error(data.message||"위치 변경에 실패했습니다.");
+  return data;
+}
+
+function v243ApplyServerLocationToLocal(memberId,data){
+  const meta=v23LoadMeta(), key=String(memberId), old=meta[key]||{};
+  meta[key]=Object.assign({},old,{
+    teamName:data.team||old.teamName||"",
+    teamActivityNo:Number(data.activityNo)||old.teamActivityNo||1,
+    entryDirection:data.direction||"",
+    activityFloor:data.floor||"",
+    detailLocation:data.detail||"",
+    locationEdited:false
+  });
+  v23SaveMeta(meta);
+}
+
+async function saveDashboardTeamLocation(team){
+  const active=(window.__dashboardInsideMembers||[]);
+  const members=active.filter(m=>v19TeamInfo(m).team===team);
   if(!members.length){alert("변경할 조원이 없습니다.");return;}
 
   const dir=document.getElementById("editTeamDirection")?.value||"";
@@ -6115,30 +6174,41 @@ function saveDashboardTeamLocation(team){
   const detail=document.getElementById("editTeamDetail")?.value||"";
   if(!dir || !floor){alert("방면과 활동층을 선택해주세요.");return;}
 
-  const meta=v23LoadMeta();
-  const now=new Date().toLocaleTimeString("ko-KR",{hour:"2-digit",minute:"2-digit",hour12:false});
+  const btn=document.getElementById("v238TeamSave");
+  if(btn){btn.disabled=true;btn.textContent="서버 저장 중...";}
 
-  members.forEach(m=>{
-    const key=String(m.memberId);
-    const old=meta[key]||{};
-    const history=Array.isArray(old.history)?old.history.slice():[];
-    history.push({time:now,teamName:old.teamName||team,entryDirection:dir,activityFloor:floor,detailLocation:detail});
-    meta[key]=Object.assign({},old,{
-      teamName:old.teamName||team,
-      teamActivityNo:old.teamActivityNo||v19TeamInfo(m).activityNo||1,
-      entryDirection:dir,
-      activityFloor:floor,
-      detailLocation:detail,
-      history:history,
-      locationEdited:true
-    });
-  });
-  v23SaveMeta(meta);
+  try{
+    const results=await Promise.all(members.map(async m=>{
+      const info=v19TeamInfo(m);
+      return {
+        memberId:m.memberId,
+        data:await v243UpdateServerLocation(
+          m.memberId,
+          info.team||team,
+          info.activityNo||m.entryCount||1,
+          dir,floor,detail
+        )
+      };
+    }));
 
-  closeDashboardMemberDetail();
-  v28DrawTeamStatus(window.__dashboardInsideMembers||[]);
-  drawDashboardInside(window.__dashboardInsideMembers||[]);
-  if(document.getElementById("teamBoardPageV29")?.style.display==="block")drawTeamBoardV29();
+    results.forEach(x=>v243ApplyServerLocationToLocal(x.memberId,x.data));
+    closeDashboardMemberDetail();
+
+    /* 서버의 현재상태를 다시 읽어 화면 전체를 동일한 값으로 맞춤 */
+    await loadDashboard(false);
+
+    const board=document.getElementById("teamBoardPageV29");
+    if(board && board.style.display==="block"){
+      const dashboard=document.getElementById("dashboardPage");
+      if(dashboard)dashboard.style.display="none";
+      board.style.display="block";
+      drawTeamBoardV29();
+    }
+  }catch(e){
+    console.error(e);
+    alert("조 위치 변경 실패: "+(e&&e.message?e.message:e));
+    if(btn){btn.disabled=false;btn.textContent=team+" "+members.length+"명 위치 변경";}
+  }
 }
 
 
@@ -6184,7 +6254,7 @@ function editDashboardMemberLocation(memberId,memberName){
   });
 }
 
-function saveDashboardMemberLocation(memberId){
+async function saveDashboardMemberLocation(memberId){
   const key=String(memberId), meta=v23LoadMeta(), old=meta[key]||{};
   const team=document.getElementById("editTeam")?.value||"";
   const dir=document.getElementById("editDirection")?.value||"";
@@ -6192,18 +6262,39 @@ function saveDashboardMemberLocation(memberId){
   const detail=document.getElementById("editDetail")?.value||"";
   if(!dir || !floor){alert("방면과 활동층을 선택해주세요.");return;}
 
-  const history=Array.isArray(old.history)?old.history.slice():[];
-  history.push({
-    time:new Date().toLocaleTimeString("ko-KR",{hour:"2-digit",minute:"2-digit",hour12:false}),
-    teamName:team,entryDirection:dir,activityFloor:floor,detailLocation:detail
-  });
-  meta[key]=Object.assign({},old,{teamName:team,entryDirection:dir,activityFloor:floor,detailLocation:detail,history:history,locationEdited:true});
-  v23SaveMeta(meta);
+  const member=(window.__dashboardInsideMembers||[]).find(m=>String(m.memberId)===key);
+  const info=member?v19TeamInfo(member):{team:old.teamName||team,activityNo:old.teamActivityNo||1};
+  const activityNo=Number(old.teamActivityNo||info.activityNo||(member&&member.entryCount)||1)||1;
 
-  closeDashboardMemberDetail();
-  v28DrawTeamStatus(window.__dashboardInsideMembers||[]);
-  drawDashboardInside(window.__dashboardInsideMembers||[]);
-  if(document.getElementById("teamBoardPageV29")?.style.display==="block")drawTeamBoardV29();
+  const btn=document.getElementById("v238MemberSave");
+  if(btn){btn.disabled=true;btn.textContent="서버 저장 중...";}
+
+  try{
+    const data=await v243UpdateServerLocation(
+      memberId,
+      team||info.team||old.teamName||"미지정",
+      activityNo,
+      dir,floor,detail
+    );
+
+    v243ApplyServerLocationToLocal(memberId,data);
+    closeDashboardMemberDetail();
+
+    /* 서버에 저장된 값을 다시 조회해서 화면을 확정 */
+    await loadDashboard(false);
+
+    const board=document.getElementById("teamBoardPageV29");
+    if(board && board.style.display==="block"){
+      const dashboard=document.getElementById("dashboardPage");
+      if(dashboard)dashboard.style.display="none";
+      board.style.display="block";
+      drawTeamBoardV29();
+    }
+  }catch(e){
+    console.error(e);
+    alert("대원 위치 변경 실패: "+(e&&e.message?e.message:e));
+    if(btn){btn.disabled=false;btn.textContent="저장";}
+  }
 }
 
 
