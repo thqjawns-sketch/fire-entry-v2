@@ -1216,6 +1216,27 @@ button:disabled{
 .v247OfficerHint{width:100%;font-size:11px;color:#64748b;margin-bottom:1px}
 
 
+
+/* V2.49L4 조 활동상태판 헤더 중앙 완주소방서 로고 */
+.v29BoardHeader{position:relative;min-height:72px}
+.v249BoardBrand{
+  position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+  display:flex;align-items:center;justify-content:center;
+  width:min(300px,34vw);padding:5px 12px;
+  border-radius:9px;background:#fff;
+  box-shadow:0 2px 7px rgba(0,0,0,.10);
+  pointer-events:none;
+}
+.v249BoardBrand img{display:block;width:100%;height:auto;max-height:54px;object-fit:contain}
+@media(max-width:760px){
+  .v29BoardHeader{flex-wrap:wrap;padding-top:12px}
+  .v249BoardBrand{
+    position:static;transform:none;order:3;width:100%;max-width:none;
+    margin-top:6px;padding:5px 10px;
+  }
+  .v249BoardBrand img{width:min(270px,78vw);max-height:48px}
+}
+
 </style>
 </head>
 
@@ -1545,7 +1566,7 @@ PPE 점검 대기
 </div>
 
 <div class="stationLogo">
-<img src="wanju-logo.png" alt="완주소방서 WANJU FIRE STATION">
+<img src="./wanju-fire-logo.png" alt="완주소방서 WANJU FIRE STATION">
 </div>
 
 <div class="card personnelStatusCardStable">
@@ -1678,6 +1699,9 @@ PPE 점검 대기
       <div class="v29BoardTitle">🗺️ 조 활동상태판 <span style="font-size:11px;opacity:.75">V2.43</span></div>
       <div id="v29BoardSite" class="v29BoardSite">-</div>
     </div>
+    <div class="v249BoardBrand" aria-label="완주소방서">
+      <img src="./wanju-fire-logo.png" alt="완주소방서 WANJU FIRE STATION">
+    </div>
     <div class="v29BoardHeaderBtns">
       <button type="button" class="v29BoardRefresh" onclick="refreshTeamBoardV29()">🔄 새로고침</button>
       <button type="button" class="v29BoardClose" onclick="closeTeamBoardV29()">✕ 닫기</button>
@@ -1725,7 +1749,7 @@ PPE 점검 대기
     <div id="exitedPageSiteName" class="siteName">-</div>
   </div>
   <div class="stationLogo">
-    <img src="wanju-logo.png" alt="완주소방서 WANJU FIRE STATION">
+    <img src="./wanju-fire-logo.png" alt="완주소방서 WANJU FIRE STATION">
   </div>
   <div class="card">
     <div class="sectionTitle">철수 완료 대원</div>
