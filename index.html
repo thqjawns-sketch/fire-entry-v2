@@ -1237,6 +1237,26 @@ button:disabled{
   .v249BoardBrand img{width:min(270px,78vw);max-height:48px}
 }
 
+
+/* V2.49L5 긴 화면 스크롤 이동 보조 */
+.v249FloatNav{
+  display:none;position:fixed;bottom:18px;z-index:9998;
+  width:auto!important;min-width:108px;margin:0!important;padding:11px 15px!important;
+  border:0!important;border-radius:999px!important;
+  background:#173d67!important;color:#fff!important;
+  box-shadow:0 5px 16px rgba(0,0,0,.22)!important;
+  font-size:14px!important;font-weight:900!important;line-height:1.1!important;
+}
+.v249FloatNav.show{display:block}
+.v249FloatRight{right:18px}
+.v249FloatLeft{left:18px}
+.v249ExitedTopBack{margin-top:0!important;margin-bottom:14px!important}
+@media(max-width:480px){
+  .v249FloatNav{bottom:14px;min-width:96px;padding:10px 13px!important;font-size:13px!important}
+  .v249FloatRight{right:12px}
+  .v249FloatLeft{left:12px}
+}
+
 </style>
 </head>
 
@@ -1640,12 +1660,7 @@ PPE 점검 대기
 <span id="dashboardAutoRefreshInfo" class="refreshSubV22">60초 자동갱신 · 마지막 갱신 --:--:--</span>
 </button>
 
-<button
-  class="back"
-  onclick="closeDashboard()"
->
-⬅ 안전관리 화면으로 돌아가기
-</button>
+
 
 </div>
 
@@ -1751,12 +1766,19 @@ PPE 점검 대기
   <div class="stationLogo">
     <img src="./wanju-fire-logo.png" alt="완주소방서 WANJU FIRE STATION">
   </div>
+  <button type="button" class="back v249ExitedTopBack" onclick="closeExitedPage()">⬅ 현장 활동 현황으로 돌아가기</button>
   <div class="card">
     <div class="sectionTitle">철수 완료 대원</div>
     <div id="dashboardExited"></div>
   </div>
   <button type="button" class="back" onclick="closeExitedPage()">⬅ 현장 활동 현황으로 돌아가기</button>
 </div>
+
+
+<!-- V2.49L5 스크롤 이동 보조 버튼 -->
+<button type="button" id="v249MainFloatDashboard" class="v249FloatNav v249FloatRight" onclick="openDashboard()" aria-label="현장 현황 열기">📊 현황</button>
+<button type="button" id="v249DashboardFloatBack" class="v249FloatNav v249FloatLeft" onclick="closeDashboard()" aria-label="안전관리 화면으로 돌아가기">⬅ 안전관리</button>
+<button type="button" id="v249ExitedFloatBack" class="v249FloatNav v249FloatLeft" onclick="closeExitedPage()" aria-label="현장 활동 현황으로 돌아가기">⬅ 현장현황</button>
 
 <script>
 /*
@@ -6776,6 +6798,27 @@ function v247InitOfficerQuick(){
   el.addEventListener("change",()=>{if(el.value.trim())v247RememberOfficer(el.value);});
 }
 document.addEventListener("DOMContentLoaded",()=>setTimeout(v247InitOfficerQuick,0));
+
+
+/* V2.49L5: 긴 화면에서 현재 화면의 이동 버튼만 표시 */
+function v249PageVisible(id){
+  const el=document.getElementById(id);
+  if(!el)return false;
+  const cs=window.getComputedStyle(el);
+  return cs.display!=="none" && cs.visibility!=="hidden";
+}
+function v249UpdateFloatNav(){
+  const scrolled=(window.scrollY||document.documentElement.scrollTop||0)>260;
+  const main=document.getElementById("v249MainFloatDashboard");
+  const dash=document.getElementById("v249DashboardFloatBack");
+  const exited=document.getElementById("v249ExitedFloatBack");
+  if(main)main.classList.toggle("show",scrolled && v249PageVisible("mainPage"));
+  if(dash)dash.classList.toggle("show",scrolled && v249PageVisible("dashboardPage"));
+  if(exited)exited.classList.toggle("show",scrolled && v249PageVisible("exitedPageV23"));
+}
+window.addEventListener("scroll",v249UpdateFloatNav,{passive:true});
+window.addEventListener("resize",v249UpdateFloatNav);
+document.addEventListener("DOMContentLoaded",v249UpdateFloatNav);
 
 </script>
 
