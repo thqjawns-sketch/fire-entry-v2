@@ -1084,6 +1084,54 @@ button:disabled{
 }
 #v34FloorMembers .memberDetail{width:100%}
 
+
+/* ===== V2.36 상태판 미세조정 ===== */
+/* 중앙 지도는 조금 줄이고 층별요약 영역은 넓힘 */
+.v33BoardLayout{
+  grid-template-columns:145px minmax(330px,0.82fr) minmax(265px,1.18fr)!important;
+}
+.v33PlanWrap{
+  min-height:390px!important;
+  padding:34px 58px!important;
+}
+.v33Plan{
+  width:min(390px,62vw)!important;
+}
+
+/* 조 표시는 건물 사각형 '안쪽' 가장자리에 배치 */
+.v33FaceA{top:8px!important;left:14%!important;right:14%!important}
+.v33FaceB{right:8px!important;top:18%!important;bottom:18%!important}
+.v33FaceC{bottom:8px!important;left:14%!important;right:14%!important}
+.v33FaceD{left:8px!important;top:18%!important;bottom:18%!important}
+
+/* 층별요약은 잘리지 않도록 줄바꿈 허용 */
+.v33SummaryRow{align-items:flex-start!important}
+.v33SummaryLoc{
+  white-space:normal!important;
+  overflow:visible!important;
+  text-overflow:clip!important;
+  line-height:1.8!important;
+  word-break:keep-all!important;
+}
+
+/* 상태판의 선택층 활동대원에서만 전체선택 숨김
+   첫 화면의 전체선택에는 영향 없음 */
+#v34FloorMembers .teamSelectV20,
+#v34FloorMembers input[type="checkbox"],
+#v34FloorMembers .insideCheck{
+  display:none!important;
+}
+#v34FloorMembers .teamDividerV19{
+  grid-template-columns:auto auto 1fr!important;
+}
+
+/* 태블릿 */
+@media(min-width:800px){
+  .v33BoardLayout{
+    grid-template-columns:145px minmax(350px,0.86fr) minmax(280px,1.14fr)!important;
+  }
+}
+
 </style>
 </head>
 
@@ -1541,7 +1589,7 @@ PPE 점검 대기
 
   <div class="v29BoardHeader">
     <div class="v29BoardHeaderMain">
-      <div class="v29BoardTitle">🗺️ 조 활동상태판 <span style="font-size:11px;opacity:.75">V2.35</span></div>
+      <div class="v29BoardTitle">🗺️ 조 활동상태판 <span style="font-size:11px;opacity:.75">V2.36</span></div>
       <div id="v29BoardSite" class="v29BoardSite">-</div>
     </div>
     <div class="v29BoardHeaderBtns">
