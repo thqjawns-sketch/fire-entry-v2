@@ -532,7 +532,7 @@ button:disabled{
 .dashboardRoster{border:1px solid #dfe5ec;border-radius:10px;overflow:hidden;background:#fff}
 .dashboardDetailOverlay{
   position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:9998;display:none;
-  align-items:flex-end;justify-content:center;
+  align-items:center;justify-content:center;padding:18px;box-sizing:border-box;
 }
 .dashboardDetailOverlay.show{display:flex}
 .dashboardDetailSheet{
@@ -1147,7 +1147,6 @@ button:disabled{
 .dashboardTeamMoveBtn:active{background:#edf5ff}
 
 /* 대원 상세 팝업 */
-.dashboardDetailOverlay{align-items:center!important;padding:18px;box-sizing:border-box}
 .dashboardDetailSheet{
   width:min(560px,100%)!important;max-height:88vh;border-radius:18px!important;
   padding:20px 20px 18px!important;
@@ -1193,7 +1192,7 @@ button:disabled{
 }
 
 
-/* ===== V2.40 조 활동상태판: 대원 위치는 조회 전용 ===== */
+/* 조 활동상태판 대원 행 */
 #teamBoardPageV29 .memberRow{
   cursor:default!important;
 }
@@ -1736,6 +1735,13 @@ PPE 점검 대기
 </div>
 
 <script>
+/*
+  V2.48 코드정리 기준
+  - 구글시트/Code.gs: 조·활동차수·현재위치의 최종 원본
+  - localStorage: 화면 캐시/최근 지휘관·안전점검관 등 편의정보만 사용
+  - 기능 변경 없이 V2.47 안정 기능 유지
+*/
+
 
 /* =====================================================
 Apps Script 주소
@@ -1803,8 +1809,7 @@ function v2SyncServerMeta(m){
       teamActivityNo:Number(m.activityNo)||1,
       entryDirection:m.direction||"미지정",
       activityFloor:m.floor||"미지정",
-      detailLocation:m.detail||"세부장소 미지정",
-      locationEdited:false
+      detailLocation:m.detail||"세부장소 미지정"
     });
     v23SaveMeta(meta);
   }catch(e){
@@ -6241,8 +6246,7 @@ function v243ApplyServerLocationToLocal(memberId,data){
     teamActivityNo:Number(data.activityNo)||old.teamActivityNo||1,
     entryDirection:data.direction||"",
     activityFloor:data.floor||"",
-    detailLocation:data.detail||"",
-    locationEdited:false
+    detailLocation:data.detail||""
   });
   v23SaveMeta(meta);
 }
