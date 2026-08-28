@@ -1132,6 +1132,66 @@ button:disabled{
   }
 }
 
+
+/* ===== V2.37 두번째 페이지 현장활동대원 개선 ===== */
+#dashboardInside .memberRow{
+  display:block!important;
+  padding:11px 12px!important;
+  cursor:pointer;
+}
+#dashboardInside .memberDetail{width:100%}
+.dashboardTeamMoveBtn{
+  margin-left:auto;border:1px solid #2d6fc0;background:#fff;color:#1e5fae;
+  border-radius:8px;padding:7px 10px;font-size:12px;font-weight:950;cursor:pointer;white-space:nowrap;
+}
+.dashboardTeamMoveBtn:active{background:#edf5ff}
+
+/* 대원 상세 팝업 */
+.dashboardDetailOverlay{align-items:center!important;padding:18px;box-sizing:border-box}
+.dashboardDetailSheet{
+  width:min(560px,100%)!important;max-height:88vh;border-radius:18px!important;
+  padding:20px 20px 18px!important;
+}
+.sheetHeader{
+  padding-bottom:13px;margin-bottom:15px!important;border-bottom:1px solid #e5eaf0;
+}
+.sheetHeader b{font-size:20px!important;color:#172b40}
+.sheetClose{
+  width:38px;height:38px;padding:0!important;display:flex;align-items:center;justify-content:center;
+  font-size:20px!important;background:#f1f4f7!important;color:#24374a;border-radius:9px!important;
+}
+.sheetMemberTitle{font-size:18px!important;margin:0 0 10px!important;color:#172b40}
+.sheetLocation{
+  padding:11px 12px!important;margin-bottom:13px!important;border:1px solid #e1e7ee;
+  background:#f7f9fb!important;line-height:1.55;
+}
+.v237InfoList{border-top:1px solid #e4e9ef;margin:4px 0 16px}
+.v237InfoRow{
+  display:flex;align-items:center;justify-content:space-between;gap:16px;
+  min-height:43px;border-bottom:1px solid #e4e9ef;font-size:14px;
+}
+.v237InfoLabel{color:#536579;font-weight:850}
+.v237InfoValue{color:#21364b;font-weight:950;text-align:right}
+.v237InfoValue.em{color:#1764cf}
+.v237InfoValue.safe{color:#16834b}
+.sheetActions{grid-template-columns:1fr 1fr!important}
+.sheetActions button{min-height:46px}
+.sheetEdit{border:1px solid #2d6fc0!important;color:#1e5fae!important}
+.v237CloseBtn{border:1px solid #d9e0e7!important;color:#334155!important;background:#f7f9fb!important}
+
+/* 조 위치변경 팝업 */
+.v237TeamMoveTitle{font-size:17px;font-weight:950;margin-bottom:5px}
+.v237TeamMoveSub{font-size:12px;color:#607387;font-weight:800;margin-bottom:14px}
+.v237SaveBtn{
+  width:100%;margin-top:14px;padding:13px;border:0;border-radius:9px;
+  background:#1764cf;color:#fff;font-weight:950;font-size:14px;cursor:pointer;
+}
+@media(max-width:520px){
+  .dashboardTeamMoveBtn{padding:6px 8px;font-size:11px}
+  .dashboardDetailOverlay{padding:10px}
+  .dashboardDetailSheet{padding:17px 14px 15px!important}
+}
+
 </style>
 </head>
 
@@ -1589,7 +1649,7 @@ PPE 점검 대기
 
   <div class="v29BoardHeader">
     <div class="v29BoardHeaderMain">
-      <div class="v29BoardTitle">🗺️ 조 활동상태판 <span style="font-size:11px;opacity:.75">V2.36</span></div>
+      <div class="v29BoardTitle">🗺️ 조 활동상태판 <span style="font-size:11px;opacity:.75">V2.37</span></div>
       <div id="v29BoardSite" class="v29BoardSite">-</div>
     </div>
     <div class="v29BoardHeaderBtns">
@@ -5766,6 +5826,33 @@ function v28NextTeamName(){
   return (max+1)+"조";
 }
 
+
+function v237AddDashboardTeamDivider(target,team,activityNo,count,locationText){
+  const d=document.createElement("div");
+  d.className="teamDividerV19 "+v19TeamColorClass(team);
+  d.dataset.team=team;
+  d.innerHTML=
+    '<span class="teamBadgeV19">'+escapeHtml(team)+'</span>'+
+    '<span class="teamMetaV19">'+Number(activityNo||1)+'차 활동 · '+Number(count||0)+'명</span>'+
+    '<span class="teamLocationV20">'+escapeHtml(locationText||"위치 미지정")+'</span>'+
+    '<button type="button" class="dashboardTeamMoveBtn">📍 조 위치변경</button>';
+  const btn=d.querySelector(".dashboardTeamMoveBtn");
+  btn.addEventListener("click",e=>{
+    e.stopPropagation();
+    openDashboardTeamLocationEdit(team);
+  });
+  target.appendChild(d);
+}
+
+function v237FormatMinutes(value){
+  const n=Number(value);
+  if(!Number.isFinite(n) || n<0)return "-";
+  const m=Math.round(n);
+  if(m<60)return m+"분";
+  const h=Math.floor(m/60), r=m%60;
+  return h+"시간"+(r?" "+r+"분":"");
+}
+
 function drawDashboardInside(list){
   const area=document.getElementById("dashboardInside");
   if(!area)return;
@@ -5798,7 +5885,7 @@ function drawDashboardInside(list){
 
     if(info.team!==lastTeam){
       lastTeam=info.team;
-      v19AddTeamDivider(area,info.team,info.activityNo,counts[info.team],v20TeamLocation(sorted,info.team));
+      v237AddDashboardTeamDivider(area,info.team,info.activityNo,counts[info.team],v20TeamLocation(sorted,info.team));
     }
 
     const row=document.createElement("div");
@@ -5806,9 +5893,7 @@ function drawDashboardInside(list){
     row.className="memberRow "+stay.className;
 
     row.innerHTML =
-      '<input type="checkbox" class="insideCheck" '+
-      'data-id="'+escapeAttr(member.memberId)+'" '+
-      'data-name="'+escapeAttr(member.memberName)+'">'+
+      
       '<div class="memberDetail">'+
         '<div class="memberLine">'+
           escapeHtml(getMemberDisplay(member.memberId,member.memberName))+
@@ -5832,8 +5917,7 @@ function drawDashboardInside(list){
         '</div>'+
       '</div>';
 
-    row.addEventListener("click",e=>{
-      if(e.target && e.target.matches('input[type="checkbox"]'))return;
+    row.addEventListener("click",()=>{
       openDashboardMemberDetail(member.memberId,member.memberName);
     });
 
@@ -5854,6 +5938,9 @@ function openDashboardMemberDetail(memberId,memberName){
   const rank=parts[1]||"-";
   const dept=parts.slice(2).join(" / ")||"-";
   const floor=vm.activityFloor||"미지정";
+  const stay=getStayStatus(member.currentMinutes);
+  const currentText=v237FormatMinutes(member.currentMinutes);
+  const totalText=v237FormatMinutes(member.totalMinutes);
 
   let overlay=document.getElementById("dashboardDetailOverlay");
   if(!overlay){
@@ -5865,19 +5952,23 @@ function openDashboardMemberDetail(memberId,memberName){
   }
   overlay.innerHTML=
     '<div class="dashboardDetailSheet">'+
-      '<div class="sheetHeader"><b>대원 상세정보</b><button class="sheetClose" onclick="closeDashboardMemberDetail()">✕</button></div>'+
-      '<div class="sheetMemberTitle">🟢 '+escapeHtml(name)+' '+escapeHtml(rank)+' / '+escapeHtml(dept)+'</div>'+
-      '<div class="sheetLocation">'+escapeHtml(vm.teamName||"미지정")+' · '+escapeHtml(vm.entryDirection||"미지정")+
-        ' / <span class="floorMini '+v23FloorClass(floor)+'">'+escapeHtml(floor)+'</span> / '+escapeHtml(vm.detailLocation||"세부장소 미지정")+'</div>'+
-      '<div class="sheetInfo">'+
-        '진입시각 : <b>'+escapeHtml(member.entryTime||"-")+'</b><br>'+
-        '현재 체류 : <b>'+Number(member.currentMinutes)+'분</b><br>'+
-        '활동차수 : <b>'+Number(member.entryCount)+'회차</b><br>'+
-        '누적 활동시간 : <b>'+Number(member.totalMinutes)+'분</b>'+
+      '<div class="sheetHeader"><b>대원 상세 정보</b><button type="button" class="sheetClose" onclick="closeDashboardMemberDetail()">×</button></div>'+
+      '<div class="sheetMemberTitle">'+stay.icon+' '+escapeHtml(name)+' '+escapeHtml(rank)+' / '+escapeHtml(dept)+'</div>'+
+      '<div class="sheetLocation">'+
+        escapeHtml(vm.teamName||"미지정")+(vm.teamActivityNo?' · '+Number(vm.teamActivityNo)+'차':'')+' · '+
+        escapeHtml(vm.entryDirection||"미지정")+' · <span class="floorMini '+v23FloorClass(floor)+'">'+escapeHtml(floor)+'</span>'+
+        ' / '+escapeHtml(vm.detailLocation||"세부장소 미지정")+
+      '</div>'+
+      '<div class="v237InfoList">'+
+        '<div class="v237InfoRow"><span class="v237InfoLabel">진입시각</span><span class="v237InfoValue">'+escapeHtml(member.entryTime||"-")+'</span></div>'+
+        '<div class="v237InfoRow"><span class="v237InfoLabel">현재 체류시간</span><span class="v237InfoValue em">'+escapeHtml(currentText)+'</span></div>'+
+        '<div class="v237InfoRow"><span class="v237InfoLabel">활동차수</span><span class="v237InfoValue">'+Number(member.entryCount||0)+'회차</span></div>'+
+        '<div class="v237InfoRow"><span class="v237InfoLabel">누적 활동시간</span><span class="v237InfoValue">'+escapeHtml(totalText)+'</span></div>'+
+        '<div class="v237InfoRow"><span class="v237InfoLabel">안전상태</span><span class="v237InfoValue '+(stay.className==="normal"?"safe":"")+'">'+stay.icon+' '+escapeHtml(stay.text)+'</span></div>'+
       '</div>'+
       '<div class="sheetActions">'+
-        '<button class="sheetEdit" onclick="closeDashboardMemberDetail();editDashboardMemberLocation(\''+escapeAttr(memberId)+'\',\''+escapeAttr(memberName)+'\')">✏️ 위치정보 수정</button>'+
-        '<button class="sheetExit" onclick="closeDashboardMemberDetail()"></button>'+
+        '<button type="button" class="sheetEdit" onclick="closeDashboardMemberDetail();editDashboardMemberLocation(\''+escapeAttr(memberId)+'\',\''+escapeAttr(memberName)+'\')">✏️ 위치정보 수정</button>'+
+        '<button type="button" class="v237CloseBtn" onclick="closeDashboardMemberDetail()">닫기</button>'+
       '</div>'+
     '</div>';
   overlay.classList.add("show");
@@ -5887,6 +5978,84 @@ function closeDashboardMemberDetail(){
   const overlay=document.getElementById("dashboardDetailOverlay");
   if(overlay)overlay.classList.remove("show");
 }
+
+function openDashboardTeamLocationEdit(team){
+  const members=(window.__dashboardInsideMembers||[]).filter(m=>v19TeamInfo(m).team===team);
+  if(!members.length)return;
+
+  const meta=v23LoadMeta();
+  const first=meta[String(members[0].memberId)]||{};
+  const same=(key)=>{
+    const vals=[...new Set(members.map(m=>(meta[String(m.memberId)]||{})[key]||""))];
+    return vals.length===1?vals[0]:"";
+  };
+  const dir=same("entryDirection");
+  const floor=same("activityFloor");
+  const detail=same("detailLocation");
+  const floors=["","옥상","상층","직상층","화점층","직하층","하층","지하층"];
+
+  let overlay=document.getElementById("dashboardDetailOverlay");
+  if(!overlay){
+    overlay=document.createElement("div");
+    overlay.id="dashboardDetailOverlay";
+    overlay.className="dashboardDetailOverlay";
+    document.body.appendChild(overlay);
+  }
+
+  overlay.innerHTML=
+    '<div class="dashboardDetailSheet">'+
+      '<div class="sheetHeader"><b>'+escapeHtml(team)+' 위치변경</b><button type="button" class="sheetClose" onclick="closeDashboardMemberDetail()">×</button></div>'+
+      '<div class="v237TeamMoveTitle">'+escapeHtml(team)+' 전체 위치 변경 · '+members.length+'명</div>'+
+      '<div class="v237TeamMoveSub">현재 활동 중인 '+escapeHtml(team)+' 대원의 위치정보를 한 번에 변경합니다.</div>'+
+      '<div class="locationEditForm">'+
+        '<label>방면<select id="editTeamDirection"><option value="">미지정</option>'+
+          ["A방면","B방면","C방면","D방면"].map(v=>'<option '+(dir===v?'selected':'')+'>'+v+'</option>').join("")+
+        '</select></label>'+
+        '<label>활동층<select id="editTeamFloor">'+
+          floors.map(v=>'<option value="'+escapeAttr(v)+'" '+(floor===v?'selected':'')+'>'+(v||"선택")+'</option>').join("")+
+        '</select></label>'+
+        '<label>세부장소<input id="editTeamDetail" value="'+escapeAttr(detail)+'" placeholder="예: 계단실 / 1203호 / 기계실"></label>'+
+      '</div>'+
+      '<button type="button" class="v237SaveBtn" onclick="saveDashboardTeamLocation(\''+escapeAttr(team)+'\')">'+escapeHtml(team)+' '+members.length+'명 위치 변경</button>'+
+    '</div>';
+  overlay.classList.add("show");
+}
+
+function saveDashboardTeamLocation(team){
+  const members=(window.__dashboardInsideMembers||[]).filter(m=>v19TeamInfo(m).team===team);
+  if(!members.length)return;
+
+  const dir=(document.getElementById("editTeamDirection")||{}).value||"";
+  const floor=(document.getElementById("editTeamFloor")||{}).value||"";
+  const detail=(document.getElementById("editTeamDetail")||{}).value||"";
+  const meta=v23LoadMeta();
+  const now=new Date().toLocaleTimeString("ko-KR",{hour:"2-digit",minute:"2-digit"});
+
+  members.forEach(m=>{
+    const key=String(m.memberId);
+    const old=meta[key]||{};
+    const history=Array.isArray(old.history)?[...old.history]:[];
+    history.push({
+      time:now,
+      teamName:old.teamName||team,
+      entryDirection:dir,
+      activityFloor:floor,
+      detailLocation:detail
+    });
+    v23SetMemberMeta(key,{
+      teamName:old.teamName||team,
+      teamActivityNo:old.teamActivityNo||v19TeamInfo(m).activityNo,
+      entryDirection:dir,
+      activityFloor:floor,
+      detailLocation:detail,
+      history:history
+    });
+  });
+
+  closeDashboardMemberDetail();
+  loadDashboard(false);
+}
+
 
 function editDashboardMemberLocation(memberId,memberName){
   const meta=v23LoadMeta(), old=meta[String(memberId)]||{};
