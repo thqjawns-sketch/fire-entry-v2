@@ -1075,6 +1075,15 @@ button:disabled{
 .v34FloorMemberEmpty{padding:16px;text-align:center;color:#718096;font-size:13px;font-weight:800}
 .v34FloorMembers .dashMemberCompact{cursor:pointer}
 
+
+/* V2.35 선택층 대원목록은 기존 현장 활동대원 표시형식 유지, 철수 체크박스만 제외 */
+#v34FloorMembers .memberRow{
+  display:block!important;
+  padding:11px 12px!important;
+  cursor:pointer;
+}
+#v34FloorMembers .memberDetail{width:100%}
+
 </style>
 </head>
 
@@ -1532,7 +1541,7 @@ PPE 점검 대기
 
   <div class="v29BoardHeader">
     <div class="v29BoardHeaderMain">
-      <div class="v29BoardTitle">🗺️ 조 활동상태판 <span style="font-size:11px;opacity:.75">V2.34</span></div>
+      <div class="v29BoardTitle">🗺️ 조 활동상태판 <span style="font-size:11px;opacity:.75">V2.35</span></div>
       <div id="v29BoardSite" class="v29BoardSite">-</div>
     </div>
     <div class="v29BoardHeaderBtns">
@@ -5527,10 +5536,10 @@ function drawTeamBoardV29(){
   /* 방면 배치: 맨 아래 A, 시계방향 B(왼쪽) → C(위) → D(오른쪽) */
   board.innerHTML=
     '<div class="v33Plan">'+
-      '<div class="v33DirLabel v33DirC">C 방면</div>'+
-      '<div class="v33DirLabel v33DirD">D 방면</div>'+
-      '<div class="v33DirLabel v33DirA">A 방면</div>'+
-      '<div class="v33DirLabel v33DirB">B 방면</div>'+
+      '<div class="v33DirLabel v33DirA">C 방면</div>'+
+      '<div class="v33DirLabel v33DirB">D 방면</div>'+
+      '<div class="v33DirLabel v33DirC">A 방면</div>'+
+      '<div class="v33DirLabel v33DirD">B 방면</div>'+
       faceHtml("C방면","v33FaceA")+
       faceHtml("D방면","v33FaceB")+
       faceHtml("A방면","v33FaceC")+
@@ -5563,7 +5572,7 @@ function drawTeamBoardV29(){
     detail.innerHTML='<div class="v29DetailEmpty">조를 누르면 현재 위치 상세정보가 표시됩니다.</div>';
   }
 
-  /* 선택한 층에서 활동하는 대원: 기존 현장 활동대원과 동일한 카드 렌더링 사용 */
+  /* 선택한 층의 대원목록 - 기존 3. 현장 활동대원 렌더링과 동일한 형태 */
   if(memberArea){
     const meta=v23LoadMeta();
     const floorMembers=members.filter(m=>{
@@ -5575,32 +5584,75 @@ function drawTeamBoardV29(){
       '<div class="v34FloorMembersHead">'+
         (v33SelectedFloor==="화점층"?'🔥 ':'')+escapeHtml(v33SelectedFloor)+' 활동대원 '+floorMembers.length+'명'+
         '<div class="v34FloorMembersSub">현재 선택한 층에서 활동 중인 대원</div>'+
-      '</div>'+
-      '<div id="v34FloorMemberRoster"></div>';
+      '</div>';
 
-    const roster=document.getElementById("v34FloorMemberRoster");
     if(!floorMembers.length){
-      roster.innerHTML='<div class="v34FloorMemberEmpty">현재 이 층에서 활동 중인 대원이 없습니다.</div>';
+      memberArea.innerHTML+='<div class="v34FloorMemberEmpty">현재 이 층에서 활동 중인 대원이 없습니다.</div>';
     }else{
-      /* 기존 3. 현장 활동대원 렌더링 결과를 그대로 재사용하기 위해 동일 데이터 구조로 그린다 */
-      roster.innerHTML=floorMembers.map(m=>{
-        const vm=meta[String(m.memberId)]||{};
-        const team=vm.teamName||"조 미지정";
-        const actNo=Number(vm.teamActivityNo)||1;
-        const dir=vm.entryDirection||"방면 미지정";
-        const floor=vm.activityFloor||"층 미지정";
-        const detailLoc=vm.detailLocation||"세부장소 미지정";
-        const mins=Number(m.currentMinutes)||0;
-        const st=v29StayState(mins);
-        return '<div class="dashMemberCompact" onclick="openDashboardMemberDetail(\''+escapeAttr(String(m.memberId))+'\')">'+
-          '<div class="dashTopLine"><span class="liveDot"></span><span class="dashNameDept">'+
-            escapeHtml(m.memberName||"이름 미상")+
-          '</span><span class="dashTime">'+mins+'분</span><span class="dashChevron">›</span></div>'+
-          '<div class="dashLocationLine"><span class="floorMini '+v23FloorClass(floor)+'">'+escapeHtml(floor)+'</span>'+
-            '<span class="dashLocText">'+escapeHtml(team)+' · '+actNo+'차 · '+escapeHtml(dir)+' · '+escapeHtml(detailLoc)+'</span>'+
-            '<span class="dashTime">'+escapeHtml(st.icon+' '+st.text)+'</span></div>'+
-        '</div>';
-      }).join("");
+      const roster=document.createElement("div");
+      roster.className="dashboardRoster";
+      memberArea.appendChild(roster);
+
+      const sorted=[...floorMembers].sort((a,b)=>{
+        const an=v19TeamNumber(v19TeamInfo(a).team);
+        const bn=v19TeamNumber(v19TeamInfo(b).team);
+        return an-bn;
+      });
+
+      const counts={};
+      sorted.forEach(m=>{
+        const ti=v19TeamInfo(m);
+        counts[ti.team]=(counts[ti.team]||0)+1;
+      });
+
+      let lastTeam=null;
+      sorted.forEach(member=>{
+        const info=v19TeamInfo(member);
+
+        if(info.team!==lastTeam){
+          lastTeam=info.team;
+          v19AddTeamDivider(
+            roster,
+            info.team,
+            info.activityNo,
+            counts[info.team],
+            v20TeamLocation(sorted,info.team)
+          );
+        }
+
+        const row=document.createElement("div");
+        const stay=getStayStatus(member.currentMinutes);
+        row.className="memberRow "+stay.className;
+
+        row.innerHTML=
+          '<div class="memberDetail">'+
+            '<div class="memberLine">'+
+              escapeHtml(getMemberDisplay(member.memberId,member.memberName))+
+            '</div>'+
+            '<span class="memberId compactId">'+escapeHtml(member.memberId)+'</span>'+
+            (function(){
+              const vm=meta[String(member.memberId)]||{};
+              const floor=vm.activityFloor||"미지정";
+              const team=vm.teamName||"미지정";
+              const dir=vm.entryDirection||"미지정";
+              const detailLoc=vm.detailLocation||"세부장소 미지정";
+              return '<div class="insideCompactLocation">'+
+                '<span class="insideLocText">'+escapeHtml(team)+(vm.teamActivityNo?' · '+Number(vm.teamActivityNo)+'차':'')+' · '+escapeHtml(dir)+' / </span>'+
+                '<span class="floorMini '+v23FloorClass(floor)+'">'+escapeHtml(floor)+'</span>'+
+                '<span class="insideLocText"> / '+escapeHtml(detailLoc)+'</span>'+
+              '</div>';
+            })()+
+            '<div class="insideCompactBottom">'+
+              '<span>진입 '+escapeHtml(member.entryTime)+' · 현재 '+Number(member.currentMinutes)+'분 · '+Number(member.entryCount)+'회차</span>'+
+              '<span class="insideStatus '+stay.className+'">'+stay.icon+' '+stay.text+'</span>'+
+            '</div>'+
+          '</div>';
+
+        row.addEventListener("click",()=>{
+          openDashboardMemberDetail(member.memberId,member.memberName);
+        });
+        roster.appendChild(row);
+      });
     }
   }
 }
