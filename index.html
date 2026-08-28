@@ -1649,7 +1649,7 @@ PPE 점검 대기
 
   <div class="v29BoardHeader">
     <div class="v29BoardHeaderMain">
-      <div class="v29BoardTitle">🗺️ 조 활동상태판 <span style="font-size:11px;opacity:.75">V2.37</span></div>
+      <div class="v29BoardTitle">🗺️ 조 활동상태판 <span style="font-size:11px;opacity:.75">V2.38</span></div>
       <div id="v29BoardSite" class="v29BoardSite">-</div>
     </div>
     <div class="v29BoardHeaderBtns">
@@ -5837,7 +5837,8 @@ function v237AddDashboardTeamDivider(target,team,activityNo,count,locationText){
     '<span class="teamLocationV20">'+escapeHtml(locationText||"위치 미지정")+'</span>'+
     '<button type="button" class="dashboardTeamMoveBtn">📍 조 위치변경</button>';
   const btn=d.querySelector(".dashboardTeamMoveBtn");
-  btn.addEventListener("click",e=>{
+  btn.addEventListener("click",function(e){
+    e.preventDefault();
     e.stopPropagation();
     openDashboardTeamLocationEdit(team);
   });
@@ -5967,11 +5968,18 @@ function openDashboardMemberDetail(memberId,memberName){
         '<div class="v237InfoRow"><span class="v237InfoLabel">안전상태</span><span class="v237InfoValue '+(stay.className==="normal"?"safe":"")+'">'+stay.icon+' '+escapeHtml(stay.text)+'</span></div>'+
       '</div>'+
       '<div class="sheetActions">'+
-        '<button type="button" class="sheetEdit" onclick="closeDashboardMemberDetail();editDashboardMemberLocation(\''+escapeAttr(memberId)+'\',\''+escapeAttr(memberName)+'\')">✏️ 위치정보 수정</button>'+
-        '<button type="button" class="v237CloseBtn" onclick="closeDashboardMemberDetail()">닫기</button>'+
+        '<button type="button" id="v238MemberEditBtn" class="sheetEdit">✏️ 위치정보 수정</button>'+
+        '<button type="button" id="v238MemberCloseBtn" class="v237CloseBtn">닫기</button>'+
       '</div>'+
     '</div>';
   overlay.classList.add("show");
+
+  const editBtn=document.getElementById("v238MemberEditBtn");
+  const closeBtn=document.getElementById("v238MemberCloseBtn");
+  if(editBtn)editBtn.addEventListener("click",function(){
+    editDashboardMemberLocation(memberId,memberName);
+  });
+  if(closeBtn)closeBtn.addEventListener("click",closeDashboardMemberDetail);
 }
 
 function closeDashboardMemberDetail(){
@@ -5981,10 +5989,9 @@ function closeDashboardMemberDetail(){
 
 function openDashboardTeamLocationEdit(team){
   const members=(window.__dashboardInsideMembers||[]).filter(m=>v19TeamInfo(m).team===team);
-  if(!members.length)return;
+  if(!members.length){alert("해당 조의 현재 활동대원을 찾지 못했습니다.");return;}
 
   const meta=v23LoadMeta();
-  const first=meta[String(members[0].memberId)]||{};
   const same=(key)=>{
     const vals=[...new Set(members.map(m=>(meta[String(m.memberId)]||{})[key]||""))];
     return vals.length===1?vals[0]:"";
@@ -6004,56 +6011,60 @@ function openDashboardTeamLocationEdit(team){
 
   overlay.innerHTML=
     '<div class="dashboardDetailSheet">'+
-      '<div class="sheetHeader"><b>'+escapeHtml(team)+' 위치변경</b><button type="button" class="sheetClose" onclick="closeDashboardMemberDetail()">×</button></div>'+
+      '<div class="sheetHeader"><b>'+escapeHtml(team)+' 위치변경</b><button type="button" id="v238TeamClose" class="sheetClose">×</button></div>'+
       '<div class="v237TeamMoveTitle">'+escapeHtml(team)+' 전체 위치 변경 · '+members.length+'명</div>'+
       '<div class="v237TeamMoveSub">현재 활동 중인 '+escapeHtml(team)+' 대원의 위치정보를 한 번에 변경합니다.</div>'+
       '<div class="locationEditForm">'+
         '<label>방면<select id="editTeamDirection"><option value="">미지정</option>'+
-          ["A방면","B방면","C방면","D방면"].map(v=>'<option '+(dir===v?'selected':'')+'>'+v+'</option>').join("")+
+          ["A방면","B방면","C방면","D방면"].map(v=>'<option value="'+v+'" '+(dir===v?'selected':'')+'>'+v+'</option>').join("")+
         '</select></label>'+
         '<label>활동층<select id="editTeamFloor">'+
           floors.map(v=>'<option value="'+escapeAttr(v)+'" '+(floor===v?'selected':'')+'>'+(v||"선택")+'</option>').join("")+
         '</select></label>'+
         '<label>세부장소<input id="editTeamDetail" value="'+escapeAttr(detail)+'" placeholder="예: 계단실 / 1203호 / 기계실"></label>'+
       '</div>'+
-      '<button type="button" class="v237SaveBtn" onclick="saveDashboardTeamLocation(\''+escapeAttr(team)+'\')">'+escapeHtml(team)+' '+members.length+'명 위치 변경</button>'+
+      '<button type="button" id="v238TeamSave" class="v237SaveBtn">'+escapeHtml(team)+' '+members.length+'명 위치 변경</button>'+
     '</div>';
   overlay.classList.add("show");
+
+  document.getElementById("v238TeamClose").addEventListener("click",closeDashboardMemberDetail);
+  document.getElementById("v238TeamSave").addEventListener("click",function(){
+    saveDashboardTeamLocation(team);
+  });
 }
 
 function saveDashboardTeamLocation(team){
   const members=(window.__dashboardInsideMembers||[]).filter(m=>v19TeamInfo(m).team===team);
-  if(!members.length)return;
+  if(!members.length){alert("변경할 조원이 없습니다.");return;}
 
-  const dir=(document.getElementById("editTeamDirection")||{}).value||"";
-  const floor=(document.getElementById("editTeamFloor")||{}).value||"";
-  const detail=(document.getElementById("editTeamDetail")||{}).value||"";
+  const dir=document.getElementById("editTeamDirection")?.value||"";
+  const floor=document.getElementById("editTeamFloor")?.value||"";
+  const detail=document.getElementById("editTeamDetail")?.value||"";
+  if(!dir || !floor){alert("방면과 활동층을 선택해주세요.");return;}
+
   const meta=v23LoadMeta();
-  const now=new Date().toLocaleTimeString("ko-KR",{hour:"2-digit",minute:"2-digit"});
+  const now=new Date().toLocaleTimeString("ko-KR",{hour:"2-digit",minute:"2-digit",hour12:false});
 
   members.forEach(m=>{
     const key=String(m.memberId);
     const old=meta[key]||{};
-    const history=Array.isArray(old.history)?[...old.history]:[];
-    history.push({
-      time:now,
+    const history=Array.isArray(old.history)?old.history.slice():[];
+    history.push({time:now,teamName:old.teamName||team,entryDirection:dir,activityFloor:floor,detailLocation:detail});
+    meta[key]=Object.assign({},old,{
       teamName:old.teamName||team,
-      entryDirection:dir,
-      activityFloor:floor,
-      detailLocation:detail
-    });
-    v23SetMemberMeta(key,{
-      teamName:old.teamName||team,
-      teamActivityNo:old.teamActivityNo||v19TeamInfo(m).activityNo,
+      teamActivityNo:old.teamActivityNo||v19TeamInfo(m).activityNo||1,
       entryDirection:dir,
       activityFloor:floor,
       detailLocation:detail,
       history:history
     });
   });
+  v23SaveMeta(meta);
 
   closeDashboardMemberDetail();
-  loadDashboard(false);
+  v28DrawTeamStatus(window.__dashboardInsideMembers||[]);
+  drawDashboardInside(window.__dashboardInsideMembers||[]);
+  if(document.getElementById("teamBoardPageV29")?.style.display==="block")drawTeamBoardV29();
 }
 
 
@@ -6066,40 +6077,61 @@ function editDashboardMemberLocation(memberId,memberName){
     overlay.className="dashboardDetailOverlay";
     document.body.appendChild(overlay);
   }
+
   const floor=old.activityFloor||"";
-  const opts=["","화점층","직상층","직하층","상층부","하층부","지하층","옥상"];
-  const floorOptions=opts.map(v=>'<option value="'+escapeAttr(v)+'" '+(v===floor?'selected':'')+'>'+(v||"선택")+'</option>').join("");
+  const floors=["","옥상","상층","직상층","화점층","직하층","하층","지하층"];
+  const currentTeams=[...new Set((window.__dashboardInsideMembers||[]).map(m=>v19TeamInfo(m).team).filter(t=>t&&t!=="조 미지정"))];
+  if(old.teamName && !currentTeams.includes(old.teamName))currentTeams.push(old.teamName);
+  currentTeams.sort((a,b)=>v19TeamNumber(a)-v19TeamNumber(b));
+
   overlay.innerHTML=
     '<div class="dashboardDetailSheet">'+
-      '<div class="sheetHeader"><b>위치정보 수정</b><button class="sheetClose" onclick="closeDashboardMemberDetail()">✕</button></div>'+
+      '<div class="sheetHeader"><b>위치정보 수정</b><button type="button" id="v238MemberEditClose" class="sheetClose">×</button></div>'+
       '<div class="sheetMemberTitle">🟢 '+escapeHtml(getMemberDisplay(memberId,memberName))+'</div>'+
       '<div class="locationEditForm">'+
         '<label>조 편성<select id="editTeam"><option value="">미지정</option>'+
-          Array.from({length:Math.max(1,v28TeamNo(v28NextTeamName()))},(_,i)=>(i+1)+"조").map(v=>'<option '+(old.teamName===v?'selected':'')+'>'+v+'</option>').join("")+
+          currentTeams.map(v=>'<option value="'+escapeAttr(v)+'" '+(old.teamName===v?'selected':'')+'>'+escapeHtml(v)+'</option>').join("")+
         '</select></label>'+
         '<label>진입방면<select id="editDirection"><option value="">미지정</option>'+
-          ["A방면","B방면","C방면","D방면"].map(v=>'<option '+(old.entryDirection===v?'selected':'')+'>'+v+'</option>').join("")+
+          ["A방면","B방면","C방면","D방면"].map(v=>'<option value="'+v+'" '+(old.entryDirection===v?'selected':'')+'>'+v+'</option>').join("")+
         '</select></label>'+
-        '<label>활동층<select id="editFloor">'+floorOptions+'</select></label>'+
+        '<label>활동층<select id="editFloor">'+
+          floors.map(v=>'<option value="'+escapeAttr(v)+'" '+(v===floor?'selected':'')+'>'+(v||"선택")+'</option>').join("")+
+        '</select></label>'+
         '<label>세부장소<input id="editDetail" value="'+escapeAttr(old.detailLocation||"")+'" placeholder="예: 기계실 / 1203호 / 계단실"></label>'+
       '</div>'+
-      '<button class="sheetSave" onclick="saveDashboardMemberLocation(\''+escapeAttr(memberId)+'\')">저장</button>'+
+      '<button type="button" id="v238MemberSave" class="sheetSave">저장</button>'+
     '</div>';
   overlay.classList.add("show");
+
+  document.getElementById("v238MemberEditClose").addEventListener("click",closeDashboardMemberDetail);
+  document.getElementById("v238MemberSave").addEventListener("click",function(){
+    saveDashboardMemberLocation(memberId);
+  });
 }
 
 function saveDashboardMemberLocation(memberId){
   const key=String(memberId), meta=v23LoadMeta(), old=meta[key]||{};
-  const team=(document.getElementById("editTeam")||{}).value||"";
-  const dir=(document.getElementById("editDirection")||{}).value||"";
-  const floor=(document.getElementById("editFloor")||{}).value||"";
-  const detail=(document.getElementById("editDetail")||{}).value||"";
-  const history=Array.isArray(old.history)?old.history:[];
-  history.push({time:new Date().toLocaleTimeString("ko-KR",{hour:"2-digit",minute:"2-digit"}),teamName:team,entryDirection:dir,activityFloor:floor,detailLocation:detail});
-  v23SetMemberMeta(key,{teamName:team,entryDirection:dir,activityFloor:floor,detailLocation:detail,history});
+  const team=document.getElementById("editTeam")?.value||"";
+  const dir=document.getElementById("editDirection")?.value||"";
+  const floor=document.getElementById("editFloor")?.value||"";
+  const detail=document.getElementById("editDetail")?.value||"";
+  if(!dir || !floor){alert("방면과 활동층을 선택해주세요.");return;}
+
+  const history=Array.isArray(old.history)?old.history.slice():[];
+  history.push({
+    time:new Date().toLocaleTimeString("ko-KR",{hour:"2-digit",minute:"2-digit",hour12:false}),
+    teamName:team,entryDirection:dir,activityFloor:floor,detailLocation:detail
+  });
+  meta[key]=Object.assign({},old,{teamName:team,entryDirection:dir,activityFloor:floor,detailLocation:detail,history:history});
+  v23SaveMeta(meta);
+
   closeDashboardMemberDetail();
-  loadDashboard(false);
+  v28DrawTeamStatus(window.__dashboardInsideMembers||[]);
+  drawDashboardInside(window.__dashboardInsideMembers||[]);
+  if(document.getElementById("teamBoardPageV29")?.style.display==="block")drawTeamBoardV29();
 }
+
 
 /* =====================================================
 철수 대원 표시
