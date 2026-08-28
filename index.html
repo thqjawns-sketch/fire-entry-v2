@@ -821,7 +821,7 @@ button:disabled{
 }
 
 
-/* ===== V2 조별현황 + 조 활동상태판 (안전관리/현재위치 중심) ===== */
+/* ===== V2 조별현황 + 조 활동현황판 (안전관리/현재위치 중심) ===== */
 .v29TeamHeader{
   display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;
 }
@@ -942,7 +942,7 @@ button:disabled{
 }
 
 
-/* ===== V2.30 조별현황 아래 조 활동상태판 독립 영역 ===== */
+/* ===== V2.30 조별현황 아래 조 활동현황판 독립 영역 ===== */
 .v30BoardLaunchBox{
   margin-top:14px;
   padding:13px 14px;
@@ -1018,7 +1018,7 @@ button:disabled{
 }
 
 
-/* ===== V2.33 조 활동상태판 : 3번 기본 + 6번 활동이력 전환 ===== */
+/* ===== V2.33 조 활동현황판 : 3번 기본 + 6번 활동이력 전환 ===== */
 .v33BoardToolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
 .v33ModeTitle{font-size:16px;font-weight:950;color:#173d67}
 .v33ModeBtn{width:auto!important;margin:0!important;padding:9px 13px!important;border:1px solid #1764cf!important;border-radius:9px!important;background:#fff!important;color:#1764cf!important;font-size:12px!important;font-weight:950!important}
@@ -1192,7 +1192,7 @@ button:disabled{
 }
 
 
-/* 조 활동상태판 대원 행 */
+/* 조 활동현황판 대원 행 */
 #teamBoardPageV29 .memberRow{
   cursor:default!important;
 }
@@ -1201,7 +1201,7 @@ button:disabled{
 }
 
 
-/* ===== V2.41 조 활동상태판: 대원 상세/개별 위치수정 다시 사용 ===== */
+/* ===== V2.41 조 활동현황판: 대원 상세/개별 위치수정 다시 사용 ===== */
 #teamBoardPageV29 .memberRow{
   cursor:pointer!important;
 }
@@ -1217,7 +1217,7 @@ button:disabled{
 
 
 
-/* V2.49L4 조 활동상태판 헤더 중앙 완주소방서 로고 */
+/* V2.49L4 조 활동현황판 헤더 중앙 완주소방서 로고 */
 .v29BoardHeader{position:relative;min-height:72px}
 .v249BoardBrand{
   position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
@@ -1240,7 +1240,7 @@ button:disabled{
 
 /* V2.49L5 긴 화면 스크롤 이동 보조 */
 .v249FloatNav{
-  display:none;position:fixed;right:18px;bottom:18px;z-index:9998;
+  display:none;position:fixed;right:18px;top:62%;bottom:auto;transform:translateY(-50%);z-index:9998;
   width:auto!important;min-width:210px;margin:0!important;padding:20px 28px!important;
   border:2px solid #d7a800!important;border-radius:999px!important;
   background:#ffc928!important;color:#171717!important;
@@ -1252,7 +1252,7 @@ button:disabled{
 .v249ExitedTopBack{margin-top:0!important;margin-bottom:14px!important}
 @media(max-width:480px){
   .v249FloatNav{
-    right:12px!important;bottom:14px;left:auto!important;
+    right:12px!important;top:62%;bottom:auto;left:auto!important;transform:translateY(-50%);
     min-width:180px;padding:17px 23px!important;font-size:19px!important;
   }
 }
@@ -1687,10 +1687,10 @@ PPE 점검 대기
 
 <div class="v30BoardLaunchBox">
   <div class="v30BoardLaunchText">
-    <div class="v30BoardLaunchTitle">🗺️ 조 활동상태판</div>
+    <div class="v30BoardLaunchTitle">🗺️ 조 활동현황판</div>
     <div class="v30BoardLaunchSub">조의 현재 위치를 층 · 방면 기준으로 한눈에 확인</div>
   </div>
-  <button type="button" class="v30BoardLaunchBtn" onclick="openTeamBoardV29()">상태판 열기 〉</button>
+  <button type="button" class="v30BoardLaunchBtn" onclick="openTeamBoardV29()">활동판 열기 〉</button>
 </div>
 
 </div>
@@ -1713,12 +1713,12 @@ PPE 점검 대기
 </div>
 
 
-<!-- 조 활동상태판 : 안전관리용 현재 위치 시각화 -->
+<!-- 조 활동현황판 : 안전관리용 현재 위치 시각화 -->
 <div id="teamBoardPageV29">
 
   <div class="v29BoardHeader">
     <div class="v29BoardHeaderMain">
-      <div class="v29BoardTitle">🗺️ 조 활동상태판 <span style="font-size:11px;opacity:.75">V2.43</span></div>
+      <div class="v29BoardTitle">🗺️ 조 활동현황판 <span style="font-size:11px;opacity:.75">V2.43</span></div>
       <div id="v29BoardSite" class="v29BoardSite">-</div>
     </div>
     <div class="v249BoardBrand" aria-label="완주소방서">
