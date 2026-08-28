@@ -2114,6 +2114,46 @@ let exitSubmitting = false;
 
 let scanAudioContext = null;
 
+/* V2.49L10: 현재 활동중 대원 투입대기 사전 차단 */
+let v249ActiveCheckCache = {
+  site:"",
+  at:0,
+  ids:new Set()
+};
+const V249_ACTIVE_CHECK_CACHE_MS = 5000;
+
+async function v249GetActiveMemberIds(){
+  const siteEl=document.getElementById("site");
+  const site=siteEl ? String(siteEl.value||"").trim() : "";
+  if(!site) throw new Error("NO_SITE");
+
+  const now=Date.now();
+  if(
+    v249ActiveCheckCache.site===site &&
+    now-v249ActiveCheckCache.at < V249_ACTIVE_CHECK_CACHE_MS
+  ){
+    return v249ActiveCheckCache.ids;
+  }
+
+  const response=await fetch(
+    API+"?action=dashboard&site="+encodeURIComponent(site)+"&t="+Date.now()
+  );
+  const data=await response.json();
+  if(!data || !data.success || !data.dashboard){
+    throw new Error("ACTIVE_CHECK_FAILED");
+  }
+
+  const ids=new Set(
+    (data.dashboard.insideMembers||[]).map(m=>String(m.id||"").trim())
+  );
+  v249ActiveCheckCache={site:site,at:Date.now(),ids:ids};
+  return ids;
+}
+
+function v249InvalidateActiveCheck(){
+  v249ActiveCheckCache={site:"",at:0,ids:new Set()};
+}
+
 
 /* =====================================================
 현장 현황 60초 자동갱신
@@ -2765,7 +2805,7 @@ function filterMembers(){
 검색 대원 추가
 ===================================================== */
 
-function addSelectedMember(){
+async function addSelectedMember(){
 
   const id =
     document
@@ -2794,9 +2834,14 @@ function addSelectedMember(){
     );
 
 
-  addMemberToQueue(
-    member
-  );
+  const added =
+    await addMemberToQueue(
+      member
+    );
+
+  if(!added){
+    return;
+  }
 
 
   document
@@ -2821,7 +2866,7 @@ function addSelectedMember(){
 투입대기 추가
 ===================================================== */
 
-function addMemberToQueue(
+async function addMemberToQueue(
   member
 ){
 
@@ -2858,6 +2903,21 @@ function addMemberToQueue(
 
     return false;
 
+  }
+
+  try{
+    const activeIds=await v249GetActiveMemberIds();
+    if(activeIds.has(String(member.id).trim())){
+      showTemporaryMessage(
+        "⛔ "+member.name+" 대원은 현재 활동중입니다. 투입대기에 추가할 수 없습니다."
+      );
+      return false;
+    }
+  }catch(e){
+    showTemporaryMessage(
+      "⚠️ 현재 활동상태 확인에 실패했습니다. 잠시 후 다시 시도하세요."
+    );
+    return false;
   }
 
 
@@ -3484,7 +3544,7 @@ async function startScanner(){
         }
       },
 
-      decodedText => {
+      async decodedText => {
 
         const id =
           String(
@@ -3539,7 +3599,7 @@ async function startScanner(){
 
 
         if(
-          addMemberToQueue(
+          await addMemberToQueue(
             member
           )
         ){
@@ -5477,6 +5537,12 @@ async function loadDashboard(
     const dashboard =
       data.dashboard;
 
+    v249ActiveCheckCache={
+      site:String(site||""),
+      at:Date.now(),
+      ids:new Set((dashboard.insideMembers||[]).map(m=>String(m.id||"").trim()))
+    };
+
     /* V2.42: 시트가 완전히 비워진 현장은 이전 조 편성/위치정보를 이어받지 않음 */
     v242SyncIncidentStateFromDashboard(dashboard);
 
@@ -6860,7 +6926,9 @@ if ("serviceWorker" in navigator) {
   });
 }
 
-/* V2.49L9: PWA/안드로이드 뒤로가기를 앱 내부 화면 이동으로 처리 */
+/* V2.49L10: PWA/안드로이드 뒤로가기 + 첫 화면 종료 확인 */
+let v249ExitConfirmed=false;
+
 function v249NavPush(view){
   try{
     history.pushState({fireApp:true,view:view},"",location.href);
@@ -6886,14 +6954,32 @@ function v249CloseOverlayByBack(){
   return false;
 }
 window.addEventListener("popstate",function(){
-  // 브라우저/PWA 뒤로가기: 현재 열린 하위 화면만 한 단계 닫는다.
-  v249CloseOverlayByBack();
+  if(v249ExitConfirmed){
+    return;
+  }
+
+  // 하위 화면에서는 앱 종료 대신 한 단계 이전 앱 화면으로 이동
+  if(v249CloseOverlayByBack()){
+    return;
+  }
+
+  // 첫 안전관리 화면에서만 종료 여부 확인
+  if(v249Visible("mainPage")){
+    const ok=confirm("앱을 종료하시겠습니까?");
+    if(ok){
+      v249ExitConfirmed=true;
+      history.back();
+    }else{
+      // 취소 시 현재 앱 화면을 다시 history에 올려 그대로 유지
+      v249NavPush("main");
+    }
+  }
 });
 document.addEventListener("DOMContentLoaded",function(){
   try{
-    if(!history.state || !history.state.fireApp){
-      history.replaceState({fireApp:true,view:"main"},"",location.href);
-    }
+    // 첫 뒤로가기에서도 popstate를 받을 수 있도록 base + main guard 2단계 구성
+    history.replaceState({fireApp:true,view:"base"},"",location.href);
+    history.pushState({fireApp:true,view:"main"},"",location.href);
   }catch(e){}
 });
 
