@@ -1207,6 +1207,15 @@ button:disabled{
   cursor:pointer!important;
 }
 
+
+/* V2.47 지휘관 또는 안전점검관 빠른선택 */
+.v247OfficerQuick{display:flex;flex-wrap:wrap;gap:7px;margin-top:8px}
+.v247OfficerQuick:empty{display:none}
+.v247OfficerChip{border:1px solid #cbd5e1;background:#f8fafc;color:#334155;border-radius:999px;
+  padding:7px 11px;font-size:13px;font-weight:700;cursor:pointer}
+.v247OfficerChip.current{background:#e0f2fe;border-color:#7dd3fc;color:#075985}
+.v247OfficerHint{width:100%;font-size:11px;color:#64748b;margin-bottom:1px}
+
 </style>
 </head>
 
@@ -1239,13 +1248,16 @@ button:disabled{
 저장된 현장정보를 확인 중입니다.
 </div>
 
-<label>안전점검관</label>
+<label>지휘관 또는 안전점검관</label>
 
 <input
   type="text"
   id="officer"
-  placeholder="안전점검관 성명"
+  placeholder="지휘관 또는 안전점검관 성명"
+  oninput="v247OfficerInputChanged()"
 >
+
+<div id="v247OfficerQuick" class="v247OfficerQuick"></div>
 
 <button
   class="dashboardBtn"
@@ -1783,7 +1795,7 @@ function v2MinutesBetween(start,end){
 function v2SyncServerMeta(m){
   try{
     if(typeof v23LoadMeta!=="function" || typeof v23SaveMeta!=="function" || !m || !m.memberId)return;
-    /* V2.46: 조/차수/현재위치는 서버(구글시트)가 최종 기준.
+    /* V2.47: 조/차수/현재위치는 서버(구글시트)가 최종 기준.
        브라우저에 과거 값이 남아 있어도 서버값으로 무조건 덮어쓴다. */
     const meta=v23LoadMeta(), key=String(m.memberId), old=meta[key]||{};
     meta[key]=Object.assign({},old,{
@@ -2821,6 +2833,8 @@ function removeQueueMember(
   renderQueue();
 
 
+  v247RememberOfficer(officer);
+
   if(
     entryQueue.length === 0
   ){
@@ -3160,7 +3174,7 @@ function v242SyncIncidentStateFromDashboard(dashboard){
   const emptyKey="fireV2OnlyEmptyState:"+site;
 
   if(v242DashboardIsCompletelyEmpty(dashboard)){
-    /* V2.46: 서버가 비어 있으면 브라우저의 이전 조/차수/위치정보를 항상 폐기 */
+    /* V2.47: 서버가 비어 있으면 브라우저의 이전 조/차수/위치정보를 항상 폐기 */
     v242ClearSiteTeamState();
     localStorage.setItem(emptyKey,"1");
   }else{
@@ -3932,11 +3946,12 @@ async function quickEntryMembers(){
   const site=(document.getElementById("site")||{}).value||"";
   const officer=((document.getElementById("officer")||{}).value||"").trim();
   if(!site){alert("화재현장을 선택하세요.");return;}
-  if(!officer){alert("안전점검관 성명을 입력하세요.");return;}
+  if(!officer){alert("지휘관 또는 안전점검관 성명을 입력하세요.");return;}
   if(entryQueue.length===0){alert("투입대기 명단에 대원을 추가하세요.");return;}
   if(!isPPEComplete()){alert("PPE 3개 항목을 모두 확인하세요.");return;}
   if(!confirm("PPE 완료 대원 "+entryQueue.length+"명을 조·위치정보 없이 즉시 투입하시겠습니까?"))return;
 
+  v247RememberOfficer(officer);
   entrySubmitting=true;
   const qbtn=document.getElementById("quickEntryButton");
   if(qbtn){qbtn.disabled=true;qbtn.innerText="⏳ 투입 처리중...";}
@@ -4007,7 +4022,7 @@ async function batchEntryMembers(){
   ){
 
     alert(
-      "안전점검관 성명을 입력하세요."
+      "지휘관 또는 안전점검관 성명을 입력하세요."
     );
 
     return;
@@ -4058,7 +4073,7 @@ async function batchEntryMembers(){
 
 
   const selectedTeamMembers = getSelectedTeamMembers();
-  /* V2.46: 승인 직전에도 시트를 다시 읽는다.
+  /* V2.47: 승인 직전에도 시트를 다시 읽는다.
      브라우저에 남아 있는 조/회차는 계산 기준으로 사용하지 않는다. */
   try{
     await v246RefreshTeamRegistryFromServer();
@@ -4874,7 +4889,7 @@ async function batchExitMembers(){
   ){
 
     alert(
-      "안전점검관 성명을 입력하세요."
+      "지휘관 또는 안전점검관 성명을 입력하세요."
     );
 
     return;
@@ -6686,6 +6701,53 @@ function sanitizeId(
   );
 
 }
+
+
+/* ===== V2.47 지휘관 또는 안전점검관 최근사용 빠른선택 ===== */
+function v247OfficerRecentKey(){return "fireV2OnlyRecentOfficers";}
+function v247LoadRecentOfficers(){
+  try{
+    const a=JSON.parse(localStorage.getItem(v247OfficerRecentKey())||"[]");
+    return Array.isArray(a)?a.filter(Boolean).slice(0,5):[];
+  }catch(e){return [];}
+}
+function v247RememberOfficer(name){
+  name=String(name||"").trim();
+  if(!name)return;
+  let a=v247LoadRecentOfficers().filter(x=>x!==name);
+  a.unshift(name);
+  localStorage.setItem(v247OfficerRecentKey(),JSON.stringify(a.slice(0,5)));
+  v247RenderOfficerQuick();
+}
+function v247OfficerInputChanged(){v247RenderOfficerQuick();}
+function v247PickOfficer(name){
+  const el=document.getElementById("officer");
+  if(el){el.value=name;el.dispatchEvent(new Event("input",{bubbles:true}));}
+}
+function v247RenderOfficerQuick(){
+  const box=document.getElementById("v247OfficerQuick");
+  if(!box)return;
+  const current=((document.getElementById("officer")||{}).value||"").trim();
+  const recent=v247LoadRecentOfficers();
+  const names=[];
+  if(current)names.push(current);
+  recent.forEach(n=>{if(n && !names.includes(n))names.push(n);});
+  const shown=names.slice(0,5);
+  if(!shown.length){box.innerHTML="";return;}
+  box.innerHTML='<div class="v247OfficerHint">'+(current?'현재 / 최근 사용':'최근 사용')+'</div>'+
+    shown.map((n,i)=>'<button type="button" class="v247OfficerChip '+(current&&n===current?'current':'')+
+      '" onclick="v247PickOfficer('+JSON.stringify(n).replace(/"/g,'&quot;')+')">'+v247Esc(n)+'</button>').join("");
+}
+function v247Esc(s){
+  return String(s||"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
+function v247InitOfficerQuick(){
+  const el=document.getElementById("officer");
+  if(!el)return;
+  v247RenderOfficerQuick();
+  el.addEventListener("change",()=>{if(el.value.trim())v247RememberOfficer(el.value);});
+}
+document.addEventListener("DOMContentLoaded",()=>setTimeout(v247InitOfficerQuick,0));
 
 </script>
 
