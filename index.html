@@ -2911,28 +2911,30 @@ async function addMemberToQueue(
   v249QueueAddPending.add(memberId);
 
   try{
-    const activeIds=await v249GetActiveMemberIds();
+    // L17: 두 개의 독립 안전검사를 순차가 아니라 동시에 실행한다.
+    // 안전성은 L16과 동일하게 유지하면서 네트워크 대기시간만 줄인다.
+    const [activeIds,insideData]=await Promise.all([
+      v249GetActiveMemberIds(),
+      (async()=>{
+        const site=(document.getElementById("site")||{}).value||"";
+        const insideRes=await fetch(
+          API+"?action=inside&site="+encodeURIComponent(site)+"&t="+Date.now(),
+          {cache:"no-store"}
+        );
+        const d=await insideRes.json();
+        if(!d || d.success!==true || !Array.isArray(d.members)){
+          throw new Error("INSIDE_CHECK_FAILED");
+        }
+        return d;
+      })()
+    ]);
 
-    if(activeIds.has(memberId)){
-      showTemporaryMessage(
-        "⛔ "+member.name+" 대원은 현재 활동중입니다. 투입대기에 추가할 수 없습니다."
+    const isInside=
+      activeIds.has(memberId) ||
+      insideData.members.some(m=>
+        String(m.memberId||m.id||"").trim()===memberId
       );
-      return false;
-    }
 
-    // L16 2중 안전확인: 기존 현장현황과 동일한 inside 경로로도 한 번 더 확인한다.
-    // 둘 중 하나라도 활동중으로 확인되면 투입대기에 절대 넣지 않는다.
-    const insideRes=await fetch(
-      API+"?action=inside&site="+encodeURIComponent(site)+"&t="+Date.now(),
-      {cache:"no-store"}
-    );
-    const insideData=await insideRes.json();
-    if(!insideData || insideData.success!==true || !Array.isArray(insideData.members)){
-      throw new Error("INSIDE_CHECK_FAILED");
-    }
-    const isInside=insideData.members.some(m=>
-      String(m.memberId||m.id||"").trim()===memberId
-    );
     if(isInside){
       showTemporaryMessage(
         "⛔ "+member.name+" 대원은 이미 현장 내부 활동 중입니다. 투입대기에 추가할 수 없습니다."
@@ -4447,12 +4449,11 @@ async function batchEntryMembers(){
 
       renderQueue();
 
-      /* V2.46: 저장 성공 후에도 서버를 다시 읽어 다음 조 번호/회차를 결정 */
-      try{
-        await v246RefreshTeamRegistryFromServer();
-      }catch(e){
+      /* L17: 승인 직전 서버 재조회는 유지한다.
+         저장 성공 뒤의 두 번째 dashboard 재조회는 사용자 완료를 막지 않고 백그라운드 동기화한다. */
+      void v246RefreshTeamRegistryFromServer().catch(e=>{
         console.warn("투입 후 시트 조/회차 재동기화 실패",e);
-      }
+      });
 
       // 성공 대원의 화면 캐시는 서버에 저장한 값과 동일하게만 기록
       selectedTeamMembers.forEach(member=>{
@@ -6443,11 +6444,26 @@ async function saveDashboardTeamLocation(team){
       };
     }));
 
-    results.forEach(x=>v243ApplyServerLocationToLocal(x.memberId,x.data));
+    results.forEach(x=>{
+      v243ApplyServerLocationToLocal(x.memberId,x.data);
+      const target=(window.__dashboardInsideMembers||[]).find(m=>String(m.memberId)===String(x.memberId));
+      if(target){
+        target.team=x.data.team||target.team||"";
+        target.activityNo=Number(x.data.activityNo)||target.activityNo||1;
+        target.direction=x.data.direction||"";
+        target.floor=x.data.floor||"";
+        target.detail=x.data.detail||"";
+      }
+    });
     closeDashboardMemberDetail();
 
-    /* 서버의 현재상태를 다시 읽어 화면 전체를 동일한 값으로 맞춤 */
-    await loadDashboard(false);
+    // L17: 조원별 서버 저장이 모두 성공했으므로 전체 dashboard 재조회는 생략.
+    if(typeof drawDashboardInside==="function"){
+      drawDashboardInside(window.__dashboardInsideMembers||[]);
+    }
+    if(typeof drawDashboardTeamSummary==="function"){
+      drawDashboardTeamSummary(window.__dashboardInsideMembers||[]);
+    }
 
     const board=document.getElementById("teamBoardPageV29");
     if(board && board.style.display==="block"){
@@ -6530,10 +6546,24 @@ async function saveDashboardMemberLocation(memberId){
     );
 
     v243ApplyServerLocationToLocal(memberId,data);
-    closeDashboardMemberDetail();
 
-    /* 서버에 저장된 값을 다시 조회해서 화면을 확정 */
-    await loadDashboard(false);
+    // L17: 서버 저장 성공 응답 자체가 확정값이므로 전체 dashboard 재조회 없이
+    // 현재 메모리 화면에 즉시 반영한다. 다음 수동/자동 새로고침에서 서버와 다시 동기화된다.
+    const target=(window.__dashboardInsideMembers||[]).find(m=>String(m.memberId)===String(memberId));
+    if(target){
+      target.team=data.team||target.team||"";
+      target.activityNo=Number(data.activityNo)||target.activityNo||1;
+      target.direction=data.direction||"";
+      target.floor=data.floor||"";
+      target.detail=data.detail||"";
+    }
+    closeDashboardMemberDetail();
+    if(typeof drawDashboardInside==="function"){
+      drawDashboardInside(window.__dashboardInsideMembers||[]);
+    }
+    if(typeof drawDashboardTeamSummary==="function"){
+      drawDashboardTeamSummary(window.__dashboardInsideMembers||[]);
+    }
 
     const board=document.getElementById("teamBoardPageV29");
     if(board && board.style.display==="block"){
@@ -6946,7 +6976,7 @@ document.addEventListener("DOMContentLoaded",v249UpdateFloatNav);
 <script>
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", function () {
-    navigator.serviceWorker.register("./service-worker.js?v=6", {updateViaCache:"none"})
+    navigator.serviceWorker.register("./service-worker.js?v=7", {updateViaCache:"none"})
       .then(function(reg){ return reg.update(); })
       .catch(function (err) {
         console.warn("Service Worker registration failed:", err);
