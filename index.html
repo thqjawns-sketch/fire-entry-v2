@@ -2989,6 +2989,14 @@ function clearQueue(){
 ===================================================== */
 
 function renderQueue(){
+  // V2.49L12: 어떤 경로로 들어왔더라도 동일 관리번호는 투입대기 1명만 유지
+  const seenQueueIds=new Set();
+  entryQueue=entryQueue.filter(function(item){
+    const id=String(item&&item.id||"").trim();
+    if(!id || seenQueueIds.has(id)) return false;
+    seenQueueIds.add(id);
+    return true;
+  });
 
   const area =
     document.getElementById(
@@ -6885,9 +6893,11 @@ document.addEventListener("DOMContentLoaded",v249UpdateFloatNav);
 <script>
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", function () {
-    navigator.serviceWorker.register("./service-worker.js").catch(function (err) {
-      console.warn("Service Worker registration failed:", err);
-    });
+    navigator.serviceWorker.register("./service-worker.js?v=2", {updateViaCache:"none"})
+      .then(function(reg){ return reg.update(); })
+      .catch(function (err) {
+        console.warn("Service Worker registration failed:", err);
+      });
   });
 }
 
