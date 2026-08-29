@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>QR기반-진·출입 안전관리앱 V2.49L20</title>
+<title>QR기반-진·출입 안전관리앱 V2.49L21</title>
 
 <script src="https://unpkg.com/html5-qrcode" type="text/javascript">
 document.addEventListener("DOMContentLoaded",function(){v31UpdateTeamPreviewAuto();});
@@ -1276,6 +1276,19 @@ button:disabled{
   }
 }
 
+
+/* V2.49L21 - 간접 설계 서명 */
+.v249l21-signature{
+  width:100%;
+  text-align:center;
+  margin:18px 0 8px;
+  font-size:11px;
+  font-weight:500;
+  letter-spacing:.35px;
+  color:#8a8f98;
+  opacity:.78;
+  user-select:none;
+}
 </style>
 
 <link rel="manifest" href="./manifest.json">
@@ -1294,7 +1307,7 @@ button:disabled{
 <div id="mainPage">
 
 <div class="title">
-🚒 QR기반-진·출입 안전관리앱 V2.49L20
+🚒 QR기반-진·출입 안전관리앱 V2.49L21
 </div>
 
 <div class="stationLogo">
@@ -1592,6 +1605,9 @@ PPE 점검 대기
 
 </div>
 
+
+
+<div class="v249l21-signature">현장 실무 기반 설계 · SBJ</div>
 
 <!-- =====================================================
 현장 활동 현황
@@ -6995,7 +7011,7 @@ document.addEventListener("DOMContentLoaded",v249UpdateFloatNav);
 <script>
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", function () {
-    navigator.serviceWorker.register("./service-worker.js?v=10", {updateViaCache:"none"})
+    navigator.serviceWorker.register("./service-worker.js?v=11", {updateViaCache:"none"})
       .then(function(reg){ return reg.update(); })
       .catch(function (err) {
         console.warn("Service Worker registration failed:", err);
