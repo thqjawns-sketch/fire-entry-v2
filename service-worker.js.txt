@@ -1,6 +1,5 @@
-const CACHE_NAME = "wanju-fire-safety-pwa-v1";
+const CACHE_NAME = "wanju-fire-safety-assets-v2";
 const STATIC_ASSETS = [
-  "./",
   "./manifest.json",
   "./icon-192.png",
   "./icon-512.png",
@@ -18,7 +17,9 @@ self.addEventListener("install", event => {
 self.addEventListener("activate", event => {
   event.waitUntil(
     caches.keys()
-      .then(keys => Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k))))
+      .then(keys => Promise.all(keys.map(k => {
+        if (k !== CACHE_NAME) return caches.delete(k);
+      })))
       .then(() => self.clients.claim())
   );
 });
@@ -29,20 +30,16 @@ self.addEventListener("fetch", event => {
 
   const url = new URL(req.url);
 
-  // Never cache cross-origin requests (e.g. Apps Script/API calls).
+  // Apps Script/API and every cross-origin request: always network.
   if (url.origin !== self.location.origin) return;
 
-  // Pages: network first, cached shell only as an offline fallback.
-  if (req.mode === "navigate") {
-    event.respondWith(
-      fetch(req)
-        .then(res => res)
-        .catch(() => caches.match("./"))
-    );
+  // App page/index: always network. Never show an old operational screen from cache.
+  if (req.mode === "navigate" || url.pathname.endsWith("/") || url.pathname.endsWith("/index.html")) {
+    event.respondWith(fetch(req, {cache:"no-store"}));
     return;
   }
 
-  // Static same-origin files: cache first, then network.
+  // Only non-operational static assets may use cache.
   event.respondWith(
     caches.match(req).then(cached => cached || fetch(req))
   );
