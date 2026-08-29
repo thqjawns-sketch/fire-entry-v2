@@ -2056,6 +2056,21 @@ window.fetch = async function(input, init){
       });
     }
 
+    if(action==="batchUpdateLocation"){
+      const p=new URLSearchParams();
+      p.set("action","batchUpdateLocation");
+      p.set("siteId",v2SiteId(old.get("site")));
+      p.set("members",old.get("members")||"[]");
+      p.set("teamName",old.get("teamName")||"");
+      p.set("activityNo",old.get("activityNo")||"");
+      p.set("entryDirection",old.get("entryDirection")||"");
+      p.set("activityFloor",old.get("activityFloor")||"");
+      p.set("detailLocation",old.get("detailLocation")||"");
+      const d=await v2CallPost(p);
+      return v2JsonResponse({success:!!(d.ok||d.success),successCount:Number(d.successCount)||0,
+        succeeded:d.succeeded||[],failed:d.failed||[],message:d.message||d.error||""});
+    }
+
     if(action==="updateLocation"){
       const p=new URLSearchParams();
       p.set("action","updateLocation");
@@ -5442,6 +5457,16 @@ isAutoRefresh = true이면
 자동갱신이므로 버튼을 처리중으로 바꾸지 않음
 ===================================================== */
 
+let v218DashboardCache=null,v218DashboardCacheAt=0,v218DashboardCacheSite="";
+async function v218FetchDashboard(site,force){
+  const now=Date.now();
+  if(!force&&v218DashboardCache&&v218DashboardCacheSite===site&&(now-v218DashboardCacheAt)<2000)return v218DashboardCache;
+  const response=await fetch(API+"?action=dashboard&site="+encodeURIComponent(site)+"&t="+now,{cache:"no-store"});
+  const data=await response.json();
+  if(data&&data.success){v218DashboardCache=data;v218DashboardCacheAt=Date.now();v218DashboardCacheSite=site;}
+  return data;
+}
+
 async function loadDashboard(
   isAutoRefresh = false
 ){
@@ -5530,22 +5555,7 @@ async function loadDashboard(
 
   try{
 
-    const response =
-      await fetch(
-
-        API +
-        "?action=dashboard&site=" +
-        encodeURIComponent(
-          site
-        ) +
-        "&t=" +
-        Date.now()
-
-      );
-
-
-    const data =
-      await response.json();
+    const data = await v218FetchDashboard(site,!isAutoRefresh);
 
 
     if(
@@ -6431,29 +6441,24 @@ async function saveDashboardTeamLocation(team){
   if(btn){btn.disabled=true;btn.textContent="서버 저장 중...";}
 
   try{
-    const results=await Promise.all(members.map(async m=>{
-      const info=v19TeamInfo(m);
-      return {
-        memberId:m.memberId,
-        data:await v243UpdateServerLocation(
-          m.memberId,
-          info.team||team,
-          info.activityNo||m.entryCount||1,
-          dir,floor,detail
-        )
-      };
-    }));
-
-    results.forEach(x=>{
-      v243ApplyServerLocationToLocal(x.memberId,x.data);
-      const target=(window.__dashboardInsideMembers||[]).find(m=>String(m.memberId)===String(x.memberId));
-      if(target){
-        target.team=x.data.team||target.team||"";
-        target.activityNo=Number(x.data.activityNo)||target.activityNo||1;
-        target.direction=x.data.direction||"";
-        target.floor=x.data.floor||"";
-        target.detail=x.data.detail||"";
-      }
+    // L18: 조원별 여러 번 호출하지 않고 서버 1회로 일괄 저장
+    const firstInfo=v19TeamInfo(members[0]);
+    const body=new URLSearchParams();
+    body.set("action","batchUpdateLocation");
+    body.set("site",(document.getElementById("site")||{}).value||"");
+    body.set("members",JSON.stringify(members.map(m=>({id:m.memberId,name:m.memberName||m.name||""}))));
+    body.set("teamName",firstInfo.team||team);
+    body.set("activityNo",String(firstInfo.activityNo||members[0].entryCount||1));
+    body.set("entryDirection",dir); body.set("activityFloor",floor); body.set("detailLocation",detail);
+    const res=await fetch(API,{method:"POST",body:body});
+    const batch=await res.json();
+    if(!batch.success && !(batch.successCount>0))throw new Error(batch.message||"조 위치 변경에 실패했습니다.");
+    (batch.succeeded||[]).forEach(data=>{
+      const memberId=data.memberId||data.id;
+      v243ApplyServerLocationToLocal(memberId,data);
+      const target=(window.__dashboardInsideMembers||[]).find(m=>String(m.memberId)===String(memberId));
+      if(target){target.team=data.team||target.team||"";target.activityNo=Number(data.activityNo)||target.activityNo||1;
+        target.direction=data.direction||"";target.floor=data.floor||"";target.detail=data.detail||"";}
     });
     closeDashboardMemberDetail();
 
@@ -6976,7 +6981,7 @@ document.addEventListener("DOMContentLoaded",v249UpdateFloatNav);
 <script>
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", function () {
-    navigator.serviceWorker.register("./service-worker.js?v=7", {updateViaCache:"none"})
+    navigator.serviceWorker.register("./service-worker.js?v=8", {updateViaCache:"none"})
       .then(function(reg){ return reg.update(); })
       .catch(function (err) {
         console.warn("Service Worker registration failed:", err);
