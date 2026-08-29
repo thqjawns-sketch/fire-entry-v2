@@ -2125,19 +2125,16 @@ async function v249GetActiveMemberIds(){
   // 현재상태 시트를 직접 조회하는 inside 경로 사용.
   // 캐시를 사용하지 않아 철수/진입 직후에도 최신 활동상태를 확인한다.
   const response=await fetch(
-    API+"?action=current&siteId="+encodeURIComponent(site)+"&t="+Date.now(),
+    API+"?action=activeIds&siteId="+encodeURIComponent(site)+"&t="+Date.now(),
     {cache:"no-store"}
   );
   const data=await response.json();
-  if(!data || data.ok!==true || !Array.isArray(data.members)){
+  if(!data || data.ok!==true || !Array.isArray(data.activeIds)){
     throw new Error("ACTIVE_CHECK_FAILED");
   }
 
   return new Set(
-    data.members
-      .filter(m=>String(m.status||"").trim()==="활동중")
-      .map(m=>String(m.memberId||m.id||"").trim())
-      .filter(Boolean)
+    data.activeIds.map(id=>String(id||"").trim()).filter(Boolean)
   );
 }
 
@@ -6896,7 +6893,7 @@ document.addEventListener("DOMContentLoaded",v249UpdateFloatNav);
 <script>
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", function () {
-    navigator.serviceWorker.register("./service-worker.js?v=3", {updateViaCache:"none"})
+    navigator.serviceWorker.register("./service-worker.js?v=4", {updateViaCache:"none"})
       .then(function(reg){ return reg.update(); })
       .catch(function (err) {
         console.warn("Service Worker registration failed:", err);
