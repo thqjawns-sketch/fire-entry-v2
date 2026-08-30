@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>QR기반-진·출입 안전관리앱 V2.49L21</title>
+<title>QR기반-진·출입 안전관리앱 V2.49L22</title>
 
 <script src="https://unpkg.com/html5-qrcode" type="text/javascript">
 document.addEventListener("DOMContentLoaded",function(){v31UpdateTeamPreviewAuto();});
@@ -1307,7 +1307,7 @@ button:disabled{
 <div id="mainPage">
 
 <div class="title">
-🚒 QR기반-진·출입 안전관리앱 V2.49L21
+🚒 QR기반-진·출입 안전관리앱 V2.49L22
 </div>
 
 <div class="stationLogo">
@@ -2916,94 +2916,48 @@ async function addSelectedMember(){
 투입대기 추가
 ===================================================== */
 
-async function addMemberToQueue(
-  member
-){
-
-  if(!member || !member.id){
-    alert("등록되지 않은 대원입니다.");
-    return false;
-  }
-
+async function addMemberToQueue(member){
+  if(!member || !member.id){ alert("등록되지 않은 대원입니다."); return false; }
   const memberId=String(member.id).trim();
-
-  // 이미 명단에 있거나 서버 확인 중이면 즉시 차단.
-  // 빠르게 여러 번 눌러도 같은 대원이 중복 추가되지 않는다.
-  if(
-    entryQueue.some(item=>String(item.id).trim()===memberId) ||
-    v249QueueAddPending.has(memberId)
-  ){
-    showTemporaryMessage(
-      member.name+" 대원은 이미 투입대기 명단에 있거나 확인 중입니다."
-    );
-    return false;
+  if(entryQueue.some(item=>String(item.id).trim()===memberId) || v249QueueAddPending.has(memberId)){
+    showTemporaryMessage(member.name+" 대원은 이미 투입대기 명단에 있거나 확인 중입니다."); return false;
   }
 
+  // L22: QR/검색 인식 즉시 투입대기에 표시, 활동상태는 백그라운드 확인
   v249QueueAddPending.add(memberId);
+  entryQueue.push({id:member.id,name:member.name,rank:member.rank||"",dept:member.dept||"",__activeCheckPending:true});
+  renderQueue();
+  showTemporaryMessage("⏳ "+member.name+" 대원 투입대기 등록 · 활동상태 확인중...");
 
-  // L19: 서버 확인이 3~4초 걸려도 사용자가 즉시 동작을 알 수 있게 표시
-  showTemporaryMessage("⏳ "+member.name+" 대원 활동상태 확인중...");
-
-  try{
-    // L17: 두 개의 독립 안전검사를 순차가 아니라 동시에 실행한다.
-    // 안전성은 L16과 동일하게 유지하면서 네트워크 대기시간만 줄인다.
-    const [activeIds,insideData]=await Promise.all([
-      v249GetActiveMemberIds(),
-      (async()=>{
-        const site=(document.getElementById("site")||{}).value||"";
-        const insideRes=await fetch(
-          API+"?action=inside&site="+encodeURIComponent(site)+"&t="+Date.now(),
-          {cache:"no-store"}
-        );
-        const d=await insideRes.json();
-        if(!d || d.success!==true || !Array.isArray(d.members)){
-          throw new Error("INSIDE_CHECK_FAILED");
-        }
-        return d;
-      })()
-    ]);
-
-    const isInside=
-      activeIds.has(memberId) ||
-      insideData.members.some(m=>
-        String(m.memberId||m.id||"").trim()===memberId
-      );
-
-    if(isInside){
-      showTemporaryMessage(
-        "⛔ "+member.name+" 대원은 이미 현장 내부 활동 중입니다. 투입대기에 추가할 수 없습니다."
-      );
-      return false;
-    }
-
-    // 서버 확인을 기다리는 동안 다른 경로에서 추가됐는지 마지막으로 재확인.
-    if(entryQueue.some(item=>String(item.id).trim()===memberId)){
-      showTemporaryMessage(
-        member.name+" 대원은 이미 투입대기 명단에 있습니다."
-      );
-      return false;
-    }
-
-    entryQueue.push({
-      id:member.id,
-      name:member.name,
-      rank:member.rank || "",
-      dept:member.dept || ""
-    });
-
-    renderQueue();
-    return true;
-
-  }catch(e){
-    showTemporaryMessage(
-      "⚠️ 현재 활동상태를 확인하지 못했습니다. 투입대기에 추가하지 않았습니다."
-    );
-    return false;
-  }finally{
-    v249QueueAddPending.delete(memberId);
-  }
+  void (async()=>{
+    try{
+      const [activeIds,insideData]=await Promise.all([
+        v249GetActiveMemberIds(),
+        (async()=>{
+          const site=(document.getElementById("site")||{}).value||"";
+          const r=await fetch(API+"?action=inside&site="+encodeURIComponent(site)+"&t="+Date.now(),{cache:"no-store"});
+          const d=await r.json();
+          if(!d || d.success!==true || !Array.isArray(d.members)) throw new Error("INSIDE_CHECK_FAILED");
+          return d;
+        })()
+      ]);
+      const isInside=activeIds.has(memberId)||insideData.members.some(x=>String(x.memberId||x.id||"").trim()===memberId);
+      const idx=entryQueue.findIndex(x=>String(x.id).trim()===memberId);
+      if(idx<0)return;
+      if(isInside){
+        entryQueue.splice(idx,1); selectedTeamMemberIds.delete(memberId); renderQueue();
+        showTemporaryMessage("⛔ "+member.name+" 대원은 현재 활동중입니다. 투입대기에서 자동 제외했습니다."); return;
+      }
+      entryQueue[idx].__activeCheckPending=false; renderQueue();
+      showTemporaryMessage("✅ "+member.name+" 대원 활동상태 확인 완료");
+    }catch(e){
+      const idx=entryQueue.findIndex(x=>String(x.id).trim()===memberId);
+      if(idx>=0){ entryQueue.splice(idx,1); selectedTeamMemberIds.delete(memberId); renderQueue(); }
+      showTemporaryMessage("⚠️ "+member.name+" 대원 활동상태 확인 실패 · 투입대기에서 제외했습니다.");
+    }finally{ v249QueueAddPending.delete(memberId); }
+  })();
+  return true;
 }
-
 
 /* =====================================================
 투입대기 삭제
@@ -3293,6 +3247,10 @@ function updateTeamSetupState(){
 }
 
 async function openTeamSetup(){
+  if(entryQueue.some(m=>m.__activeCheckPending)){
+    showTemporaryMessage("⏳ 대원 활동상태 확인중입니다. 확인 완료 후 조 편성이 가능합니다.");
+    return;
+  }
   if(entryQueue.length===0){
     alert("먼저 QR 또는 검색으로 투입대원을 등록하세요.");
     return;
@@ -4183,6 +4141,10 @@ async function quickEntryMembers(){
 }
 
 async function batchEntryMembers(){
+  if(entryQueue.some(m=>m.__activeCheckPending)){
+    showTemporaryMessage("⏳ 대원 활동상태 확인중입니다. 확인 완료 후 투입하세요.");
+    return;
+  }
 
   if(
     entrySubmitting
@@ -7011,7 +6973,7 @@ document.addEventListener("DOMContentLoaded",v249UpdateFloatNav);
 <script>
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", function () {
-    navigator.serviceWorker.register("./service-worker.js?v=11", {updateViaCache:"none"})
+    navigator.serviceWorker.register("./service-worker.js?v=12", {updateViaCache:"none"})
       .then(function(reg){ return reg.update(); })
       .catch(function (err) {
         console.warn("Service Worker registration failed:", err);
@@ -7076,6 +7038,18 @@ document.addEventListener("DOMContentLoaded",function(){
   }catch(e){}
 });
 
+
+/* V2.49L22: 세부장소 클릭 시 기존 기록을 보면서 바로 덮어쓰기 */
+function v249L22DetailQuickEdit(){
+  document.querySelectorAll('input[id*="detail" i],textarea[id*="detail" i]').forEach(el=>{
+    if(el.dataset.l22Quick==="1")return;
+    el.dataset.l22Quick="1";
+    el.addEventListener("focus",function(){ setTimeout(()=>{try{this.select();}catch(e){}},0); });
+    el.addEventListener("click",function(){ try{this.select();}catch(e){} });
+  });
+}
+document.addEventListener("DOMContentLoaded",v249L22DetailQuickEdit);
+document.addEventListener("focusin",v249L22DetailQuickEdit);
 </script>
 
 </body>
