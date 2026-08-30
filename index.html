@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>QR기반-진·출입 안전관리앱 V2.49L22</title>
+<title>QR기반-진·출입 안전관리앱 V2.49L23</title>
 
 <script src="https://unpkg.com/html5-qrcode" type="text/javascript">
 document.addEventListener("DOMContentLoaded",function(){v31UpdateTeamPreviewAuto();});
@@ -1307,7 +1307,7 @@ button:disabled{
 <div id="mainPage">
 
 <div class="title">
-🚒 QR기반-진·출입 안전관리앱 V2.49L22
+🚒 QR기반-진·출입 안전관리앱 V2.49L23
 </div>
 
 <div class="stationLogo">
@@ -2013,12 +2013,24 @@ window.fetch = async function(input, init){
       const d=await res.json();
 
       const inside=(d.insideMembers||[]).map(v2OldInsideMember);
-      const exited=v2AggregateExited(d.exitedMembers||[]);
+
+      /* V2.49L23
+         철수완료는 과거 철수이력 건수가 아니라 "현재 철수 상태인 고유 대원"으로 계산.
+         철수 후 재진입하여 현재 활동중인 대원은 철수완료에서 제외하되,
+         과거 철수 활동이력 자체는 삭제하지 않고 그대로 보존한다.
+      */
+      const insideIds=new Set(
+        (d.insideMembers||[])
+          .map(m=>String(m.memberId||m.id||"").trim())
+          .filter(Boolean)
+      );
+      const exited=v2AggregateExited(d.exitedMembers||[])
+        .filter(m=>!insideIds.has(String(m.memberId||"").trim()));
 
       return v2JsonResponse({
         success:!!d.ok,
         dashboard:{
-          insideCount:Number(d.insideCount)||0,
+          insideCount:Number(d.insideCount)||inside.length,
           uniqueMemberCount:Number(d.participantCount)||0,
           exitedCount:exited.length,
           insideMembers:inside,
@@ -6973,7 +6985,7 @@ document.addEventListener("DOMContentLoaded",v249UpdateFloatNav);
 <script>
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", function () {
-    navigator.serviceWorker.register("./service-worker.js?v=12", {updateViaCache:"none"})
+    navigator.serviceWorker.register("./service-worker.js?v=13", {updateViaCache:"none"})
       .then(function(reg){ return reg.update(); })
       .catch(function (err) {
         console.warn("Service Worker registration failed:", err);
