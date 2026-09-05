@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>QR기반-진·출입 안전관리앱 V2.49L31</title>
+<title>QR기반-진·출입 안전관리앱 V2.49L32</title>
 
 <script src="https://unpkg.com/html5-qrcode" type="text/javascript">
 document.addEventListener("DOMContentLoaded",function(){v31UpdateTeamPreviewAuto();});
@@ -1290,7 +1290,7 @@ button:disabled{
   user-select:none;
 }
 
-/* V2.49L31 현장관리 */
+/* V2.49L32 현장관리 */
 .siteTopRow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:end}
 .siteManageBtn{width:auto!important;min-width:118px;margin:0!important;padding:12px 14px!important;background:#263238!important;color:#fff!important}
 .siteReportBtn{margin-top:9px!important;background:#3457d5!important;color:#fff!important}
@@ -1332,7 +1332,7 @@ button:disabled{
 <div id="mainPage">
 
 <div class="title">
-🚒 QR기반-진·출입 안전관리앱 V2.49L31
+🚒 QR기반-진·출입 안전관리앱 V2.49L32
 </div>
 
 <div class="stationLogo">
@@ -2058,7 +2058,7 @@ window.fetch = async function(input, init){
 
       const inside=(d.insideMembers||[]).map(v2OldInsideMember);
 
-      /* V2.49L31
+      /* V2.49L32
          철수완료는 과거 철수이력 건수가 아니라 "현재 철수 상태인 고유 대원"으로 계산.
          철수 후 재진입하여 현재 활동중인 대원은 철수완료에서 제외하되,
          과거 철수 활동이력 자체는 삭제하지 않고 그대로 보존한다.
@@ -2190,7 +2190,7 @@ let activityFloor = "";
 let scanner = null;
 let scanning = false;
 
-/* V2.49L31: 철수 전용 QR 상태 - 기존 진입/조편성 로직과 분리 */
+/* V2.49L32: 철수 전용 QR 상태 - 기존 진입/조편성 로직과 분리 */
 let exitScanner = null;
 let exitScanning = false;
 let exitLastScannedId = "";
@@ -2286,7 +2286,7 @@ const CHOSUNG = [
 
 
 /* =====================================================
-V2.49L31 현장대응단 현장관리 + 진·출입 활동 종합보고서
+V2.49L32 현장대응단 현장관리 + 진·출입 활동 종합보고서
 ===================================================== */
 const V249L31_AREA = {
  "삼례읍":["삼례리","후정리","해전리","신금리","석전리","수계리","하리"],
@@ -2305,6 +2305,14 @@ const V249L31_AREA = {
 let v249L31FireType="";
 
 function v249L31OpenSiteManager(){
+  alert("현장관리는 현장대응단만 기록할 수 있습니다.");
+  const pin=v249L31ManagerPin();
+  if(pin===null)return;
+  if(pin!=="1190"){
+    alert("현장대응단 현장관리 PIN이 올바르지 않습니다.");
+    return;
+  }
+
   const town=document.getElementById("v249l31Town");
   town.innerHTML='<option value="">읍·면 선택</option>'+
     Object.keys(V249L31_AREA).map(x=>'<option value="'+x+'">'+x+'</option>').join("");
@@ -2349,7 +2357,7 @@ async function v249L31CreateSite(){
  let f=v249L31FireType;
  if(f==="기타")f=(document.getElementById("v249l31OtherType").value||"").trim();
  if(!t||!r||!f){alert("읍·면, 리, 화재 대상을 모두 선택하세요.");return;}
- const pin=v249L31ManagerPin(); if(pin===null)return;
+ const pin="1190";
  const siteName=t+" "+r+" "+f+"화재";
  if(!confirm(siteName+"\\n\\n새 화재현장을 생성하시겠습니까?"))return;
  const p=new URLSearchParams();
@@ -2369,7 +2377,7 @@ async function v249L31CloseSite(){
  const siteName=document.getElementById("site").value||"";
  if(!siteName){alert("종료할 화재현장을 먼저 선택하세요.");return;}
  const siteId=v2SiteId(siteName);
- const pin=v249L31ManagerPin(); if(pin===null)return;
+ const pin="1190";
  if(!confirm(siteName+"\\n\\n현장활동을 종료하시겠습니까?\\n내부 활동대원이 있으면 종료되지 않습니다."))return;
  const p=new URLSearchParams();
  p.set("action","closeSite");p.set("siteId",siteId);p.set("managerPin",pin);
@@ -4486,7 +4494,7 @@ async function batchEntryMembers(){
   // 브라우저가 '투입중' 문구를 먼저 그릴 시간을 준 뒤 서버 최종확인을 수행
   await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
 
-  /* V2.49L31:
+  /* V2.49L32:
      승인 후 별도 dashboard GET을 기다리지 않고 바로 batchEntry POST.
      조번호/활동차수와 중복진입 여부는 Code L20이 ScriptLock 안에서 최종 확정한다. */
   const form =
@@ -5186,7 +5194,7 @@ async function loadInsideMembers(){
 
 
 /* =====================================================
-V2.49L31 철수대원 QR 연속 스캔
+V2.49L32 철수대원 QR 연속 스캔
 - L23 조편성/조투입 코드는 변경하지 않음
 - 현재 내부 대원만 대상
 - 서버 철수 성공 후 "○○○ 대원 철수하였습니다." 2초 표시
@@ -7464,7 +7472,7 @@ document.addEventListener("DOMContentLoaded",v249UpdateFloatNav);
 <script>
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", function () {
-    navigator.serviceWorker.register("./service-worker.js?v=19", {updateViaCache:"none"})
+    navigator.serviceWorker.register("./service-worker.js?v=20", {updateViaCache:"none"})
       .then(function(reg){ return reg.update(); })
       .catch(function (err) {
         console.warn("Service Worker registration failed:", err);
