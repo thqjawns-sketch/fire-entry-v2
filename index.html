@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>QR기반-진·출입 안전관리앱 V2.49L27</title>
+<title>QR기반-진·출입 안전관리앱 V2.49L28</title>
 
 <script src="https://unpkg.com/html5-qrcode" type="text/javascript">
 document.addEventListener("DOMContentLoaded",function(){v31UpdateTeamPreviewAuto();});
@@ -1307,7 +1307,7 @@ button:disabled{
 <div id="mainPage">
 
 <div class="title">
-🚒 QR기반-진·출입 안전관리앱 V2.49L27
+🚒 QR기반-진·출입 안전관리앱 V2.49L28
 </div>
 
 <div class="stationLogo">
@@ -2028,7 +2028,7 @@ window.fetch = async function(input, init){
 
       const inside=(d.insideMembers||[]).map(v2OldInsideMember);
 
-      /* V2.49L27
+      /* V2.49L28
          철수완료는 과거 철수이력 건수가 아니라 "현재 철수 상태인 고유 대원"으로 계산.
          철수 후 재진입하여 현재 활동중인 대원은 철수완료에서 제외하되,
          과거 철수 활동이력 자체는 삭제하지 않고 그대로 보존한다.
@@ -2078,7 +2078,9 @@ window.fetch = async function(input, init){
         successCount:Number(d.successCount)||0,
         succeeded:d.succeeded||[],
         failed:d.failed||[],
-        message:d.message||""
+        teamName:d.teamName||d.team||"",
+        activityNo:Number(d.activityNo)||0,
+        message:d.message||d.error||""
       });
     }
 
@@ -2158,7 +2160,7 @@ let activityFloor = "";
 let scanner = null;
 let scanning = false;
 
-/* V2.49L27: 철수 전용 QR 상태 - 기존 진입/조편성 로직과 분리 */
+/* V2.49L28: 철수 전용 QR 상태 - 기존 진입/조편성 로직과 분리 */
 let exitScanner = null;
 let exitScanning = false;
 let exitLastScannedId = "";
@@ -3302,8 +3304,7 @@ async function openTeamSetup(){
   v31UpdateTeamPreviewAuto();
   setTimeout(()=>card.scrollIntoView({behavior:"smooth",block:"start"}),50);
 
-  /* L27: 사용자가 조/방면/층을 선택하는 동안 서버 조/회차를 미리 받아 둔다. */
-  void v249L27PrefetchTeamRegistry()
+  void v246RefreshTeamRegistryFromServer()
     .then(()=>{
       renderTeamMembers();
       v31UpdateTeamPreviewAuto();
@@ -3447,55 +3448,6 @@ async function v246RefreshTeamRegistryFromServer(){
   }
   return j.dashboard;
 }
-/* V2.49L27: 조 투입 승인 전 서버 왕복 최소화
-   조편성 화면에서 미리 dashboard를 받아 두고, 승인 시 신선한 결과를 재사용한다.
-   실제 중복 진입 차단은 기존 서버 batchEntry의 ScriptLock + 활동중 검사를 그대로 사용한다. */
-let v249L27TeamPrefetchPromise = null;
-let v249L27TeamPrefetchAt = 0;
-let v249L27TeamPrefetchSite = "";
-const V249L27_TEAM_PREFETCH_FRESH_MS = 30000;
-
-function v249L27PrefetchTeamRegistry(){
-  const site=(document.getElementById("site")||{}).value||"";
-  if(!site)return Promise.resolve(null);
-
-  if(v249L27TeamPrefetchPromise && v249L27TeamPrefetchSite===site){
-    return v249L27TeamPrefetchPromise;
-  }
-
-  v249L27TeamPrefetchSite=site;
-  v249L27TeamPrefetchPromise=v246RefreshTeamRegistryFromServer()
-    .then(d=>{
-      v249L27TeamPrefetchAt=Date.now();
-      return d;
-    })
-    .finally(()=>{
-      v249L27TeamPrefetchPromise=null;
-    });
-
-  return v249L27TeamPrefetchPromise;
-}
-
-async function v249L27EnsureTeamRegistryBeforeEntry(){
-  const site=(document.getElementById("site")||{}).value||"";
-  const fresh=
-    v249L27TeamPrefetchSite===site &&
-    v249L27TeamPrefetchAt>0 &&
-    (Date.now()-v249L27TeamPrefetchAt)<=V249L27_TEAM_PREFETCH_FRESH_MS;
-
-  if(fresh)return true;
-
-  /* 조편성 중 이미 시작된 조회가 있으면 그 결과만 기다린다. */
-  if(v249L27TeamPrefetchPromise && v249L27TeamPrefetchSite===site){
-    await v249L27TeamPrefetchPromise;
-    return true;
-  }
-
-  /* 사전조회가 없거나 오래됐을 때만 최종 1회 조회 */
-  await v249L27PrefetchTeamRegistry();
-  return true;
-}
-
 function v31SaveTeams(arr){
   localStorage.setItem(v31TeamRegistryKey(),JSON.stringify(arr||[]));
 }
@@ -4379,26 +4331,9 @@ async function batchEntryMembers(){
   // 브라우저가 '투입중' 문구를 먼저 그릴 시간을 준 뒤 서버 최종확인을 수행
   await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
 
-  try{
-    /* L27:
-       조편성 화면에서 이미 완료된 최신 조회(30초 이내)는 그대로 사용한다.
-       따라서 보통 승인 후에는 dashboard GET 없이 batchEntry POST로 바로 진행한다.
-       단, 사전조회가 아직 진행중이면 그 결과를 기다리고,
-       조회가 없거나 오래됐으면 안전하게 1회 갱신한다. */
-    await v249L27EnsureTeamRegistryBeforeEntry();
-    resolvedTeam = v31ResolveTeam(selectedTeamMembers);
-    teamName = resolvedTeam.teamName;
-    activityNo = resolvedTeam.activityNo;
-  }catch(e){
-    console.error("시트 조/회차 최종 확인 실패",e);
-    alert("시트의 조/회차 정보를 확인하지 못했습니다. 투입을 중단합니다.");
-    entrySubmitting=false;
-    button.disabled=false;
-    button.innerText="🔴 조 투입 승인";
-    progress.innerText="";
-    return;
-  }
-
+  /* V2.49L28:
+     승인 후 별도 dashboard GET을 기다리지 않고 바로 batchEntry POST.
+     조번호/활동차수와 중복진입 여부는 Code L20이 ScriptLock 안에서 최종 확정한다. */
   const form =
     new URLSearchParams();
 
@@ -4469,6 +4404,14 @@ async function batchEntryMembers(){
     const data =
       await response.json();
 
+    /* L28: 서버 실패를 '처리 완료'로 오인하지 않음 */
+    if(!data || (data.success!==true && Number(data.successCount||0)===0)){
+      throw new Error((data&&data.message)||"서버에서 진입을 완료하지 못했습니다.");
+    }
+
+    /* 서버가 확정한 조/회차를 화면 기록에도 동일하게 사용 */
+    if(data.teamName) teamName=data.teamName;
+    if(Number(data.activityNo)>0) activityNo=Number(data.activityNo);
 
     let message =
       data.message ||
@@ -4550,14 +4493,9 @@ async function batchEntryMembers(){
 
       /* L17: 승인 직전 서버 재조회는 유지한다.
          저장 성공 뒤의 두 번째 dashboard 재조회는 사용자 완료를 막지 않고 백그라운드 동기화한다. */
-      void v246RefreshTeamRegistryFromServer()
-        .then(()=>{
-          v249L27TeamPrefetchSite=site;
-          v249L27TeamPrefetchAt=Date.now();
-        })
-        .catch(e=>{
-          console.warn("투입 후 시트 조/회차 재동기화 실패",e);
-        });
+      void v246RefreshTeamRegistryFromServer().catch(e=>{
+        console.warn("투입 후 시트 조/회차 재동기화 실패",e);
+      });
 
       // 성공 대원의 화면 캐시는 서버에 저장한 값과 동일하게만 기록
       selectedTeamMembers.forEach(member=>{
@@ -4604,7 +4542,8 @@ async function batchEntryMembers(){
     );
 
     alert(
-      "일괄 진입 기록 오류"
+      "조 투입 처리 실패\n" +
+      (error && error.message ? error.message : "네트워크 또는 서버 연결을 확인하세요.")
     );
 
   }finally{
@@ -5066,7 +5005,7 @@ async function loadInsideMembers(){
 
 
 /* =====================================================
-V2.49L27 철수대원 QR 연속 스캔
+V2.49L28 철수대원 QR 연속 스캔
 - L23 조편성/조투입 코드는 변경하지 않음
 - 현재 내부 대원만 대상
 - 서버 철수 성공 후 "○○○ 대원 철수하였습니다." 2초 표시
@@ -7344,7 +7283,7 @@ document.addEventListener("DOMContentLoaded",v249UpdateFloatNav);
 <script>
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", function () {
-    navigator.serviceWorker.register("./service-worker.js?v=15", {updateViaCache:"none"})
+    navigator.serviceWorker.register("./service-worker.js?v=16", {updateViaCache:"none"})
       .then(function(reg){ return reg.update(); })
       .catch(function (err) {
         console.warn("Service Worker registration failed:", err);
