@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>QR기반-진·출입 안전관리앱 V2.49L28</title>
+<title>QR기반-진·출입 안전관리앱 V2.49L30</title>
 
 <script src="https://unpkg.com/html5-qrcode" type="text/javascript">
 document.addEventListener("DOMContentLoaded",function(){v31UpdateTeamPreviewAuto();});
@@ -1307,7 +1307,7 @@ button:disabled{
 <div id="mainPage">
 
 <div class="title">
-🚒 QR기반-진·출입 안전관리앱 V2.49L28
+🚒 QR기반-진·출입 안전관리앱 V2.49L30
 </div>
 
 <div class="stationLogo">
@@ -2028,7 +2028,7 @@ window.fetch = async function(input, init){
 
       const inside=(d.insideMembers||[]).map(v2OldInsideMember);
 
-      /* V2.49L28
+      /* V2.49L30
          철수완료는 과거 철수이력 건수가 아니라 "현재 철수 상태인 고유 대원"으로 계산.
          철수 후 재진입하여 현재 활동중인 대원은 철수완료에서 제외하되,
          과거 철수 활동이력 자체는 삭제하지 않고 그대로 보존한다.
@@ -2160,7 +2160,7 @@ let activityFloor = "";
 let scanner = null;
 let scanning = false;
 
-/* V2.49L28: 철수 전용 QR 상태 - 기존 진입/조편성 로직과 분리 */
+/* V2.49L30: 철수 전용 QR 상태 - 기존 진입/조편성 로직과 분리 */
 let exitScanner = null;
 let exitScanning = false;
 let exitLastScannedId = "";
@@ -4181,6 +4181,7 @@ async function quickEntryMembers(){
 }
 
 async function batchEntryMembers(){
+  const v249L29ClientStarted=performance.now();
   if(entryQueue.some(m=>m.__activeCheckPending)){
     showTemporaryMessage("⏳ 대원 활동상태 확인중입니다. 확인 완료 후 투입하세요.");
     return;
@@ -4331,7 +4332,7 @@ async function batchEntryMembers(){
   // 브라우저가 '투입중' 문구를 먼저 그릴 시간을 준 뒤 서버 최종확인을 수행
   await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
 
-  /* V2.49L28:
+  /* V2.49L30:
      승인 후 별도 dashboard GET을 기다리지 않고 바로 batchEntry POST.
      조번호/활동차수와 중복진입 여부는 Code L20이 ScriptLock 안에서 최종 확정한다. */
   const form =
@@ -4388,6 +4389,8 @@ async function batchEntryMembers(){
 
   try{
 
+    const v249L29FetchStarted=performance.now();
+
     const response =
       await fetch(
 
@@ -4403,6 +4406,25 @@ async function batchEntryMembers(){
 
     const data =
       await response.json();
+
+    const v249L29FetchMs=Math.round(performance.now()-v249L29FetchStarted);
+    const v249L29TotalMs=Math.round(performance.now()-v249L29ClientStarted);
+
+    if(data && data.timing){
+      console.table({
+        "전체 체감시간(ms)":v249L29TotalMs,
+        "POST 왕복(ms)":v249L29FetchMs,
+        "서버 전체(ms)":data.timing.totalMs,
+        "현장 확인(ms)":data.timing.siteCheckMs,
+        "Lock 대기(ms)":data.timing.lockWaitMs,
+        "대원명부(ms)":data.timing.memberMapMs,
+        "현재상태 읽기(ms)":data.timing.currentReadMs,
+        "조 확정(ms)":data.timing.teamResolveMs,
+        "PPE 저장(ms)":data.timing.ppeWriteMs,
+        "활동이력 저장(ms)":data.timing.historyWriteMs,
+        "현재상태 저장(ms)":data.timing.currentWriteMs
+      });
+    }
 
     /* L28: 서버 실패를 '처리 완료'로 오인하지 않음 */
     if(!data || (data.success!==true && Number(data.successCount||0)===0)){
@@ -4441,6 +4463,11 @@ async function batchEntryMembers(){
 
     }
 
+
+    if(data && data.timing){
+      const sec=(Number(data.timing.totalMs||0)/1000).toFixed(1);
+      progress.innerText="✅ 서버 처리 "+sec+"초 · 전체 상세시간은 개발자 콘솔에 기록됨";
+    }
 
     alert(
       message
@@ -5005,7 +5032,7 @@ async function loadInsideMembers(){
 
 
 /* =====================================================
-V2.49L28 철수대원 QR 연속 스캔
+V2.49L30 철수대원 QR 연속 스캔
 - L23 조편성/조투입 코드는 변경하지 않음
 - 현재 내부 대원만 대상
 - 서버 철수 성공 후 "○○○ 대원 철수하였습니다." 2초 표시
@@ -7283,7 +7310,7 @@ document.addEventListener("DOMContentLoaded",v249UpdateFloatNav);
 <script>
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", function () {
-    navigator.serviceWorker.register("./service-worker.js?v=16", {updateViaCache:"none"})
+    navigator.serviceWorker.register("./service-worker.js?v=18", {updateViaCache:"none"})
       .then(function(reg){ return reg.update(); })
       .catch(function (err) {
         console.warn("Service Worker registration failed:", err);
