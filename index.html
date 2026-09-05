@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>QR기반-진·출입 안전관리앱 V2.49L24</title>
+<title>QR기반-진·출입 안전관리앱 V2.49L25</title>
 
 <script src="https://unpkg.com/html5-qrcode" type="text/javascript">
 document.addEventListener("DOMContentLoaded",function(){v31UpdateTeamPreviewAuto();});
@@ -1307,7 +1307,7 @@ button:disabled{
 <div id="mainPage">
 
 <div class="title">
-🚒 QR기반-진·출입 안전관리앱 V2.49L24
+🚒 QR기반-진·출입 안전관리앱 V2.49L25
 </div>
 
 <div class="stationLogo">
@@ -5005,7 +5005,7 @@ async function loadInsideMembers(){
 
 
 /* =====================================================
-V2.49L24 철수대원 QR 연속 스캔
+V2.49L25 철수대원 QR 연속 스캔
 - 현재 내부 대원만 대상
 - QR 인식 즉시 1명 철수 처리
 - 성공 후 카메라 유지, 다음 대원 연속 스캔
@@ -5043,7 +5043,7 @@ function showExitScanMessage(text,isError){
   box.innerText=text;
   const reader=document.getElementById("exitReader");
   reader.insertAdjacentElement("afterend",box);
-  setTimeout(()=>{ if(box.parentNode) box.remove(); },2200);
+  setTimeout(()=>{ if(box.parentNode) box.remove(); },isError ? 2200 : 2000);
 }
 
 async function toggleExitScanner(){
@@ -5176,7 +5176,7 @@ async function v249L24HandleExitQr(decodedText){
     exitInsideMap.delete(id);
     playScanBeep();
     if(navigator.vibrate) navigator.vibrate(80);
-    showExitScanMessage("✅ "+name+" 대원 철수완료 · 내부 잔여 "+exitInsideMap.size+"명",false);
+    showExitScanMessage("✅ "+name+" 대원 철수하였습니다.",false);
     const info=document.getElementById("exitScanInfo");
     if(info) info.innerText="현재 내부 "+exitInsideMap.size+"명 대상 · QR 인식 즉시 철수 처리";
     void loadInsideMembers();
