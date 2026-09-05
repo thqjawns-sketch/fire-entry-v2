@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>QR기반-진·출입 안전관리앱 V2.49L23</title>
+<title>QR기반-진·출입 안전관리앱 V2.49L24</title>
 
 <script src="https://unpkg.com/html5-qrcode" type="text/javascript">
 document.addEventListener("DOMContentLoaded",function(){v31UpdateTeamPreviewAuto();});
@@ -1307,7 +1307,7 @@ button:disabled{
 <div id="mainPage">
 
 <div class="title">
-🚒 QR기반-진·출입 안전관리앱 V2.49L23
+🚒 QR기반-진·출입 안전관리앱 V2.49L24
 </div>
 
 <div class="stationLogo">
@@ -1570,6 +1570,20 @@ PPE 점검 대기
 
 <div id="insideCount" class="insideTitle">
 🔴 현재 현장 내부 0명
+</div>
+
+<button
+  id="exitScanButton"
+  class="scan"
+  onclick="toggleExitScanner()"
+  style="margin-bottom:10px;background:#168a4a;"
+>
+📷 철수대원 QR 스캔
+</button>
+
+<div id="exitReader"></div>
+<div id="exitScanInfo" class="info" style="display:none;">
+현재 내부 대원만 QR 인식 즉시 철수 처리됩니다. 카메라는 계속 유지됩니다.
 </div>
 
 <button
@@ -2014,7 +2028,7 @@ window.fetch = async function(input, init){
 
       const inside=(d.insideMembers||[]).map(v2OldInsideMember);
 
-      /* V2.49L23
+      /* V2.49L24
          철수완료는 과거 철수이력 건수가 아니라 "현재 철수 상태인 고유 대원"으로 계산.
          철수 후 재진입하여 현재 활동중인 대원은 철수완료에서 제외하되,
          과거 철수 활동이력 자체는 삭제하지 않고 그대로 보존한다.
@@ -2143,6 +2157,14 @@ let activityFloor = "";
 
 let scanner = null;
 let scanning = false;
+
+/* V2.49L24: 철수 전용 QR 연속스캔 */
+let exitScanner = null;
+let exitScanning = false;
+let exitLastScannedId = "";
+let exitLastScannedAt = 0;
+let exitInsideMap = new Map();
+const exitScanPending = new Set();
 
 let lastScannedId = "";
 let lastScannedAt = 0;
@@ -3498,6 +3520,10 @@ QR ON/OFF
 ===================================================== */
 
 async function toggleScanner(){
+
+  if(exitScanning){
+    await stopExitScanner();
+  }
 
   if(
     scanning
@@ -4975,6 +5001,192 @@ async function loadInsideMembers(){
 
   }
 
+}
+
+
+/* =====================================================
+V2.49L24 철수대원 QR 연속 스캔
+- 현재 내부 대원만 대상
+- QR 인식 즉시 1명 철수 처리
+- 성공 후 카메라 유지, 다음 대원 연속 스캔
+===================================================== */
+
+async function v249L24LoadExitInsideMap(){
+  const site=document.getElementById("site").value;
+  if(!site) throw new Error("NO_SITE");
+  const response=await fetch(API+"?action=inside&site="+encodeURIComponent(site)+"&t="+Date.now());
+  const data=await response.json();
+  if(!data.success) throw new Error(data.message||"현재 내부 대원 조회 실패");
+  exitInsideMap=new Map();
+  (data.members||[]).forEach(m=>{
+    const id=String(m.memberId||m.id||"").trim();
+    if(id) exitInsideMap.set(id,m);
+  });
+  return exitInsideMap;
+}
+
+function showExitScanMessage(text,isError){
+  const old=document.getElementById("exitScanToast");
+  if(old) old.remove();
+  const box=document.createElement("div");
+  box.id="exitScanToast";
+  box.className="info";
+  box.style.fontWeight="bold";
+  box.style.marginTop="8px";
+  if(isError){
+    box.style.background="#fce8e6";
+    box.style.color="#b3261e";
+  }else{
+    box.style.background="#e6f4ea";
+    box.style.color="#137333";
+  }
+  box.innerText=text;
+  const reader=document.getElementById("exitReader");
+  reader.insertAdjacentElement("afterend",box);
+  setTimeout(()=>{ if(box.parentNode) box.remove(); },2200);
+}
+
+async function toggleExitScanner(){
+  if(exitScanning){
+    await stopExitScanner();
+    return;
+  }
+  if(scanning){
+    await stopScanner();
+  }
+  await startExitScanner();
+}
+
+async function startExitScanner(){
+  const site=document.getElementById("site").value;
+  const officer=document.getElementById("officer").value.trim();
+  if(!site){ alert("화재현장을 선택하세요."); return; }
+  if(!officer){ alert("지휘관 또는 안전점검관 성명을 입력하세요."); return; }
+
+  const button=document.getElementById("exitScanButton");
+  const info=document.getElementById("exitScanInfo");
+  button.disabled=true;
+  button.innerText="⏳ 현재 내부 대원 확인중...";
+  try{
+    await v249L24LoadExitInsideMap();
+    if(exitInsideMap.size===0){
+      alert("현재 내부에 활동 중인 대원이 없습니다.");
+      return;
+    }
+
+    initScanAudio();
+    exitScanner=new Html5Qrcode("exitReader");
+    const cameras=await Html5Qrcode.getCameras();
+    if(!cameras.length) throw new Error("카메라를 찾을 수 없습니다.");
+    const cameraId=cameras[cameras.length-1].id;
+    exitScanning=true;
+    button.innerText="❌ 철수 QR 스캔 종료";
+    if(info){
+      info.style.display="block";
+      info.innerText="현재 내부 "+exitInsideMap.size+"명 대상 · QR 인식 즉시 철수 처리";
+    }
+
+    await exitScanner.start(
+      cameraId,
+      {fps:10,qrbox:{width:250,height:250}},
+      decodedText=>{ void v249L24HandleExitQr(decodedText); },
+      ()=>{}
+    );
+  }catch(error){
+    console.error(error);
+    exitScanning=false;
+    exitScanner=null;
+    alert(error && error.message ? error.message : "철수 QR 카메라 실행 오류");
+    const reader=document.getElementById("exitReader");
+    if(reader) reader.innerHTML="";
+    if(info) info.style.display="none";
+  }finally{
+    button.disabled=false;
+    if(!exitScanning) button.innerText="📷 철수대원 QR 스캔";
+  }
+}
+
+async function stopExitScanner(){
+  const button=document.getElementById("exitScanButton");
+  const info=document.getElementById("exitScanInfo");
+  try{
+    if(exitScanner){
+      try{ if(exitScanner.isScanning) await exitScanner.stop(); }catch(e){}
+      try{ exitScanner.clear(); }catch(e){}
+    }
+  }finally{
+    exitScanner=null;
+    exitScanning=false;
+    exitScanPending.clear();
+    exitInsideMap.clear();
+    exitLastScannedId="";
+    exitLastScannedAt=0;
+    const reader=document.getElementById("exitReader");
+    if(reader) reader.innerHTML="";
+    if(button){ button.disabled=false; button.innerText="📷 철수대원 QR 스캔"; }
+    if(info) info.style.display="none";
+  }
+}
+
+async function v249L24HandleExitQr(decodedText){
+  const id=String(decodedText||"").trim();
+  const now=Date.now();
+  if(!id) return;
+  if(id===exitLastScannedId && now-exitLastScannedAt<1800) return;
+  exitLastScannedId=id;
+  exitLastScannedAt=now;
+
+  if(exitScanPending.has(id)) return;
+
+  const inside=exitInsideMap.get(id);
+  if(!inside){
+    const roster=members.find(m=>String(m.id||m.memberId||"").trim()===id);
+    showExitScanMessage(
+      roster ? "⚠️ "+roster.name+" 대원은 현재 내부 활동대원이 아닙니다." : "⚠️ 등록되지 않았거나 현재 내부 대원이 아닌 QR입니다.",
+      true
+    );
+    if(navigator.vibrate) navigator.vibrate([100,80,100]);
+    return;
+  }
+
+  const site=document.getElementById("site").value;
+  const officer=document.getElementById("officer").value.trim();
+  const name=inside.memberName||inside.name||getMemberDisplay(id,"")||id;
+  exitScanPending.add(id);
+  showExitScanMessage("⏳ "+name+" 대원 철수 처리중...",false);
+
+  const form=new URLSearchParams();
+  form.append("action","batchExit");
+  form.append("site",site);
+  form.append("officer",officer);
+  form.append("members",JSON.stringify([{id:id,name:name}]));
+
+  try{
+    const response=await fetch(API,{method:"POST",body:form});
+    const data=await response.json();
+    const failed=(data.failed||[]);
+    const ok=(data.success===true || data.ok===true || Number(data.successCount)>0) && failed.length===0;
+    if(!ok){
+      const reason=failed.length ? (failed[0].message||"철수 처리 제외") : (data.message||"철수 처리 실패");
+      showExitScanMessage("⚠️ "+name+" 대원 · "+reason,true);
+      try{ await v249L24LoadExitInsideMap(); }catch(e){}
+      return;
+    }
+
+    exitInsideMap.delete(id);
+    playScanBeep();
+    if(navigator.vibrate) navigator.vibrate(80);
+    showExitScanMessage("✅ "+name+" 대원 철수완료 · 내부 잔여 "+exitInsideMap.size+"명",false);
+    const info=document.getElementById("exitScanInfo");
+    if(info) info.innerText="현재 내부 "+exitInsideMap.size+"명 대상 · QR 인식 즉시 철수 처리";
+    void loadInsideMembers();
+  }catch(error){
+    console.error(error);
+    showExitScanMessage("⚠️ "+name+" 대원 철수 처리 오류 · 다시 스캔하세요.",true);
+    try{ await v249L24LoadExitInsideMap(); }catch(e){}
+  }finally{
+    exitScanPending.delete(id);
+  }
 }
 
 
@@ -6985,7 +7197,7 @@ document.addEventListener("DOMContentLoaded",v249UpdateFloatNav);
 <script>
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", function () {
-    navigator.serviceWorker.register("./service-worker.js?v=13", {updateViaCache:"none"})
+    navigator.serviceWorker.register("./service-worker.js?v=14", {updateViaCache:"none"})
       .then(function(reg){ return reg.update(); })
       .catch(function (err) {
         console.warn("Service Worker registration failed:", err);
