@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>QR기반-진·출입 안전관리앱 V2.49L30</title>
+<title>QR기반-진·출입 안전관리앱 V2.49L31</title>
 
 <script src="https://unpkg.com/html5-qrcode" type="text/javascript">
 document.addEventListener("DOMContentLoaded",function(){v31UpdateTeamPreviewAuto();});
@@ -1289,6 +1289,31 @@ button:disabled{
   opacity:.78;
   user-select:none;
 }
+
+/* V2.49L31 현장관리 */
+.siteTopRow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:end}
+.siteManageBtn{width:auto!important;min-width:118px;margin:0!important;padding:12px 14px!important;background:#263238!important;color:#fff!important}
+.siteReportBtn{margin-top:9px!important;background:#3457d5!important;color:#fff!important}
+.v249l31Modal{display:none;position:fixed;z-index:99999;inset:0;background:rgba(0,0,0,.55);padding:18px;overflow:auto}
+.v249l31Panel{max-width:720px;margin:4vh auto;background:#fff;border-radius:16px;padding:20px;box-shadow:0 12px 40px rgba(0,0,0,.25)}
+.v249l31Panel h2{margin-top:0}.v249l31Grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.v249l31FireTypes{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.v249l31FireTypes button{margin:0!important}
+.v249l31CloseBtn{background:#b42318!important;color:#fff!important}
+.v249l31Secondary{background:#666!important;color:#fff!important}
+.v249l31Report{max-width:1000px}
+.v249l31Report table{width:100%;border-collapse:collapse;font-size:13px}
+.v249l31Report th,.v249l31Report td{border:1px solid #bbb;padding:7px;text-align:left}
+.v249l31Report th{background:#f2f4f7}
+@media(max-width:700px){.siteTopRow{grid-template-columns:1fr}.siteManageBtn{width:100%!important}.v249l31Grid{grid-template-columns:1fr}.v249l31FireTypes{grid-template-columns:repeat(2,1fr)}}
+@media print{
+ body *{visibility:hidden!important}
+ #v249l31ReportModal,#v249l31ReportModal *{visibility:visible!important}
+ #v249l31ReportModal{position:absolute!important;inset:0!important;background:#fff!important;padding:0!important}
+ #v249l31ReportModal .v249l31Panel{box-shadow:none!important;margin:0!important;max-width:none!important}
+ .v249l31NoPrint{display:none!important}
+}
+
 </style>
 
 <link rel="manifest" href="./manifest.json">
@@ -1307,7 +1332,7 @@ button:disabled{
 <div id="mainPage">
 
 <div class="title">
-🚒 QR기반-진·출입 안전관리앱 V2.49L30
+🚒 QR기반-진·출입 안전관리앱 V2.49L31
 </div>
 
 <div class="stationLogo">
@@ -1318,13 +1343,18 @@ button:disabled{
 
 <label>화재현장</label>
 
-<select id="site" onchange="siteChanged()">
-<option value="">⏳ 현장목록 불러오는 중...</option>
-</select>
+<div class="siteTopRow">
+  <select id="site" onchange="siteChanged()">
+    <option value="">⏳ 현장목록 불러오는 중...</option>
+  </select>
+  <button type="button" class="siteManageBtn" onclick="v249L31OpenSiteManager()">⚙️ 현장관리</button>
+</div>
 
 <div id="siteLoadInfo" class="cacheInfo">
 저장된 현장정보를 확인 중입니다.
 </div>
+
+<button type="button" class="siteReportBtn" onclick="v249L31OpenReport()">📄 진·출입 활동 종합보고서</button>
 
 <label>지휘관 또는 안전점검관</label>
 
@@ -2028,7 +2058,7 @@ window.fetch = async function(input, init){
 
       const inside=(d.insideMembers||[]).map(v2OldInsideMember);
 
-      /* V2.49L30
+      /* V2.49L31
          철수완료는 과거 철수이력 건수가 아니라 "현재 철수 상태인 고유 대원"으로 계산.
          철수 후 재진입하여 현재 활동중인 대원은 철수완료에서 제외하되,
          과거 철수 활동이력 자체는 삭제하지 않고 그대로 보존한다.
@@ -2160,7 +2190,7 @@ let activityFloor = "";
 let scanner = null;
 let scanning = false;
 
-/* V2.49L30: 철수 전용 QR 상태 - 기존 진입/조편성 로직과 분리 */
+/* V2.49L31: 철수 전용 QR 상태 - 기존 진입/조편성 로직과 분리 */
 let exitScanner = null;
 let exitScanning = false;
 let exitLastScannedId = "";
@@ -2253,6 +2283,130 @@ const CHOSUNG = [
 /* =====================================================
 앱 시작
 ===================================================== */
+
+
+/* =====================================================
+V2.49L31 현장대응단 현장관리 + 진·출입 활동 종합보고서
+===================================================== */
+const V249L31_AREA = {
+ "삼례읍":["삼례리","후정리","해전리","신금리","석전리","수계리","하리"],
+ "봉동읍":["장기리","낙평리","구만리","구미리","용암리","은하리","율소리","제내리"],
+ "용진읍":["상운리","구억리","간중리","신지리","운곡리","용흥리"],
+ "이서면":["갈산리","금계리","금평리","남계리","반교리","상개리","은교리","이문리"],
+ "소양면":["황운리","명덕리","죽절리","해월리","화심리","신원리","대흥리"],
+ "구이면":["원기리","항가리","평촌리","덕천리","두현리","백여리","광곡리","안덕리"],
+ "고산면":["읍내리","서봉리","율곡리","어우리","남봉리","화정리","양야리","삼기리"],
+ "비봉면":["소농리","내월리","대치리","백도리","이전리","수선리"],
+ "운주면":["장선리","완창리","산북리","금당리","고당리","경천리"],
+ "화산면":["화평리","운산리","우월리","춘산리","운곡리","종리리","성북리"],
+ "동상면":["신월리","수만리","사봉리","대아리"],
+ "경천면":["경천리","가천리","용복리"]
+};
+let v249L31FireType="";
+
+function v249L31OpenSiteManager(){
+  const town=document.getElementById("v249l31Town");
+  town.innerHTML='<option value="">읍·면 선택</option>'+
+    Object.keys(V249L31_AREA).map(x=>'<option value="'+x+'">'+x+'</option>').join("");
+  document.getElementById("v249l31Ri").innerHTML='<option value="">리 선택</option>';
+  v249L31FireType="";
+  document.getElementById("v249l31OtherType").style.display="none";
+  const site=document.getElementById("site").value||"";
+  document.getElementById("v249l31CloseTarget").innerHTML=site
+    ? "종료 대상: <b>"+v249L31Esc(site)+"</b><br>현재 내부 대원이 있으면 종료되지 않습니다."
+    : "종료할 현장을 먼저 선택하세요.";
+  document.getElementById("v249l31SiteModal").style.display="block";
+}
+function v249L31CloseSiteManager(){document.getElementById("v249l31SiteModal").style.display="none";}
+function v249L31RenderRi(){
+ const t=document.getElementById("v249l31Town").value;
+ document.getElementById("v249l31Ri").innerHTML='<option value="">리 선택</option>'+
+  (V249L31_AREA[t]||[]).map(x=>'<option value="'+x+'">'+x+'</option>').join("");
+ v249L31UpdatePreview();
+}
+function v249L31SetFireType(t){
+ v249L31FireType=t;
+ document.getElementById("v249l31OtherType").style.display=t==="기타"?"block":"none";
+ v249L31UpdatePreview();
+}
+function v249L31UpdatePreview(){
+ const t=document.getElementById("v249l31Town").value;
+ const r=document.getElementById("v249l31Ri").value;
+ let f=v249L31FireType;
+ if(f==="기타") f=(document.getElementById("v249l31OtherType").value||"").trim();
+ document.getElementById("v249l31SitePreview").innerText=(t&&r&&f)?("🔥 "+t+" "+r+" "+f+"화재"):"읍·면, 리, 화재 대상을 선택하세요.";
+}
+document.addEventListener("input",e=>{if(e.target&&e.target.id==="v249l31OtherType")v249L31UpdatePreview();});
+document.addEventListener("change",e=>{if(e.target&&e.target.id==="v249l31Ri")v249L31UpdatePreview();});
+
+function v249L31ManagerPin(){
+ const pin=prompt("현장대응단 현장관리 PIN을 입력하세요.");
+ return pin===null?null:String(pin).trim();
+}
+async function v249L31CreateSite(){
+ const t=document.getElementById("v249l31Town").value;
+ const r=document.getElementById("v249l31Ri").value;
+ let f=v249L31FireType;
+ if(f==="기타")f=(document.getElementById("v249l31OtherType").value||"").trim();
+ if(!t||!r||!f){alert("읍·면, 리, 화재 대상을 모두 선택하세요.");return;}
+ const pin=v249L31ManagerPin(); if(pin===null)return;
+ const siteName=t+" "+r+" "+f+"화재";
+ if(!confirm(siteName+"\\n\\n새 화재현장을 생성하시겠습니까?"))return;
+ const p=new URLSearchParams();
+ p.set("action","createSite");p.set("siteName",siteName);p.set("managerPin",pin);
+ p.set("safetyOfficer",(document.getElementById("officer").value||"").trim());
+ try{
+  const d=await v2CallPost(p);
+  if(!d.ok)throw new Error(d.error||d.message||"현장 생성 실패");
+  v249L31CloseSiteManager();
+  await loadSites();
+  document.getElementById("site").value=siteName;
+  if(typeof siteChanged==="function")await siteChanged();
+  alert("🔥 "+siteName+"\\n현장을 생성했습니다.\\n첫 조는 1조 / 1차 활동부터 시작합니다.");
+ }catch(e){alert(e.message||"현장 생성 실패");}
+}
+async function v249L31CloseSite(){
+ const siteName=document.getElementById("site").value||"";
+ if(!siteName){alert("종료할 화재현장을 먼저 선택하세요.");return;}
+ const siteId=v2SiteId(siteName);
+ const pin=v249L31ManagerPin(); if(pin===null)return;
+ if(!confirm(siteName+"\\n\\n현장활동을 종료하시겠습니까?\\n내부 활동대원이 있으면 종료되지 않습니다."))return;
+ const p=new URLSearchParams();
+ p.set("action","closeSite");p.set("siteId",siteId);p.set("managerPin",pin);
+ try{
+  const d=await v2CallPost(p);
+  if(!d.ok)throw new Error(d.error||d.message||"현장 종료 실패");
+  v249L31CloseSiteManager();
+  document.getElementById("site").value="";
+  await loadSites();
+  alert("✅ "+siteName+"\\n현장활동을 종료했습니다.\\n활동 데이터와 종합보고서는 그대로 보존됩니다.");
+ }catch(e){alert(e.message||"현장 종료 실패");}
+}
+function v249L31Esc(x){return String(x??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));}
+function v249L31Mins(a,b){
+ const x=new Date(String(a||"").replace(" ","T")), y=b?new Date(String(b).replace(" ","T")):new Date();
+ return (!a||isNaN(x)||isNaN(y))?"-":Math.max(0,Math.floor((y-x)/60000));
+}
+async function v249L31OpenReport(){
+ const siteName=document.getElementById("site").value||"";
+ if(!siteName){alert("보고서를 조회할 화재현장을 선택하세요.");return;}
+ const modal=document.getElementById("v249l31ReportModal"),body=document.getElementById("v249l31ReportBody");
+ modal.style.display="block"; body.innerHTML="<h3>⏳ 종합보고서를 불러오는 중...</h3>";
+ try{
+  const siteId=v2SiteId(siteName);
+  const res=await V2_NATIVE_FETCH(API+"?action=siteReport&siteId="+encodeURIComponent(siteId)+"&t="+Date.now(),{cache:"no-store"});
+  const d=await res.json(); if(!d.ok)throw new Error(d.error||"보고서 조회 실패");
+  const h=d.history||[], teams=d.teamRounds||[];
+  const rows=h.map(r=>"<tr><td>"+v249L31Esc(r.name)+"</td><td>"+v249L31Esc(r.department)+"</td><td>"+v249L31Esc(r.team)+" "+Number(r.activityNo||1)+"차</td><td>"+v249L31Esc(r.entryTime)+"</td><td>"+v249L31Esc(r.exitTime||"활동중")+"</td><td>"+v249L31Mins(r.entryTime,r.exitTime)+"분</td><td>"+v249L31Esc([r.direction,r.floor,r.detail].filter(Boolean).join(" / "))+"</td></tr>").join("");
+  const teamRows=teams.map(x=>"<tr><td>"+v249L31Esc(x.team)+" "+x.activityNo+"차</td><td>"+v249L31Esc(x.members.join(", "))+"</td><td>"+v249L31Esc([x.direction,x.floor,x.detail].filter(Boolean).join(" / "))+"</td><td>"+v249L31Esc(x.entryTime)+"</td><td>"+v249L31Esc(x.exitTime||"활동중")+"</td></tr>").join("");
+  body.innerHTML="<h1>화재현장 진·출입 활동 종합보고서</h1>"+
+   "<p><b>현장명</b> "+v249L31Esc(d.site.siteName)+"<br><b>현장상태</b> "+v249L31Esc(d.site.status)+"<br><b>현장 생성</b> "+v249L31Esc(d.site.createdAt)+"<br><b>현장 종료</b> "+v249L31Esc(d.site.closedAt||"-")+"<br><b>보고서 생성</b> "+v249L31Esc(d.generatedAt)+"</p>"+
+   "<h3>종합현황</h3><p>참여대원 <b>"+d.participantCount+"명</b> · 총 투입 <b>"+d.totalEntries+"회</b> · 현재 내부 <b>"+d.insideCount+"명</b> · 최장 체류 <b>"+d.maxMinutes+"분</b> · 31분 이상 <b>"+d.over31Count+"건</b></p>"+
+   "<h3>조별 활동현황</h3><table><thead><tr><th>조/차수</th><th>대원</th><th>활동위치</th><th>진입</th><th>철수</th></tr></thead><tbody>"+(teamRows||'<tr><td colspan="5">기록 없음</td></tr>')+"</tbody></table>"+
+   "<h3>개인별 진·출입 현황</h3><table><thead><tr><th>성명</th><th>소속</th><th>조</th><th>진입</th><th>철수</th><th>체류</th><th>활동위치</th></tr></thead><tbody>"+(rows||'<tr><td colspan="7">기록 없음</td></tr>')+"</tbody></table>";
+ }catch(e){body.innerHTML="<h3>⚠️ "+v249L31Esc(e.message||"보고서 조회 실패")+"</h3>";}
+}
+
 
 window.onload =
 function(){
@@ -4332,7 +4486,7 @@ async function batchEntryMembers(){
   // 브라우저가 '투입중' 문구를 먼저 그릴 시간을 준 뒤 서버 최종확인을 수행
   await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
 
-  /* V2.49L30:
+  /* V2.49L31:
      승인 후 별도 dashboard GET을 기다리지 않고 바로 batchEntry POST.
      조번호/활동차수와 중복진입 여부는 Code L20이 ScriptLock 안에서 최종 확정한다. */
   const form =
@@ -5032,7 +5186,7 @@ async function loadInsideMembers(){
 
 
 /* =====================================================
-V2.49L30 철수대원 QR 연속 스캔
+V2.49L31 철수대원 QR 연속 스캔
 - L23 조편성/조투입 코드는 변경하지 않음
 - 현재 내부 대원만 대상
 - 서버 철수 성공 후 "○○○ 대원 철수하였습니다." 2초 표시
@@ -7310,7 +7464,7 @@ document.addEventListener("DOMContentLoaded",v249UpdateFloatNav);
 <script>
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", function () {
-    navigator.serviceWorker.register("./service-worker.js?v=18", {updateViaCache:"none"})
+    navigator.serviceWorker.register("./service-worker.js?v=19", {updateViaCache:"none"})
       .then(function(reg){ return reg.update(); })
       .catch(function (err) {
         console.warn("Service Worker registration failed:", err);
@@ -7388,6 +7542,46 @@ function v249L22DetailQuickEdit(){
 document.addEventListener("DOMContentLoaded",v249L22DetailQuickEdit);
 document.addEventListener("focusin",v249L22DetailQuickEdit);
 </script>
+
+
+<div id="v249l31SiteModal" class="v249l31Modal">
+ <div class="v249l31Panel">
+  <h2>⚙️ 현장대응단 현장관리</h2>
+  <div class="info">현장 생성·종료는 현장대응단에서 관리합니다.</div>
+  <label>읍·면</label>
+  <select id="v249l31Town" onchange="v249L31RenderRi()"></select>
+  <label>리</label>
+  <select id="v249l31Ri"></select>
+  <label>화재 대상</label>
+  <div class="v249l31FireTypes">
+   <button type="button" onclick="v249L31SetFireType('주택')">주택</button>
+   <button type="button" onclick="v249L31SetFireType('공장')">공장</button>
+   <button type="button" onclick="v249L31SetFireType('창고')">창고</button>
+   <button type="button" onclick="v249L31SetFireType('축사')">축사</button>
+   <button type="button" onclick="v249L31SetFireType('상가')">상가</button>
+   <button type="button" onclick="v249L31SetFireType('차량')">차량</button>
+   <button type="button" onclick="v249L31SetFireType('산림')">산림</button>
+   <button type="button" onclick="v249L31SetFireType('기타')">기타</button>
+  </div>
+  <input id="v249l31OtherType" type="text" placeholder="기타 화재대상 직접 입력" style="display:none;margin-top:8px">
+  <div id="v249l31SitePreview" class="status">화재 대상을 선택하세요.</div>
+  <button type="button" onclick="v249L31CreateSite()">🔥 새 화재현장 생성</button>
+  <hr style="margin:18px 0">
+  <div id="v249l31CloseTarget" class="info">종료할 현장을 먼저 선택하세요.</div>
+  <button type="button" class="v249l31CloseBtn" onclick="v249L31CloseSite()">🔴 선택 현장 활동 종료</button>
+  <button type="button" class="v249l31Secondary" onclick="v249L31CloseSiteManager()">닫기</button>
+ </div>
+</div>
+
+<div id="v249l31ReportModal" class="v249l31Modal">
+ <div class="v249l31Panel v249l31Report">
+  <div class="v249l31NoPrint">
+   <button type="button" onclick="window.print()">📄 PDF로 저장 / 인쇄</button>
+   <button type="button" class="v249l31Secondary" onclick="document.getElementById('v249l31ReportModal').style.display='none'">닫기</button>
+  </div>
+  <div id="v249l31ReportBody">보고서를 불러오는 중입니다.</div>
+ </div>
+</div>
 
 </body>
 </html>
