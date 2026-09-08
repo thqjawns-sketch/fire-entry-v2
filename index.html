@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>QR기반-진·출입 안전관리앱 V2.49L42</title>
+<title>QR기반-진·출입 안전관리앱 V2.49L44</title>
 
 <script src="https://unpkg.com/html5-qrcode" type="text/javascript">
 document.addEventListener("DOMContentLoaded",function(){v31UpdateTeamPreviewAuto();});
@@ -1290,7 +1290,7 @@ button:disabled{
   user-select:none;
 }
 
-/* V2.49L42 현장관리 */
+/* V2.49L41 현장관리 */
 .siteTopRow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:end}
 .siteManageBtn{width:auto!important;min-width:118px;margin:0!important;padding:12px 14px!important;background:#263238!important;color:#fff!important}
 .siteReportBtn{margin-top:9px!important;background:#3457d5!important;color:#fff!important}
@@ -1337,7 +1337,7 @@ button:disabled{
 <div id="mainPage">
 
 <div class="title">
-🚒 QR기반-진·출입 안전관리앱 V2.49L42
+🚒 QR기반-진·출입 안전관리앱 V2.49L41
 </div>
 
 <div class="stationLogo">
@@ -1624,9 +1624,10 @@ PPE 점검 대기
 <button
   id="insideRefreshBtn"
   class="refresh"
-  onclick="loadInsideMembers()"
+  onclick="loadInsideMembers(false)"
 >
-🔄 현황 새로고침
+<span class="refreshMainV22">🔄 현황 새로고침</span>
+<span id="insideAutoRefreshInfo" class="refreshSubV22">60초 자동동기화 · 마지막 동기화 --:--:--</span>
 </button>
 
 <div id="v23InsideSummary" class="v23Summary">활동 중 조·위치 요약은 현장현황을 불러오면 표시됩니다.</div>
@@ -2073,7 +2074,7 @@ window.fetch = async function(input, init){
 
       const inside=(d.insideMembers||[]).map(v2OldInsideMember);
 
-      /* V2.49L42
+      /* V2.49L41
          철수완료는 과거 철수이력 건수가 아니라 "현재 철수 상태인 고유 대원"으로 계산.
          철수 후 재진입하여 현재 활동중인 대원은 철수완료에서 제외하되,
          과거 철수 활동이력 자체는 삭제하지 않고 그대로 보존한다.
@@ -2225,7 +2226,7 @@ let activityFloor = "";
 let scanner = null;
 let scanning = false;
 
-/* V2.49L42: 철수 전용 QR 상태 - 기존 진입/조편성 로직과 분리 */
+/* V2.49L41: 철수 전용 QR 상태 - 기존 진입/조편성 로직과 분리 */
 let exitScanner = null;
 let exitScanning = false;
 let exitLastScannedId = "";
@@ -2306,6 +2307,15 @@ let dashboardAutoRefreshTimer = null;
 const DASHBOARD_AUTO_REFRESH_MS =
 60000;
 
+/* =====================================================
+V2.49L44 첫 화면 현재 현장 내부 60초 동기화
+- L41 기능은 그대로 유지
+- 첫 화면의 현재 내부 목록만 현황 새로고침 방식으로 동기화
+- 현장 활동 현황(2번째 화면)의 기존 60초 자동갱신과 분리
+===================================================== */
+let insideAutoRefreshTimer = null;
+const INSIDE_AUTO_REFRESH_MS = 60000;
+
 
 const CHOSUNG = [
 "ㄱ","ㄲ","ㄴ","ㄷ","ㄸ",
@@ -2321,7 +2331,7 @@ const CHOSUNG = [
 
 
 /* =====================================================
-V2.49L42 현장대응단 현장관리 + 진·출입 활동 종합보고서
+V2.49L41 현장대응단 현장관리 + 진·출입 활동 종합보고서
 ===================================================== */
 const V249L31_AREA = {
  "삼례읍":["삼례리","후정리","해전리","신금리","석전리","수계리","하리"],
@@ -2869,8 +2879,6 @@ async function loadMembers(){
 
 function siteChanged(){
 
-  v249L42SyncInsideCount();
-
   entryQueue =
     [];
 
@@ -2878,7 +2886,8 @@ function siteChanged(){
 
   resetPPE();
 
-  loadInsideMembers();
+  loadInsideMembers(false);
+  startInsideAutoRefresh();
 
 }
 
@@ -4578,7 +4587,7 @@ async function batchEntryMembers(){
   // 브라우저가 '투입중' 문구를 먼저 그릴 시간을 준 뒤 서버 최종확인을 수행
   await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
 
-  /* V2.49L42:
+  /* V2.49L41:
      승인 후 별도 dashboard GET을 기다리지 않고 바로 batchEntry POST.
      조번호/활동차수와 중복진입 여부는 Code L20이 ScriptLock 안에서 최종 확정한다. */
   const form =
@@ -4995,45 +5004,7 @@ function v19AddTeamDivider(target,team,activityNo,count,locationText){
   target.appendChild(d);
 }
 
-/* =====================================================
-V2.49L42 첫 화면 현재 내부 인원 10초 동기화
-- 첫 화면이 보이고 앱이 활성 상태일 때만 조회
-- 현재 내부 숫자만 갱신하여 전체 현황 재렌더링 방지
-===================================================== */
-let v249L42InsideSyncTimer=null;
-let v249L42InsideSyncBusy=false;
-async function v249L42SyncInsideCount(){
-  if(v249L42InsideSyncBusy || document.hidden)return;
-  const main=document.getElementById("mainPage");
-  if(!main || getComputedStyle(main).display==="none")return;
-  const site=(document.getElementById("site")||{}).value||"";
-  const countEl=document.getElementById("insideCount");
-  if(!countEl)return;
-  if(!site){countEl.innerText="🔴 현재 현장 내부 0명";return;}
-  v249L42InsideSyncBusy=true;
-  try{
-    const response=await fetch(API+"?action=inside&site="+encodeURIComponent(site)+"&t="+Date.now(),{cache:"no-store"});
-    const data=await response.json();
-    if(data&&data.success&&Array.isArray(data.members)){
-      countEl.innerText="🔴 현재 현장 내부 "+data.members.length+"명";
-    }
-  }catch(e){
-    console.warn("현재 내부 자동동기화 실패",e);
-  }finally{v249L42InsideSyncBusy=false;}
-}
-function v249L42StartInsideSync(){
-  if(v249L42InsideSyncTimer)clearInterval(v249L42InsideSyncTimer);
-  v249L42InsideSyncTimer=setInterval(v249L42SyncInsideCount,10000);
-}
-document.addEventListener("visibilitychange",function(){
-  if(!document.hidden)v249L42SyncInsideCount();
-});
-document.addEventListener("DOMContentLoaded",function(){
-  v249L42StartInsideSync();
-  setTimeout(v249L42SyncInsideCount,800);
-});
-
-async function loadInsideMembers(){
+async function loadInsideMembers(isAutoRefresh = false){
 
   if(
     insideLoading
@@ -5047,6 +5018,13 @@ async function loadInsideMembers(){
   insideLoading =
     true;
 
+  // 60초 자동동기화 때 사용자가 철수 대상으로 체크한 대원은 유지한다.
+  const selectedBeforeRefresh = new Set(
+    [...document.querySelectorAll("#insideList input.insideCheck:checked")]
+      .map(chk => String(chk.dataset.id || "").trim())
+      .filter(Boolean)
+  );
+
 
   const refreshButton =
     document.getElementById(
@@ -5055,7 +5033,8 @@ async function loadInsideMembers(){
 
 
   if(
-    refreshButton
+    refreshButton &&
+    !isAutoRefresh
   ){
 
     refreshButton.disabled =
@@ -5064,7 +5043,7 @@ async function loadInsideMembers(){
     const refreshMain =
       refreshButton.querySelector(".refreshMainV22");
     if(refreshMain){
-      refreshMain.textContent = "⏳ 처리중...";
+      refreshMain.textContent = "⏳ 동기화 새로고침...";
     }
 
   }
@@ -5271,11 +5250,33 @@ async function loadInsideMembers(){
 
     updateV23Summary(data.members);
 
+    // 자동/수동 동기화 후에도 아직 내부에 있는 체크 대원은 선택 상태를 유지한다.
+    if(selectedBeforeRefresh.size){
+      document.querySelectorAll("#insideList input.insideCheck").forEach(chk=>{
+        if(selectedBeforeRefresh.has(String(chk.dataset.id || "").trim())){
+          chk.checked = true;
+        }
+      });
+    }
+
     selectAllState =
       false;
 
 
     updateSelectedCount();
+
+    const autoInfo = document.getElementById("insideAutoRefreshInfo");
+    if(autoInfo){
+      const now = new Date();
+      autoInfo.textContent =
+        "60초 자동동기화 · 마지막 동기화 " +
+        now.toLocaleTimeString("ko-KR",{
+          hour:"2-digit",
+          minute:"2-digit",
+          second:"2-digit",
+          hour12:false
+        });
+    }
 
   }catch(error){
 
@@ -5316,7 +5317,37 @@ async function loadInsideMembers(){
 
 
 /* =====================================================
-V2.49L42 철수대원 QR 연속 스캔
+V2.49L44 첫 화면 현재 현장 내부 60초 자동동기화
+===================================================== */
+function startInsideAutoRefresh(){
+  stopInsideAutoRefresh();
+
+  const site = (document.getElementById("site") || {}).value || "";
+  if(!site) return;
+
+  insideAutoRefreshTimer = setInterval(function(){
+    const mainPage = document.getElementById("mainPage");
+
+    if(
+      mainPage &&
+      mainPage.style.display !== "none" &&
+      !document.hidden
+    ){
+      loadInsideMembers(true);
+    }
+  }, INSIDE_AUTO_REFRESH_MS);
+}
+
+function stopInsideAutoRefresh(){
+  if(insideAutoRefreshTimer){
+    clearInterval(insideAutoRefreshTimer);
+    insideAutoRefreshTimer = null;
+  }
+}
+
+
+/* =====================================================
+V2.49L41 철수대원 QR 연속 스캔
 - L23 조편성/조투입 코드는 변경하지 않음
 - 현재 내부 대원만 대상
 - 서버 철수 성공 후 "○○○ 대원 철수하였습니다." 2초 표시
@@ -5861,6 +5892,9 @@ async function batchExitMembers(){
 
 async function openDashboard(){
 
+  // 첫 화면 자동동기화와 2번째 화면 자동갱신이 동시에 돌지 않도록 중지
+  stopInsideAutoRefresh();
+
   const site =
     document
       .getElementById(
@@ -5951,12 +5985,15 @@ function closeDashboard(){
     .style.display =
     "block";
 
-  v249L42SyncInsideCount();
 
   window.scrollTo(
     0,
     0
   );
+
+  // 첫 화면으로 돌아오면 즉시 1회 동기화 후 60초 주기 시작
+  loadInsideMembers(true);
+  startInsideAutoRefresh();
 
 }
 
@@ -6056,6 +6093,13 @@ document.addEventListener(
           true
         );
 
+      }else{
+        const mainPage = document.getElementById("mainPage");
+        const site = (document.getElementById("site") || {}).value || "";
+        if(mainPage && mainPage.style.display !== "none" && site){
+          loadInsideMembers(true);
+          startInsideAutoRefresh();
+        }
       }
 
     }
@@ -7595,7 +7639,7 @@ document.addEventListener("DOMContentLoaded",v249UpdateFloatNav);
 <script>
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", function () {
-    navigator.serviceWorker.register("./service-worker.js?v=29", {updateViaCache:"none"})
+    navigator.serviceWorker.register("./service-worker.js?v=28", {updateViaCache:"none"})
       .then(function(reg){ return reg.update(); })
       .catch(function (err) {
         console.warn("Service Worker registration failed:", err);
