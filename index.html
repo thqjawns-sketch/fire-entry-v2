@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>QR기반-진·출입 안전관리앱 V2.49L40</title>
+<title>QR기반-진·출입 안전관리앱 V2.49L40-R1</title>
 
 <script src="https://unpkg.com/html5-qrcode" type="text/javascript" onerror="this.onerror=null;this.src='https://cdn.jsdelivr.net/npm/html5-qrcode/html5-qrcode.min.js';"></script>
 <script>
@@ -3905,6 +3905,47 @@ function v249L39PreferredCameras(cameras){
 }
 
 async function v249L39StartCameraWithFallback(readerId, config, onSuccess, onError){
+  const ua=String(navigator.userAgent||"").toLowerCase();
+  const touch=Number(navigator.maxTouchPoints||0);
+  const mobileOrTablet=
+    /android|iphone|ipad|ipod|mobile|tablet/.test(ua) ||
+    (/macintosh/.test(ua) && touch>1);
+
+  // V2.49L40-R1:
+  // 휴대폰/태블릿은 카메라 목록의 이름/순서를 추측하지 않고
+  // 브라우저에 후면(environment) 카메라를 직접 요청한다.
+  if(mobileOrTablet){
+    let instance=null;
+    try{
+      const reader=document.getElementById(readerId);
+      if(reader) reader.innerHTML="";
+
+      instance=new Html5Qrcode(readerId);
+      await instance.start(
+        {facingMode:"environment"},
+        config,
+        onSuccess,
+        onError||(()=>{})
+      );
+
+      return {
+        instance,
+        camera:{id:"environment",label:"후면카메라"}
+      };
+    }catch(error){
+      try{
+        if(instance){
+          try{ if(instance.isScanning) await instance.stop(); }catch(e){}
+          try{ instance.clear(); }catch(e){}
+        }
+      }catch(e){}
+      const reader=document.getElementById(readerId);
+      if(reader) reader.innerHTML="";
+      throw error;
+    }
+  }
+
+  // 노트북/PC는 기존 L40 카메라 자동선택 + 실패 시 다음 카메라 시도 그대로 유지
   const cameras=await Html5Qrcode.getCameras();
   if(!cameras || !cameras.length){
     throw new Error("카메라를 찾을 수 없습니다.");
