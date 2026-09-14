@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>QR기반-진·출입 안전관리앱 V2.49L48</title>
+<title>QR기반-진·출입 안전관리앱 V2.49L40</title>
 
 <script src="https://unpkg.com/html5-qrcode" type="text/javascript" onerror="this.onerror=null;this.src='https://cdn.jsdelivr.net/npm/html5-qrcode/html5-qrcode.min.js';"></script>
 <script>
@@ -1397,14 +1397,6 @@ button:disabled{
 📷 QR 연속 스캔 시작
 </button>
 
-<button
-  id="cameraSwitchButton"
-  class="addBtn"
-  onclick="v249L47SwitchCamera()"
->
-🔄 카메라 전환
-</button>
-
 <div id="reader"></div>
 
 <div class="info">
@@ -2309,9 +2301,6 @@ let activityFloor = "";
 
 let scanner = null;
 let scanning = false;
-
-let v249L47CurrentCameraId = "";
-const V249L47_CAMERA_KEY = "fire_app_preferred_camera_id";
 
 /* V2.49L39: 철수 전용 QR 상태 - 기존 진입/조편성 로직과 분리 */
 let exitScanner = null;
@@ -3320,14 +3309,8 @@ async function addMemberToQueue(member){
       showTemporaryMessage("✅ "+member.name+" 대원 활동상태 확인 완료");
     }catch(e){
       const idx=entryQueue.findIndex(x=>String(x.id).trim()===memberId);
-      if(idx>=0){
-        // V2.49L42: 통신/조회 실패만으로 대원을 투입대기에서 삭제하지 않음.
-        // 명확히 "현재 활동중"으로 확인된 경우에만 위 로직에서 자동 제외한다.
-        entryQueue[idx].__activeCheckPending=false;
-        entryQueue[idx].__activeCheckWarning=true;
-        renderQueue();
-      }
-      showTemporaryMessage("⚠️ "+member.name+" 대원 상태 확인이 지연됩니다 · 투입대기 명단은 유지합니다.");
+      if(idx>=0){ entryQueue.splice(idx,1); selectedTeamMemberIds.delete(memberId); renderQueue(); }
+      showTemporaryMessage("⚠️ "+member.name+" 대원 활동상태 확인 실패 · 투입대기에서 제외했습니다.");
     }finally{ v249QueueAddPending.delete(memberId); }
   })();
   return true;
@@ -3485,12 +3468,7 @@ function renderQueue(){
         escapeHtml(
           member.id
         ) +
-        '</div>' +
-        (member.__activeCheckPending
-          ? '<div style="margin-top:4px;font-size:12px;color:#173d67;font-weight:bold">⏳ 활동상태 확인중...</div>'
-          : member.__activeCheckWarning
-            ? '<div style="margin-top:4px;font-size:12px;color:#b26a00;font-weight:bold">⚠️ 상태 확인 지연 · 명단 유지</div>'
-            : '');
+        '</div>';
 
 
       const button =
@@ -3894,47 +3872,30 @@ V2.49L39 카메라 자동선택 + 자동대체
 - IR/가상카메라는 뒤로 배치
 - 선택 카메라 실패 시 다음 카메라 자동 시도
 ===================================================== */
-function v249L46IsMobileDevice(){
-  const ua=String(navigator.userAgent||"").toLowerCase();
-  const touch=Number(navigator.maxTouchPoints||0);
-
-  if(/android|iphone|ipad|ipod|mobile|tablet/.test(ua)) return true;
-  if(/macintosh/.test(ua) && touch>1) return true;
-  return false;
-}
-
 function v249L39CameraScore(camera){
   const label=String((camera&&camera.label)||"").toLowerCase();
+  const ua=String(navigator.userAgent||"").toLowerCase();
+  const mobile=/android|iphone|ipad|ipod|mobile/.test(ua);
   let score=0;
 
   const bad=["ir","infrared","virtual","obs","snap camera","manycam","droidcam","epoccam","ndi"];
   if(bad.some(k=>label.includes(k))) score-=100;
 
-  if(/integrated|webcam|camera|hd|usb|내장|웹캠/.test(label)) score+=45;
-  if(/front|user/.test(label)) score+=15;
-  if(/back|rear|environment/.test(label)) score+=5;
+  if(mobile){
+    if(/back|rear|environment|후면|뒷/.test(label)) score+=60;
+    if(/front|user|전면/.test(label)) score+=15;
+  }else{
+    if(/integrated|webcam|camera|hd|usb|내장|웹캠/.test(label)) score+=45;
+    if(/front|user/.test(label)) score+=15;
+    if(/back|rear|environment/.test(label)) score+=5;
+  }
 
+  // 라벨이 비어 있어도 후보에서 제외하지 않음
   return score;
 }
 
 function v249L39PreferredCameras(cameras){
-  const saved=localStorage.getItem(V249L47_CAMERA_KEY)||"";
-  const list=(cameras||[]).slice();
-
-  if(saved){
-    const idx=list.findIndex(c=>String(c.id||"")===saved);
-    if(idx>=0){
-      const selected=list.splice(idx,1)[0];
-      return [selected,...list];
-    }
-  }
-
-  if(v249L46IsMobileDevice()){
-    // 모바일/태블릿은 예전 정상 방식처럼 마지막 장치 우선
-    return list.reverse();
-  }
-
-  return list
+  return (cameras||[])
     .map((c,index)=>({camera:c,index,score:v249L39CameraScore(c)}))
     .sort((a,b)=>{
       if(b.score!==a.score) return b.score-a.score;
@@ -3945,7 +3906,6 @@ function v249L39PreferredCameras(cameras){
 
 async function v249L39StartCameraWithFallback(readerId, config, onSuccess, onError){
   const cameras=await Html5Qrcode.getCameras();
-
   if(!cameras || !cameras.length){
     throw new Error("카메라를 찾을 수 없습니다.");
   }
@@ -3956,19 +3916,15 @@ async function v249L39StartCameraWithFallback(readerId, config, onSuccess, onErr
   for(let i=0;i<ordered.length;i++){
     const cam=ordered[i];
     let instance=null;
-
     try{
       const reader=document.getElementById(readerId);
       if(reader) reader.innerHTML="";
 
       instance=new Html5Qrcode(readerId);
       await instance.start(cam.id,config,onSuccess,onError||(()=>{}));
-
       return {instance,camera:cam};
-
     }catch(error){
       lastError=error;
-
       try{
         if(instance){
           try{ if(instance.isScanning) await instance.stop(); }catch(e){}
@@ -3978,100 +3934,11 @@ async function v249L39StartCameraWithFallback(readerId, config, onSuccess, onErr
 
       const reader=document.getElementById(readerId);
       if(reader) reader.innerHTML="";
-
       await new Promise(resolve=>setTimeout(resolve,180));
     }
   }
 
   throw lastError || new Error("사용 가능한 카메라를 실행하지 못했습니다.");
-}
-
-/* =====================================================
-V2.49L47 카메라 전환 / 선택 기억
-- 태블릿별 카메라 순서 차이를 자동 추측하지 않고 사용자가 1회 전환
-- 선택한 카메라 deviceId를 localStorage에 저장
-- 이후 QR 스캔은 저장된 카메라를 최우선 사용
-===================================================== */
-async function v249L47SwitchCamera(){
-  const switchBtn=document.getElementById("cameraSwitchButton");
-  const oldId=String(v249L47CurrentCameraId || localStorage.getItem(V249L47_CAMERA_KEY) || "");
-  const wasScanning=scanning;
-
-  try{
-    if(switchBtn){
-      switchBtn.disabled=true;
-      switchBtn.innerText="⏳ 카메라 전환중...";
-    }
-
-    /* V2.49L48
-       Android 태블릿은 현재 카메라가 열린 상태에서 다른 카메라를 바로 열면
-       장치 점유가 풀리기 전에 새 카메라를 요청해 오류가 발생할 수 있음.
-       반드시 현재 카메라를 먼저 완전히 종료한 뒤 장치목록을 다시 읽고 전환한다.
-    */
-    if(wasScanning){
-      await stopScanner();
-      await new Promise(resolve=>setTimeout(resolve,1000));
-    }
-
-    const cameras=await Html5Qrcode.getCameras();
-
-    if(!cameras || cameras.length<2){
-      showTemporaryMessage("사용 가능한 카메라가 1개뿐입니다.");
-      if(wasScanning) await startScanner();
-      return;
-    }
-
-    let idx=cameras.findIndex(c=>String(c.id||"")===oldId);
-
-    // 현재 카메라 ID가 목록에서 확인되지 않으면 첫 번째가 아니라
-    // 현재 L46 기본선택(모바일은 마지막 장치)을 기준으로 잡음.
-    if(idx<0 && v249L46IsMobileDevice()){
-      idx=cameras.length-1;
-    }else if(idx<0){
-      idx=0;
-    }
-
-    let nextIndex=(idx+1)%cameras.length;
-    const next=cameras[nextIndex];
-
-    localStorage.setItem(V249L47_CAMERA_KEY,String(next.id||""));
-    v249L47CurrentCameraId=String(next.id||"");
-
-    if(wasScanning){
-      await new Promise(resolve=>setTimeout(resolve,350));
-      await startScanner();
-
-      // startScanner가 실제로 정상 시작하지 못하면 이전 카메라 설정 복원
-      if(!scanning){
-        throw new Error("SWITCH_START_FAILED");
-      }
-    }
-
-    const label=(next.label||("카메라 "+(nextIndex+1)));
-    showTemporaryMessage("🔄 "+label+" 로 전환했습니다.");
-
-  }catch(e){
-    console.error("카메라 전환 오류",e);
-
-    // 실패 시 기존 카메라 설정을 되돌려 다음 실행 때 최소한 원래 카메라는 사용 가능하게 함
-    try{
-      if(oldId){
-        localStorage.setItem(V249L47_CAMERA_KEY,oldId);
-        v249L47CurrentCameraId=oldId;
-      }else{
-        localStorage.removeItem(V249L47_CAMERA_KEY);
-        v249L47CurrentCameraId="";
-      }
-    }catch(_){}
-
-    alert("카메라 전환 중 오류가 발생했습니다.\n현재 카메라를 종료한 뒤 다시 시도해주세요.");
-
-  }finally{
-    if(switchBtn){
-      switchBtn.disabled=false;
-      switchBtn.innerText="🔄 카메라 전환";
-    }
-  }
 }
 
 
@@ -4136,7 +4003,6 @@ async function startScanner(){
 
     scanner=started.instance;
     scanning=true;
-    v249L47CurrentCameraId=String((started.camera&&started.camera.id)||"");
 
     button.disabled=false;
     button.innerText="❌ QR 연속 스캔 종료";
@@ -4519,13 +4385,6 @@ function checkPPE(){
 
     status.style.color =
       "#188038";
-
-    // V2.49L42: PPE 안전점검이 모두 완료되면
-    // 더 이상 QR 촬영이 필요하지 않으므로 진입용 카메라를 자동 종료한다.
-    // stopScanner() 내부에서 실제 카메라 스트림까지 해제한다.
-    if(scanning){
-      void stopScanner();
-    }
 
   }else{
 
