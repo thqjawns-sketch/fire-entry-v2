@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>QR기반-진·출입 안전관리앱 V2.49L40</title>
+<title>QR기반-진·출입 안전관리앱 V2.49L42</title>
 
 <script src="https://unpkg.com/html5-qrcode" type="text/javascript" onerror="this.onerror=null;this.src='https://cdn.jsdelivr.net/npm/html5-qrcode/html5-qrcode.min.js';"></script>
 <script>
@@ -3309,8 +3309,14 @@ async function addMemberToQueue(member){
       showTemporaryMessage("✅ "+member.name+" 대원 활동상태 확인 완료");
     }catch(e){
       const idx=entryQueue.findIndex(x=>String(x.id).trim()===memberId);
-      if(idx>=0){ entryQueue.splice(idx,1); selectedTeamMemberIds.delete(memberId); renderQueue(); }
-      showTemporaryMessage("⚠️ "+member.name+" 대원 활동상태 확인 실패 · 투입대기에서 제외했습니다.");
+      if(idx>=0){
+        // V2.49L42: 통신/조회 실패만으로 대원을 투입대기에서 삭제하지 않음.
+        // 명확히 "현재 활동중"으로 확인된 경우에만 위 로직에서 자동 제외한다.
+        entryQueue[idx].__activeCheckPending=false;
+        entryQueue[idx].__activeCheckWarning=true;
+        renderQueue();
+      }
+      showTemporaryMessage("⚠️ "+member.name+" 대원 상태 확인이 지연됩니다 · 투입대기 명단은 유지합니다.");
     }finally{ v249QueueAddPending.delete(memberId); }
   })();
   return true;
@@ -3468,7 +3474,12 @@ function renderQueue(){
         escapeHtml(
           member.id
         ) +
-        '</div>';
+        '</div>' +
+        (member.__activeCheckPending
+          ? '<div style="margin-top:4px;font-size:12px;color:#173d67;font-weight:bold">⏳ 활동상태 확인중...</div>'
+          : member.__activeCheckWarning
+            ? '<div style="margin-top:4px;font-size:12px;color:#b26a00;font-weight:bold">⚠️ 상태 확인 지연 · 명단 유지</div>'
+            : '');
 
 
       const button =
@@ -4385,6 +4396,13 @@ function checkPPE(){
 
     status.style.color =
       "#188038";
+
+    // V2.49L42: PPE 안전점검이 모두 완료되면
+    // 더 이상 QR 촬영이 필요하지 않으므로 진입용 카메라를 자동 종료한다.
+    // stopScanner() 내부에서 실제 카메라 스트림까지 해제한다.
+    if(scanning){
+      void stopScanner();
+    }
 
   }else{
 
