@@ -3,11 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>QR기반-진·출입 안전관리앱 V2.49L39</title>
+<title>QR기반-진·출입 안전관리앱 V2.49L40</title>
 
-<script src="https://unpkg.com/html5-qrcode" type="text/javascript">
-document.addEventListener("DOMContentLoaded",function(){v31UpdateTeamPreviewAuto();});
-
+<script src="https://unpkg.com/html5-qrcode" type="text/javascript" onerror="this.onerror=null;this.src='https://cdn.jsdelivr.net/npm/html5-qrcode/html5-qrcode.min.js';"></script>
+<script>
+document.addEventListener("DOMContentLoaded",function(){
+  try{ v31UpdateTeamPreviewAuto(); }catch(e){ console.warn("초기 조 미리보기 갱신 생략",e); }
+});
 </script>
 
 <style>
