@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>QR기반-진·출입 안전관리앱 V2.49L46</title>
+<title>QR기반-진·출입 안전관리앱 V2.49L47</title>
 
 <script src="https://unpkg.com/html5-qrcode" type="text/javascript" onerror="this.onerror=null;this.src='https://cdn.jsdelivr.net/npm/html5-qrcode/html5-qrcode.min.js';"></script>
 <script>
@@ -1397,6 +1397,14 @@ button:disabled{
 📷 QR 연속 스캔 시작
 </button>
 
+<button
+  id="cameraSwitchButton"
+  class="addBtn"
+  onclick="v249L47SwitchCamera()"
+>
+🔄 카메라 전환
+</button>
+
 <div id="reader"></div>
 
 <div class="info">
@@ -2301,6 +2309,9 @@ let activityFloor = "";
 
 let scanner = null;
 let scanning = false;
+
+let v249L47CurrentCameraId = "";
+const V249L47_CAMERA_KEY = "fire_app_preferred_camera_id";
 
 /* V2.49L39: 철수 전용 QR 상태 - 기존 진입/조편성 로직과 분리 */
 let exitScanner = null;
@@ -3899,7 +3910,6 @@ function v249L39CameraScore(camera){
   const bad=["ir","infrared","virtual","obs","snap camera","manycam","droidcam","epoccam","ndi"];
   if(bad.some(k=>label.includes(k))) score-=100;
 
-  // 이 점수는 노트북/PC에서만 사용한다.
   if(/integrated|webcam|camera|hd|usb|내장|웹캠/.test(label)) score+=45;
   if(/front|user/.test(label)) score+=15;
   if(/back|rear|environment/.test(label)) score+=5;
@@ -3908,7 +3918,23 @@ function v249L39CameraScore(camera){
 }
 
 function v249L39PreferredCameras(cameras){
-  return (cameras||[])
+  const saved=localStorage.getItem(V249L47_CAMERA_KEY)||"";
+  const list=(cameras||[]).slice();
+
+  if(saved){
+    const idx=list.findIndex(c=>String(c.id||"")===saved);
+    if(idx>=0){
+      const selected=list.splice(idx,1)[0];
+      return [selected,...list];
+    }
+  }
+
+  if(v249L46IsMobileDevice()){
+    // 모바일/태블릿은 예전 정상 방식처럼 마지막 장치 우선
+    return list.reverse();
+  }
+
+  return list
     .map((c,index)=>({camera:c,index,score:v249L39CameraScore(c)}))
     .sort((a,b)=>{
       if(b.score!==a.score) return b.score-a.score;
@@ -3924,21 +3950,7 @@ async function v249L39StartCameraWithFallback(readerId, config, onSuccess, onErr
     throw new Error("카메라를 찾을 수 없습니다.");
   }
 
-  let ordered;
-
-  if(v249L46IsMobileDevice()){
-    /*
-      V2.49L46
-      휴대폰/태블릿 카메라 선택을 자동판별 이전의 정상 방식으로 복원.
-      기존 정상 버전에서 사용하던 cameras[cameras.length - 1]을 그대로 우선 사용한다.
-      실패할 때만 나머지 카메라를 뒤에서 앞으로 순차 시도한다.
-    */
-    ordered=cameras.slice().reverse();
-  }else{
-    // 노트북은 L39의 일반 웹캠 우선/IR·가상카메라 후순위 로직 유지
-    ordered=v249L39PreferredCameras(cameras);
-  }
-
+  const ordered=v249L39PreferredCameras(cameras);
   let lastError=null;
 
   for(let i=0;i<ordered.length;i++){
@@ -3972,6 +3984,44 @@ async function v249L39StartCameraWithFallback(readerId, config, onSuccess, onErr
   }
 
   throw lastError || new Error("사용 가능한 카메라를 실행하지 못했습니다.");
+}
+
+/* =====================================================
+V2.49L47 카메라 전환 / 선택 기억
+- 태블릿별 카메라 순서 차이를 자동 추측하지 않고 사용자가 1회 전환
+- 선택한 카메라 deviceId를 localStorage에 저장
+- 이후 QR 스캔은 저장된 카메라를 최우선 사용
+===================================================== */
+async function v249L47SwitchCamera(){
+  try{
+    const cameras=await Html5Qrcode.getCameras();
+    if(!cameras || cameras.length<2){
+      showTemporaryMessage("사용 가능한 카메라가 1개뿐입니다.");
+      return;
+    }
+
+    let currentId=v249L47CurrentCameraId || localStorage.getItem(V249L47_CAMERA_KEY) || "";
+    let idx=cameras.findIndex(c=>String(c.id||"")===String(currentId||""));
+    let nextIndex=(idx+1+cameras.length)%cameras.length;
+    const next=cameras[nextIndex];
+
+    localStorage.setItem(V249L47_CAMERA_KEY,String(next.id||""));
+    v249L47CurrentCameraId=String(next.id||"");
+
+    const wasScanning=scanning;
+    if(wasScanning){
+      await stopScanner();
+      await new Promise(resolve=>setTimeout(resolve,250));
+      await startScanner();
+    }
+
+    const label=(next.label||("카메라 "+(nextIndex+1)));
+    showTemporaryMessage("🔄 "+label+" 로 전환했습니다.");
+
+  }catch(e){
+    console.error("카메라 전환 오류",e);
+    alert("카메라 전환 중 오류가 발생했습니다.");
+  }
 }
 
 
@@ -4036,6 +4086,7 @@ async function startScanner(){
 
     scanner=started.instance;
     scanning=true;
+    v249L47CurrentCameraId=String((started.camera&&started.camera.id)||"");
 
     button.disabled=false;
     button.innerText="❌ QR 연속 스캔 종료";
