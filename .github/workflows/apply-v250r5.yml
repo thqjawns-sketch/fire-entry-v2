@@ -1,0 +1,56 @@
+name: Apply V2.50-R5 commander detail
+on:
+  push:
+    branches: [ v2.50-r5-test ]
+    paths: [ '.github/workflows/apply-v250r5.yml' ]
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: v2.50-r5-test
+      - name: Patch commander board
+        shell: python
+        run: |
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          if 'V2.50-R4' not in s:
+              raise SystemExit('Expected V2.50-R4 not found')
+          s=s.replace('V2.50-R4','V2.50-R5')
+
+          css_anchor='.v250TeamChip strong{font-size:13px}.v250TeamChip.isolated{border-color:#d93025;background:#fff1f0;color:#b42318}.v29BoardRefresh.isLoading{opacity:.75;cursor:wait}'
+          css_new=css_anchor+'''\n/* ===== V2.50-R5 지휘관 관제용 상세 조별현황 ===== */\n.v250TeamSummaryRow{display:none!important}\n.v250CommanderTeamsWrap{grid-column:1/-1;margin-top:10px;padding:12px;border:1px solid #d9e3ee;border-radius:12px;background:#f8fbff}\n.v250CommanderTeamsHead{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:9px;color:#173d67;font-weight:950;font-size:15px}\n.v250CommanderTeamsSub{font-size:12px;color:#66788a;font-weight:800}\n.v250CommanderTeamsGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px}\n.v250CommanderTeamCard{min-width:0;padding:12px 13px;border:1px solid #d6e1ec;border-left:6px solid #188038;border-radius:11px;background:#fff;box-shadow:0 2px 7px rgba(20,50,80,.05)}\n.v250CommanderTeamCard.caution{border-left-color:#f9ab00;background:#fffdf8}\n.v250CommanderTeamCard.warning{border-left-color:#d93025;background:#fff8f7}\n.v250CommanderTeamCard.critical,.v250CommanderTeamCard.isolated{border-left-color:#8b0000;background:#fff0f0}\n.v250CommanderTeamTop{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}\n.v250CommanderTeamName{font-size:19px;font-weight:950;color:#173d67}\n.v250CommanderTeamCount{font-size:14px;font-weight:950;color:#334e68;white-space:nowrap}\n.v250CommanderTeamLoc{margin-top:7px;font-size:14px;font-weight:900;color:#263b50;line-height:1.45}\n.v250CommanderTeamMeta{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}\n.v250CommanderTeamBadge{display:inline-block;padding:4px 7px;border-radius:999px;background:#eef4fa;color:#29435f;font-size:12px;font-weight:900}\n.v250CommanderTeamBadge.normal{background:#e6f4ea;color:#137333}\n.v250CommanderTeamBadge.caution{background:#fff3e0;color:#b06000}\n.v250CommanderTeamBadge.warning{background:#fce8e6;color:#b3261e}\n.v250CommanderTeamBadge.critical{background:#d93025;color:#fff}\n.v250CommanderTeamBadge.isolated{background:#8b0000;color:#fff}\n.v250CommanderMembers{margin-top:9px;display:flex;flex-wrap:wrap;gap:6px}\n.v250CommanderMember{padding:6px 8px;border:1px solid #e1e7ee;border-radius:8px;background:#f8fafc;color:#263b50;font-size:12px;font-weight:850;line-height:1.35}\n.v250CommanderMember.isolated{border-color:#d93025;background:#fff0f0;color:#b42318}\n@media(min-width:1500px){.v250CommanderTeamsGrid{grid-template-columns:repeat(4,minmax(0,1fr))}.v250CommanderTeamCard{padding:14px}.v250CommanderTeamName{font-size:20px}}\n@media(max-width:900px){.v250CommanderTeamsGrid{grid-template-columns:1fr 1fr}}\n@media(max-width:620px){.v250CommanderTeamsGrid{grid-template-columns:1fr}}\n'''
+          if css_anchor not in s:
+              raise SystemExit('CSS anchor missing')
+          s=s.replace(css_anchor,css_new,1)
+
+          html_anchor='<div id="v250BoardEmergency" style="display:none;width:100%;padding:10px;border-radius:10px;background:#b42318;color:#fff;text-align:center;font-weight:950"></div>\n  <div id="v250BoardRefreshInfo" style="width:100%;font-size:12px;font-weight:800">60초 자동갱신 · 마지막 갱신 --:--:--</div>'
+          html_new='''<div id="v250BoardEmergency" style="display:none;width:100%;padding:10px;border-radius:10px;background:#b42318;color:#fff;text-align:center;font-weight:950"></div>\n  <div class="v250CommanderTeamsWrap">\n    <div class="v250CommanderTeamsHead">\n      <span>👥 조별 활동현황</span>\n      <span id="v250CommanderTeamsCount" class="v250CommanderTeamsSub">현재 활동 0개조 · 0명</span>\n    </div>\n    <div id="v250CommanderTeams" class="v250CommanderTeamsGrid"></div>\n  </div>\n  <div id="v250BoardRefreshInfo" style="width:100%;font-size:12px;font-weight:800">60초 자동갱신 · 마지막 갱신 --:--:--</div>'''
+          if html_anchor not in s:
+              raise SystemExit('HTML anchor missing')
+          s=s.replace(html_anchor,html_new,1)
+
+          js_anchor='''  const iso=list.filter(m=>m.isolated);\n  if(emergency){'''
+          js_insert='''  const teamBoard=document.getElementById("v250CommanderTeams");\n  const teamCount=document.getElementById("v250CommanderTeamsCount");\n  if(teamBoard){\n    const gm=new Map();\n    list.forEach(m=>{\n      const team=String(m.team||"조 미지정");\n      const activityNo=Number(m.activityNo||m.entryCount||1)||1;\n      const key=team+"|"+activityNo;\n      if(!gm.has(key))gm.set(key,{team,activityNo,direction:m.direction||"미지정",floor:m.floor||"미지정",detail:m.detail||"세부장소 미지정",members:[],maxMinutes:0,isolated:false});\n      const g=gm.get(key);\n      const mins=Number(m.currentMinutes)||v2MinutesBetween(m.entryTime,"")||0;\n      g.maxMinutes=Math.max(g.maxMinutes,mins);\n      g.isolated=g.isolated||!!m.isolated;\n      g.members.push({id:m.memberId,name:m.memberName||m.name||"",mins,isolated:!!m.isolated});\n      if((!g.detail || g.detail==="세부장소 미지정") && m.detail)g.detail=m.detail;\n    });\n    const groups=[...gm.values()].sort((a,b)=>{\n      const na=parseInt(String(a.team).match(/\\d+/)?.[0]||"999",10), nb=parseInt(String(b.team).match(/\\d+/)?.[0]||"999",10);\n      return na-nb || a.activityNo-b.activityNo || String(a.team).localeCompare(String(b.team),"ko");\n    });\n    if(teamCount)teamCount.textContent="현재 활동 "+groups.length+"개조 · "+list.length+"명";\n    if(!groups.length){\n      teamBoard.innerHTML='<div class="v29DetailEmpty" style="grid-column:1/-1">현재 활동 중인 조가 없습니다.</div>';\n    }else{\n      teamBoard.innerHTML=groups.map(g=>{\n        const mins=Number(g.maxMinutes)||0;\n        let cls="normal",icon="🟢",label="정상";\n        if(mins>=31){cls="critical";icon="🚨";label="즉시확인";}\n        else if(mins>=26){cls="warning";icon="🔴";label="경고";}\n        else if(mins>=21){cls="caution";icon="🟠";label="주의";}\n        const cardCls=g.isolated?"isolated":cls;\n        const membersHtml=g.members.map(x=>'<span class="v250CommanderMember '+(x.isolated?'isolated':'')+'">'+(x.isolated?'🚨 ':'')+escapeHtml(getMemberDisplay(x.id,x.name))+' · '+x.mins+'분</span>').join('');\n        return '<div class="v250CommanderTeamCard '+cardCls+'">'+\n          '<div class="v250CommanderTeamTop"><div class="v250CommanderTeamName">'+escapeHtml(g.team)+' <span style="font-size:13px;color:#60758b">'+g.activityNo+'차</span></div><div class="v250CommanderTeamCount">'+g.members.length+'명</div></div>'+\n          '<div class="v250CommanderTeamLoc">📍 '+escapeHtml(g.direction)+' · '+escapeHtml(g.floor)+' · '+escapeHtml(g.detail||"세부장소 미지정")+'</div>'+\n          '<div class="v250CommanderTeamMeta"><span class="v250CommanderTeamBadge '+cls+'">'+icon+' 최장 '+mins+'분 · '+label+'</span>'+(g.isolated?'<span class="v250CommanderTeamBadge isolated">🚨 고립대원 포함</span>':'')+'</div>'+\n          '<div class="v250CommanderMembers">'+membersHtml+'</div>'+\n          '</div>';\n      }).join('');\n    }\n  }\n\n  const iso=list.filter(m=>m.isolated);\n  if(emergency){'''
+          if js_anchor not in s:
+              raise SystemExit('JS anchor missing')
+          s=s.replace(js_anchor,js_insert,1)
+          p.write_text(s,encoding='utf-8')
+      - name: Validate patch
+        run: |
+          grep -q 'V2.50-R5' index.html
+          grep -q 'v250CommanderTeams' index.html
+          grep -q '고립대원 포함' index.html
+          grep -q '최장 ' index.html
+          git diff --check
+      - name: Commit patched index
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git commit -m 'Apply V2.50-R5 commander control board' || exit 0
+          git push origin HEAD:v2.50-r5-test
