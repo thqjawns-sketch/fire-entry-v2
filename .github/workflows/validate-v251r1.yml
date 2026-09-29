@@ -1,0 +1,29 @@
+name: Validate V2.51-R1 frontend
+on:
+  push:
+    branches: [ v2.51-r1-safety-test ]
+    paths: [ '.github/workflows/validate-v251r1.yml' ]
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: v2.51-r1-safety-test
+      - name: Extract inline scripts
+        run: |
+          python - <<'PY'
+          import re, pathlib
+          s=pathlib.Path('index.html').read_text(encoding='utf-8')
+          blocks=[]
+          for m in re.finditer(r'<script(?![^>]*\bsrc=)[^>]*>(.*?)</script>',s,re.S|re.I):
+              blocks.append(m.group(1))
+          pathlib.Path('/tmp/index-inline.js').write_text('\n;\n'.join(blocks),encoding='utf-8')
+          print('inline script blocks',len(blocks))
+          PY
+          node --check /tmp/index-inline.js
+      - name: Verify safety markers
+        run: |
+          grep -q 'V2.51-R1' index.html
+          grep -q '현황 확인자' index.html
+          grep -q 'V251_RECHECK_MINUTES=10' index.html
