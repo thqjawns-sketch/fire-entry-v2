@@ -2510,8 +2510,14 @@ async function v249L34LoadActiveSites(){
 }
 async function v249L37Close(ev,name){
   if(ev)ev.stopPropagation();
+  const btn=ev&&ev.currentTarget?ev.currentTarget:null;
+  if(btn){btn.disabled=true;btn.innerText="⏳ 활동 종료 중...";}
   document.getElementById("site").value=name;
-  await v249L31CloseSite();
+  try{
+    await v249L31CloseSite();
+  }finally{
+    if(btn&&document.body.contains(btn)){btn.disabled=false;btn.innerText="🔴 활동 종료";}
+  }
 }
 function v249L37Report(ev,name,siteId){
   if(ev)ev.stopPropagation();
@@ -2520,6 +2526,8 @@ function v249L37Report(ev,name,siteId){
 async function v249L37Reset(ev,name,siteId){
   if(ev)ev.stopPropagation();
   if(!confirm("⚠️ 종료된 현장 기록 초기화\\n\\n"+name+"\\n\\n이 현장의 진·출입 기록, PPE 기록, 활동위치 및 활동이력이 모두 삭제됩니다.\\n삭제 후 복구할 수 없습니다.\\n\\n기록을 초기화하시겠습니까?"))return;
+  const btn=ev&&ev.currentTarget?ev.currentTarget:null;
+  if(btn){btn.disabled=true;btn.innerText="⏳ 기록 초기화 중...";}
   const p=new URLSearchParams();
   p.set("action","resetClosedSite"); p.set("siteId",siteId); p.set("managerPin","1190");
   try{
@@ -2528,7 +2536,10 @@ async function v249L37Reset(ev,name,siteId){
     alert("✅ "+name+"\\n종료 현장 기록을 초기화했습니다.");
     await loadSites();
     await v249L34LoadActiveSites();
-  }catch(e){alert(e.message||"기록 초기화 실패");}
+  }catch(e){
+    alert(e.message||"기록 초기화 실패");
+    if(btn&&document.body.contains(btn)){btn.disabled=false;btn.innerText="🗑️ 기록 초기화";}
+  }
 }
 async function v249L31CloseSite(){
  const siteName=document.getElementById("site").value||"";
@@ -2541,9 +2552,8 @@ async function v249L31CloseSite(){
  try{
   const d=await v2CallPost(p);
   if(!d.ok)throw new Error(d.error||d.message||"현장 종료 실패");
-  v249L31CloseSiteManager();
-  document.getElementById("site").value="";
   await loadSites();
+  await v249L34LoadActiveSites();
   alert("✅ "+siteName+"\\n현장활동을 종료했습니다.\\n활동 데이터와 종합보고서는 그대로 보존됩니다.");
  }catch(e){alert(e.message||"현장 종료 실패");}
 }
@@ -4608,6 +4618,11 @@ function checkPPE(){
 
     status.style.color =
       "#188038";
+
+    // PPE 안전점검 완료 시 진입 QR 카메라만 자동 종료
+    if(scanning){
+      void stopScanner();
+    }
 
   }else{
 
