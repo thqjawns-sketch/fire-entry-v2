@@ -4973,6 +4973,29 @@ async function batchEntryMembers(){
     const v249L29FetchMs=Math.round(performance.now()-v249L29FetchStarted);
     const v249L29TotalMs=Math.round(performance.now()-v249L29ClientStarted);
 
+    /* R14D-DIAG: 태블릿에서도 F12 없이 조 투입 지연 원인을 확인하기 위한 표시만 추가.
+       투입/저장/복구 로직은 변경하지 않는다. */
+    try{
+      let diag=document.getElementById("v249EntryTimingDiag");
+      if(!diag){
+        diag=document.createElement("div");
+        diag.id="v249EntryTimingDiag";
+        diag.style.cssText="margin:8px 0 0;padding:8px 10px;border:1px solid #d1d5db;border-radius:8px;background:#f8fafc;color:#111827;font-size:13px;line-height:1.45;font-weight:700;";
+        if(progress && progress.parentNode){
+          progress.parentNode.insertBefore(diag,progress.nextSibling);
+        }
+      }
+      const serverMs=(data&&data.timing)?Number(data.timing.totalMs||0):0;
+      const gapMs=Math.max(0,v249L29FetchMs-serverMs);
+      diag.textContent=
+        "진단 · 서버 "+(serverMs/1000).toFixed(1)+"초 / POST 응답 "+
+        (v249L29FetchMs/1000).toFixed(1)+"초 / 응답차이 "+
+        (gapMs/1000).toFixed(1)+"초 / 전체 "+
+        (v249L29TotalMs/1000).toFixed(1)+"초";
+    }catch(diagErr){
+      console.warn("조 투입 진단표시 실패",diagErr);
+    }
+
     if(data && data.timing){
       console.table({
         "전체 체감시간(ms)":v249L29TotalMs,
