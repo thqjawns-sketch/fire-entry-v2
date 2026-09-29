@@ -3721,10 +3721,6 @@ function updateTeamSetupState(){
 }
 
 async function openTeamSetup(){
-  if(entryQueue.some(m=>m.__activeCheckPending)){
-    showTemporaryMessage("⏳ 대원 활동상태 확인중입니다. 확인 완료 후 조 편성이 가능합니다.");
-    return;
-  }
   if(entryQueue.length===0){
     alert("먼저 QR 또는 검색으로 투입대원을 등록하세요.");
     return;
@@ -3734,13 +3730,32 @@ async function openTeamSetup(){
     return;
   }
 
-  // L19: 조편성 화면은 즉시 연다. 서버 조/회차 확인은 화면을 막지 않고 뒤에서 수행.
+  /* R6: '조 편성 후 투입'은 서버 활동상태 확인을 기다리지 않고 즉시 화면을 연다.
+     활동상태/조·회차 확인은 뒤에서 계속 진행하며 실제 '조 투입 승인' 안전확인은 기존대로 유지한다. */
+  const modeButton=document.getElementById("teamModeButton");
+  if(modeButton) modeButton.innerText="⏳ 조편성 화면 여는 중...";
+
   const card=document.getElementById("teamSetupCard");
-  if(!card)return;
+  if(!card){
+    if(modeButton) modeButton.innerText="👥 조 편성 후 투입";
+    return;
+  }
+
   card.classList.add("modeOpen");
   renderTeamMembers();
   v31UpdateTeamPreviewAuto();
-  setTimeout(()=>card.scrollIntoView({behavior:"smooth",block:"start"}),50);
+
+  // 화면을 먼저 그린 다음 스크롤/버튼 문구 복원
+  requestAnimationFrame(()=>{
+    requestAnimationFrame(()=>{
+      card.scrollIntoView({behavior:"smooth",block:"start"});
+      if(modeButton) modeButton.innerText="👥 조 편성 후 투입";
+    });
+  });
+
+  if(entryQueue.some(m=>m.__activeCheckPending)){
+    showTemporaryMessage("⏳ 대원 활동상태는 뒤에서 확인 중입니다. 조 편성은 먼저 진행할 수 있습니다.");
+  }
 
   void v246RefreshTeamRegistryFromServer()
     .then(()=>{
