@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>QR기반-진·출입 안전관리앱 V2.51-R7</title>
+<title>QR기반-진·출입 안전관리앱 V2.51-R7.1</title>
 
 <script src="https://unpkg.com/html5-qrcode" type="text/javascript" onerror="this.onerror=null;this.src='https://cdn.jsdelivr.net/npm/html5-qrcode/html5-qrcode.min.js';"></script>
 <script>
@@ -1524,7 +1524,7 @@ button:disabled{
 <div id="mainPage">
 
 <div class="title">
-🚒 QR기반-진·출입 안전관리앱 V2.51-R7
+🚒 QR기반-진·출입 안전관리앱 V2.51-R7.1
 </div>
 
 <div class="stationLogo">
@@ -3610,9 +3610,13 @@ async function addMemberToQueue(member){
       entryQueue[idx].__activeCheckPending=false; renderQueue();
       showTemporaryMessage("✅ "+member.name+" 대원 활동상태 확인 완료");
     }catch(e){
+      console.warn("대원 활동상태 확인 지연",memberId,e);
       const idx=entryQueue.findIndex(x=>String(x.id).trim()===memberId);
-      if(idx>=0){ entryQueue.splice(idx,1); selectedTeamMemberIds.delete(memberId); renderQueue(); }
-      showTemporaryMessage("⚠️ "+member.name+" 대원 활동상태 확인 실패 · 투입대기에서 제외했습니다.");
+      if(idx>=0){
+        entryQueue[idx].__activeCheckPending=false;
+        renderQueue();
+      }
+      showTemporaryMessage("⚠️ "+member.name+" 대원 활동상태 확인 지연 · 투입대기 유지");
     }finally{ v249QueueAddPending.delete(memberId); }
   })();
   return true;
