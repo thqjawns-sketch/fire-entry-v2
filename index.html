@@ -2244,7 +2244,7 @@ async function v249L38VerifyWrite(params){
   const ids=v249L38ParseMemberIds(params);
   if(!siteId || !ids.length) return null;
 
-  /* V2.51-R11: 투입 완료 확인용 GET은 재시도 함수에 넣지 않는다.
+  /* V2.51-R12: 투입 완료 확인용 GET은 재시도 함수에 넣지 않는다.
      1회 확인을 짧게 끝내고 다음 폴링으로 넘어가 현장 체감 지연을 줄인다. */
   const controller=(typeof AbortController!=="undefined")?new AbortController():null;
   const timer=controller?setTimeout(()=>controller.abort(),1800):null;
@@ -4933,7 +4933,7 @@ async function quickEntryMembers(){
       entryQueue=entryQueue.filter(m=>!successIds.has(String(m.id)));
       renderQueue();
       if(entryQueue.length===0) resetPPE(); else { checkPPE(); renderTeamMembers(); }
-      /* V2.51-R11: 투입 직후 현재 현장 내부 조회를 호출하지 않음.
+      /* V2.51-R12: 투입 직후 현재 현장 내부 조회를 호출하지 않음.
          투입 저장/대기명단 정리와 현재내부 조회를 분리하여 연속 투입 지연을 방지한다.
          현재내부는 현황 새로고침 또는 별도 현황 갱신에서 조회한다. */
     }
@@ -5319,7 +5319,7 @@ async function batchEntryMembers(){
         if(card)card.classList.add("modeOpen");
       }
 
-      /* V2.51-R11: 투입 직후 현재 현장 내부 조회를 호출하지 않음.
+      /* V2.51-R12: 투입 직후 현재 현장 내부 조회를 호출하지 않음.
          투입 저장/대기명단 정리와 현재내부 조회를 분리하여 연속 투입 지연을 방지한다.
          현재내부는 현황 새로고침 또는 별도 현황 갱신에서 조회한다. */
 
@@ -5517,9 +5517,13 @@ async function loadInsideMembers(){
   if(
     insideLoading
   ){
-
     return;
+  }
 
+  /* V2.51-R12: 투입/철수 저장 중 현재내부 조회가 서버와 경쟁하지 않도록 보류 */
+  if(v249L38WritePending>0 || entrySubmitting || exitSubmitting){
+    showTemporaryMessage("⏳ 투입·철수 저장 완료 후 현황을 갱신합니다.");
+    return;
   }
 
 
@@ -6465,7 +6469,9 @@ function startDashboardAutoRefresh(){
           !document.hidden &&
           v249L38WritePending===0 &&
           !entrySubmitting &&
-          !exitSubmitting
+          !exitSubmitting &&
+          !dashboardLoading &&
+          !insideLoading
         ){
 
           loadDashboard(true).then(function(){
@@ -6532,7 +6538,9 @@ document.addEventListener(
         "none" &&
         v249L38WritePending===0 &&
         !entrySubmitting &&
-        !exitSubmitting
+        !exitSubmitting &&
+        !dashboardLoading &&
+        !insideLoading
       ){
 
         loadDashboard(
@@ -6555,13 +6563,37 @@ isAutoRefresh = true이면
 ===================================================== */
 
 let v218DashboardCache=null,v218DashboardCacheAt=0,v218DashboardCacheSite="";
+/* V2.51-R12 현황 통신 안정화
+   - 같은 현장의 dashboard 요청은 동시에 1개만 전송
+   - 10초 자동갱신/수동갱신이 겹쳐도 기존 요청을 함께 사용
+   - 직전 정상 응답은 아주 짧게 재사용하여 연속 클릭/화면전환 폭주 방지 */
+let v251R12DashboardPromise=null;
+let v251R12DashboardPromiseSite="";
 async function v218FetchDashboard(site,force){
   const now=Date.now();
-  if(!force&&v218DashboardCache&&v218DashboardCacheSite===site&&(now-v218DashboardCacheAt)<2000)return v218DashboardCache;
-  const response=await fetch(API+"?action=dashboard&site="+encodeURIComponent(site)+"&t="+now,{cache:"no-store"});
-  const data=await response.json();
-  if(data&&data.success){v218DashboardCache=data;v218DashboardCacheAt=Date.now();v218DashboardCacheSite=site;}
-  return data;
+  if(v218DashboardCache&&v218DashboardCacheSite===site&&(now-v218DashboardCacheAt)<2500){
+    return v218DashboardCache;
+  }
+  if(v251R12DashboardPromise && v251R12DashboardPromiseSite===site){
+    return v251R12DashboardPromise;
+  }
+  v251R12DashboardPromiseSite=site;
+  v251R12DashboardPromise=(async function(){
+    try{
+      const response=await fetch(API+"?action=dashboard&site="+encodeURIComponent(site)+"&t="+Date.now(),{cache:"no-store"});
+      const data=await response.json();
+      if(data&&data.success){
+        v218DashboardCache=data;
+        v218DashboardCacheAt=Date.now();
+        v218DashboardCacheSite=site;
+      }
+      return data;
+    }finally{
+      v251R12DashboardPromise=null;
+      v251R12DashboardPromiseSite="";
+    }
+  })();
+  return v251R12DashboardPromise;
 }
 
 async function loadDashboard(
@@ -9012,5 +9044,9 @@ setInterval(v251RefreshEnhancements,30000);
 })();
 </script>
 
+
+<!-- V2.51-R12 STATUS-COMMS-STABILITY
+  현황조회 중복호출 방지 / 자동갱신-수동조회 충돌 방지 / 쓰기 중 inside 조회 보류
+-->
 </body>
 </html>
