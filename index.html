@@ -2282,24 +2282,50 @@ async function v249L38VerifyWrite(params){
 
 async function v2CallPost(params){
   v249L38WritePending++;
-  let lastError=null;
+  const action=String(params.get("action")||"");
   try{
+    /* V2.51-R9 현장투입 응답 안정화
+       batchEntry/batchExit은 같은 POST를 재전송하지 않는다.
+       최초 POST는 그대로 진행시키고, 2.5초부터 현재상태를 병행 확인한다.
+       서버 저장이 끝나는 즉시 화면을 성공 처리하여 '투입 처리중' 장기 대기를 줄인다. */
+    if(action==="batchEntry" || action==="batchExit"){
+      const cloned=new URLSearchParams(params.toString());
+      const postPromise=V2_NATIVE_FETCH(API,{method:"POST",body:cloned,cache:"no-store"})
+        .then(async res=>{
+          if(!res || !res.ok) throw new Error("서버 응답 오류"+(res?" ("+res.status+")":""));
+          return await res.json();
+        });
+
+      let postDone=false, postValue=null, postError=null;
+      postPromise.then(v=>{postDone=true;postValue=v;}).catch(e=>{postDone=true;postError=e;});
+
+      await v249L38Sleep(2500);
+      for(let i=0;i<18;i++){
+        if(postDone){
+          if(postError) throw postError;
+          return postValue;
+        }
+        const verified=await v249L38VerifyWrite(params);
+        if(verified) return verified;
+        await v249L38Sleep(700);
+      }
+
+      /* 상태확인 시간 안에 끝나지 않은 경우에도 중복 POST는 하지 않고
+         최초 요청의 응답만 기다린다. */
+      return await postPromise;
+    }
+
+    let lastError=null;
     for(let attempt=0;attempt<V249L38_RETRY_DELAYS.length;attempt++){
       if(attempt>0) await v249L38Sleep(V249L38_RETRY_DELAYS[attempt]);
       try{
         const cloned=new URLSearchParams(params.toString());
         const res=await V2_NATIVE_FETCH(API,{method:"POST",body:cloned,cache:"no-store"});
         if(!res || !res.ok) throw new Error("서버 응답 오류"+(res?" ("+res.status+")":""));
-        const d=await res.json();
-        return d;
+        return await res.json();
       }catch(error){
         lastError=error;
         console.warn("POST 동기화 재시도 "+(attempt+1)+"/"+V249L38_RETRY_DELAYS.length,error);
-
-        /* 응답만 유실된 경우 바로 다시 POST하면 중복 기록 위험이 있으므로
-           현재상태를 먼저 확인하고, 이미 반영되었으면 성공으로 종료한다. */
-        const verified=await v249L38VerifyWrite(params);
-        if(verified) return verified;
       }
     }
     throw lastError||new Error("동기화 실패");
