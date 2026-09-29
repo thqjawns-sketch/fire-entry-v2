@@ -1812,9 +1812,19 @@ PPE 점검 대기
       <img src="./wanju-fire-logo.png" alt="완주소방서 WANJU FIRE STATION">
     </div>
     <div class="v29BoardHeaderBtns">
-      <button type="button" class="v29BoardRefresh" onclick="refreshTeamBoardV29()">🔄 새로고침</button>
+      <button type="button" id="v29BoardRefreshBtn" class="v29BoardRefresh" onclick="refreshTeamBoardV29(false)"><span id="v29BoardRefreshText">🔄 현황 새로고침</span><small id="v29BoardRefreshInfo">10초 자동갱신 · 마지막 갱신 --:--:--</small></button>
       <button type="button" class="v29BoardClose" onclick="closeTeamBoardV29()">✕ 현황판 닫기</button>
     </div>
+  </div>
+
+  <div id="v29CommanderSummary" class="v29CommanderSummary">
+    <div class="v29CmdBox"><span>현재 내부</span><b id="v29CmdInside">0명</b></div>
+    <div class="v29CmdBox"><span>현장 참여</span><b id="v29CmdUnique">0명</b></div>
+    <div class="v29CmdBox"><span>철수 완료</span><b id="v29CmdExited">0명</b></div>
+    <div class="v29CmdBox"><span>현재 활동 조</span><b id="v29CmdTeams">0개조</b></div>
+    <div class="v29CmdBox v29CmdAlert"><span>확인 필요</span><b id="v29CmdDue">0명</b></div>
+    <div class="v29CmdBox v29CmdIso"><span>고립대원</span><b id="v29CmdIso">0명</b></div>
+    <div class="v29CmdBox"><span>안전확인 완료</span><b id="v29CmdConfirmed">0명</b></div>
   </div>
 
   <div class="v29BoardCard">
@@ -1850,6 +1860,12 @@ PPE 점검 대기
   </div>
 
 </div>
+
+
+<style>
+/* R16 지휘자용 조 활동 종합현황판 */
+.v29BoardRefresh{display:flex!important;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-width:180px}.v29BoardRefresh small{display:block;font-size:10px;font-weight:800;opacity:.82;white-space:nowrap}.v29CommanderSummary{display:grid;grid-template-columns:repeat(7,minmax(105px,1fr));gap:8px;margin:10px 12px 12px}.v29CmdBox{background:#fff;border:1px solid #dce5ee;border-radius:12px;padding:10px 8px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.04)}.v29CmdBox span{display:block;font-size:11px;font-weight:850;color:#607387;margin-bottom:4px}.v29CmdBox b{display:block;font-size:20px;font-weight:950;color:#20364b}.v29CmdAlert{border-color:#e7b0aa;background:#fff8f7}.v29CmdAlert b{color:#b42318}.v29CmdIso{border-color:#d88980;background:#fff3f1}.v29CmdIso b{color:#9f1d14}@media(max-width:1100px){.v29CommanderSummary{grid-template-columns:repeat(4,1fr)}}@media(max-width:650px){.v29CommanderSummary{grid-template-columns:repeat(2,1fr)}.v29BoardRefresh{min-width:145px}}
+</style>
 
 <!-- 3번째 창 : 철수 대원 확인 -->
 <div id="exitedPageV23">
@@ -7130,39 +7146,115 @@ function showTeamBoardDetailV29(teamName){
     '<div class="v29DetailMeta"><span>현재 활동 '+Number(t.count)+'명</span><span>체류시간은 조 내 최장 체류 기준</span></div>';
 }
 
+let v29BoardAutoRefreshTimer=null;
+let v29BoardLoading=false;
+
+function v29BoardSafetyState(m){
+  const mins=Number(m&&m.currentMinutes)||0;
+  if(m&&m.isolated)return {due:true,isolated:true,confirmed:false};
+  if(mins<=30)return {due:false,isolated:false,confirmed:false};
+  const raw=m&&m.safetyCheckedAt;
+  if(raw){
+    let t=Date.parse(raw);
+    if(!Number.isFinite(t)){
+      const x=String(raw).trim().replace(/\./g,'-').replace(/\//g,'-');
+      t=Date.parse(x);
+    }
+    if(Number.isFinite(t)){
+      const elapsed=Math.max(0,(Date.now()-t)/60000);
+      if(elapsed<10)return {due:false,isolated:false,confirmed:true};
+    }
+  }
+  return {due:true,isolated:false,confirmed:false};
+}
+
+function updateTeamBoardCommanderSummaryV29(){
+  const members=window.__dashboardInsideMembers||[];
+  const teams=v29GroupTeams(members);
+  const states=members.map(v29BoardSafetyState);
+  const text=(id,value)=>{const el=document.getElementById(id);if(el)el.textContent=value;};
+  const dashInside=document.getElementById('dashInside');
+  const dashUnique=document.getElementById('dashUnique');
+  const dashExited=document.getElementById('dashExited');
+  text('v29CmdInside',(dashInside?dashInside.textContent:members.length)+'명');
+  text('v29CmdUnique',(dashUnique?dashUnique.textContent:'0')+'명');
+  text('v29CmdExited',(dashExited?dashExited.textContent:(window.__dashboardExitedMembers||[]).length)+'명');
+  text('v29CmdTeams',teams.length+'개조');
+  text('v29CmdDue',states.filter(x=>x.due).length+'명');
+  text('v29CmdIso',states.filter(x=>x.isolated).length+'명');
+  text('v29CmdConfirmed',states.filter(x=>x.confirmed).length+'명');
+}
+
+function v29BoardSetRefreshTime(){
+  const info=document.getElementById('v29BoardRefreshInfo');
+  if(info)info.textContent='10초 자동갱신 · 마지막 갱신 '+v249R8NowText();
+}
+
+function startTeamBoardAutoRefreshV29(){
+  stopTeamBoardAutoRefreshV29();
+  v29BoardAutoRefreshTimer=setInterval(function(){
+    const board=document.getElementById('teamBoardPageV29');
+    if(board&&board.style.display!=='none'&&!document.hidden&&!v249R8WriteBusy()&&!v29BoardLoading&&!dashboardLoading){
+      void refreshTeamBoardV29(true);
+    }
+  },DASHBOARD_AUTO_REFRESH_MS);
+}
+
+function stopTeamBoardAutoRefreshV29(){
+  if(v29BoardAutoRefreshTimer){clearInterval(v29BoardAutoRefreshTimer);v29BoardAutoRefreshTimer=null;}
+}
+
 function openTeamBoardV29(){
   const dashboard=document.getElementById("dashboardPage");
   const board=document.getElementById("teamBoardPageV29");
   if(!board)return;
+  stopDashboardAutoRefresh();
   if(dashboard)dashboard.style.display="none";
   board.style.display="block";
   v249NavPush("teamBoard");
-
   const site=document.getElementById("v29BoardSite");
   const dashSite=document.getElementById("dashboardSiteName");
   if(site)site.textContent=dashSite?dashSite.textContent:"";
-
   drawTeamBoardV29();
+  updateTeamBoardCommanderSummaryV29();
   window.scrollTo({top:0,behavior:"smooth"});
+  void refreshTeamBoardV29(true);
+  startTeamBoardAutoRefreshV29();
 }
 
 function closeTeamBoardV29(){
+  stopTeamBoardAutoRefreshV29();
   const dashboard=document.getElementById("dashboardPage");
   const board=document.getElementById("teamBoardPageV29");
   if(board)board.style.display="none";
   if(dashboard)dashboard.style.display="block";
+  startDashboardAutoRefresh();
   window.scrollTo({top:0,behavior:"smooth"});
 }
 
-async function refreshTeamBoardV29(){
-  // 기존 안정화된 현황 조회 함수를 그대로 사용
-  await loadDashboard(false);
-  // loadDashboard가 dashboardPage 표시를 건드리지 않으므로 상태판을 다시 표시
-  const dashboard=document.getElementById("dashboardPage");
-  const board=document.getElementById("teamBoardPageV29");
-  if(dashboard)dashboard.style.display="none";
-  if(board)board.style.display="block";
-  drawTeamBoardV29();
+async function refreshTeamBoardV29(isAutoRefresh=false){
+  if(v29BoardLoading||dashboardLoading)return;
+  if(v249R8WriteBusy())return;
+  const btn=document.getElementById('v29BoardRefreshBtn');
+  const label=document.getElementById('v29BoardRefreshText');
+  v29BoardLoading=true;
+  if(btn&&!isAutoRefresh){btn.disabled=true;if(label)label.textContent='⏳ 처리중...';}
+  try{
+    await loadDashboard(true);
+    const dashboard=document.getElementById("dashboardPage");
+    const board=document.getElementById("teamBoardPageV29");
+    if(dashboard)dashboard.style.display="none";
+    if(board)board.style.display="block";
+    drawTeamBoardV29();
+    updateTeamBoardCommanderSummaryV29();
+    v29BoardSetRefreshTime();
+  }catch(e){
+    console.error(e);
+    if(!isAutoRefresh)alert('조 활동 현황 통신 오류');
+  }finally{
+    v29BoardLoading=false;
+    if(btn){btn.disabled=false;if(label)label.textContent='🔄 현황 새로고침';}
+  }
 }
 
 
