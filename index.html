@@ -2098,68 +2098,6 @@ async function v249L38VerifyWrite(params){
   }
 }
 
-/* =====================================================
-   R15 조 투입 승인 응답지연 빠른 복구
-   - batchEntry POST는 단 한 번만 전송
-   - 6초 안에 응답이 없으면 현재상태 확인을 병행
-   - 이미 저장되었으면 원 POST 응답을 더 기다리지 않고 성공 복구
-   - 중복 POST 재전송 없음
-===================================================== */
-async function v249L45BatchEntryFastPost(params){
-  v249L38WritePending++;
-  try{
-    const cloned=new URLSearchParams(params.toString());
-    const postPromise=V2_NATIVE_FETCH(API,{method:"POST",body:cloned,cache:"no-store"})
-      .then(async res=>{
-        if(!res || !res.ok) throw new Error("서버 응답 오류"+(res?" ("+res.status+")":""));
-        return await res.json();
-      })
-      .then(data=>({done:true,data:data,error:null}))
-      .catch(error=>({done:true,data:null,error:error}));
-
-    // 정상적인 4~6초 투입은 기존 응답을 그대로 사용한다.
-    let result=await Promise.race([
-      postPromise,
-      v249L38Sleep(6000).then(()=>({done:false}))
-    ]);
-    if(result.done){
-      if(result.error) throw result.error;
-      return result.data;
-    }
-
-    // 6초를 넘기면 POST를 다시 보내지 않고 저장상태만 확인한다.
-    // 원 POST는 백그라운드에서 계속 진행되며 둘 중 먼저 확인되는 쪽으로 종료한다.
-    for(let i=0;i<6;i++){
-      const verified=await v249L38VerifyWrite(params);
-      if(verified) return verified;
-
-      result=await Promise.race([
-        postPromise,
-        v249L38Sleep(1500).then(()=>({done:false}))
-      ]);
-      if(result.done){
-        if(result.error){
-          const recovered=await v249L38VerifyWrite(params);
-          if(recovered) return recovered;
-          throw result.error;
-        }
-        return result.data;
-      }
-    }
-
-    // 아주 드문 장기 실행은 기존 요청 결과를 기다린다. 추가 POST는 보내지 않는다.
-    result=await postPromise;
-    if(result.error){
-      const recovered=await v249L38VerifyWrite(params);
-      if(recovered) return recovered;
-      throw result.error;
-    }
-    return result.data;
-  }finally{
-    v249L38WritePending=Math.max(0,v249L38WritePending-1);
-  }
-}
-
 async function v2CallPost(params){
   v249L38WritePending++;
   let lastError=null;
@@ -2287,7 +2225,7 @@ window.fetch = async function(input, init){
       p.set("activityFloor",old.get("activityFloor")||"");
       p.set("detailLocation",old.get("detailLocation")||"");
 
-      const d=await v249L45BatchEntryFastPost(p);
+      const d=await v2CallPost(p);
       return v2JsonResponse({
         success:!!(d.ok || d.success),
         successCount:Number(d.successCount)||0,
