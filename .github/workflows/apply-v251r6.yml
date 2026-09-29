@@ -1,0 +1,26 @@
+name: Apply V2.51-R6 isolation summary
+on:
+  push:
+    paths:
+      - '.github/scripts/patch_v251r6.py'
+      - '.github/workflows/apply-v251r6.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply patch
+        run: python .github/scripts/patch_v251r6.py
+      - name: Commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          if git diff --cached --quiet; then
+            echo "No changes"
+          else
+            git commit -m "Apply V2.51-R6 isolation summary cleanup"
+            git push
+          fi
