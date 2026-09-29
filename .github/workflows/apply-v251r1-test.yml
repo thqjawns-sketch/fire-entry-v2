@@ -1,0 +1,32 @@
+name: Apply V2.51-R1 safety management test
+on:
+  push:
+    branches: [ v2.51-r1-safety-test ]
+    paths: [ '.github/workflows/apply-v251r1-test.yml' ]
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: v2.51-r1-safety-test
+      - name: Patch frontend
+        run: python .github/scripts/patch_v251r1_frontend.py
+      - name: Validate
+        run: |
+          grep -q 'V2.51-R1' index.html
+          grep -q '🛡️ 2. 조·대원 안전관리' index.html
+          grep -q '현황 확인자' index.html
+          grep -q 'batchSafetyCheck' index.html
+          grep -q '조 전체 고립지정' index.html
+          grep -q 'V251_RECHECK_MINUTES=10' index.html
+          git diff --check
+      - name: Commit
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git commit -m 'Apply V2.51-R1 safety management frontend' || exit 0
+          git push origin HEAD:v2.51-r1-safety-test
