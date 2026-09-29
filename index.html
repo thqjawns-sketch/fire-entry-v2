@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>QR기반-진·출입 안전관리앱 V2.50-R3</title>
+<title>QR기반-진·출입 안전관리앱 V2.50-R4</title>
 
 <script src="https://unpkg.com/html5-qrcode" type="text/javascript" onerror="this.onerror=null;this.src='https://cdn.jsdelivr.net/npm/html5-qrcode/html5-qrcode.min.js';"></script>
 <script>
@@ -1219,7 +1219,7 @@ button:disabled{
 
 
 
-/* V2.50-R3 조 활동현황판 : 지휘자용 헤더 + 가로형 인원현황 */
+/* V2.50-R4 조 활동현황판 : 지휘자용 헤더 + 가로형 인원현황 */
 .v29BoardHeader{
   display:grid;grid-template-columns:minmax(190px,1fr) auto minmax(220px,1fr);
   align-items:center;gap:16px;min-height:74px;padding:12px 18px;
@@ -1258,6 +1258,11 @@ button:disabled{
 .v250FloorSummary{margin-top:9px;padding:7px 10px;border-radius:9px;background:#eef4fa;color:#29435f;text-align:center;font-size:13px;font-weight:900;line-height:1.5}
 #v250BoardEmergency{margin-top:9px!important}
 #v250BoardRefreshInfo{margin-top:7px!important;text-align:right!important;color:#66788a!important;opacity:1!important}
+.v250TeamSummaryRow{grid-column:1/-1;display:flex;align-items:center;gap:10px;margin-top:1px;padding:8px 10px;border-radius:9px;background:#eef4fa;color:#29435f;font-size:13px;font-weight:900;overflow:hidden}
+.v250TeamSummaryLabel{flex:0 0 auto;color:#173d67;font-weight:950}
+.v250TeamSummaryList{display:flex;gap:8px;align-items:center;overflow-x:auto;white-space:nowrap;scrollbar-width:thin}
+.v250TeamChip{display:inline-flex;align-items:center;gap:5px;padding:5px 9px;border:1px solid #d6e1ec;border-radius:999px;background:#fff;color:#173d67}
+.v250TeamChip strong{font-size:13px}.v250TeamChip.isolated{border-color:#d93025;background:#fff1f0;color:#b42318}.v29BoardRefresh.isLoading{opacity:.75;cursor:wait}
 @media(max-width:980px){
   .v29BoardHeader{grid-template-columns:1fr auto;gap:10px}
   .v249BoardBrand{grid-column:1 / -1;grid-row:2;width:min(290px,72vw);max-width:none}
@@ -6920,6 +6925,8 @@ function v250RenderBoardSummary(members){
   const uniqueEl=document.getElementById("dashUnique"), exitedEl=document.getElementById("dashExited");
   const unique=uniqueEl?String(uniqueEl.textContent||"0").replace(/[^0-9]/g,"")||"0":"0";
   const exited=exitedEl?String(exitedEl.textContent||"0").replace(/[^0-9]/g,"")||"0":"0";
+  const teams=v29GroupTeams(list);
+  const teamText=teams.length?teams.map(t=>'<span class="v250TeamChip '+(t.isolated?'isolated':'')+'">'+(t.isolated?'🚨 ':'')+'<strong>'+escapeHtml(t.team)+'</strong> '+t.count+'명 · '+escapeHtml(t.direction||'미지정')+' · '+escapeHtml(t.floor||'미지정')+' · '+Number(t.minutes||0)+'분</span>').join(''):'<span class="v250TeamChip">활동 중인 조 없음</span>';
   if(sum)sum.innerHTML=
     '<div class="v250Metric v250MetricInside"><div class="v250MetricLabel">현재 내부</div><div class="v250MetricValue">'+list.length+'명</div></div>'+ 
     '<div class="v250Metric"><div class="v250MetricLabel">현장 참여대원</div><div class="v250MetricValue">'+escapeHtml(unique)+'명</div></div>'+ 
@@ -6928,7 +6935,8 @@ function v250RenderBoardSummary(members){
     '<div class="v250Metric v250MetricOrange"><div class="v250MetricLabel">🟠 21~25분</div><div class="v250MetricValue">'+orange+'명</div></div>'+ 
     '<div class="v250Metric v250MetricRed"><div class="v250MetricLabel">🔴 26~30분</div><div class="v250MetricValue">'+red+'명</div></div>'+ 
     '<div class="v250Metric v250MetricCritical"><div class="v250MetricLabel">🚨 31분 이상</div><div class="v250MetricValue">'+critical+'명</div></div>'+ 
-    '<div class="v250FloorSummary" style="grid-column:1/-1">층별 현재 인원 · '+(floorText||"활동대원 없음")+'</div>';
+    '<div class="v250FloorSummary" style="grid-column:1/-1">층별 현재 인원 · '+(floorText||"활동대원 없음")+'</div>'+
+    '<div class="v250TeamSummaryRow"><span class="v250TeamSummaryLabel">조별현황</span><div class="v250TeamSummaryList">'+teamText+'</div></div>';
   const iso=list.filter(m=>m.isolated);
   if(emergency){
     if(iso.length){emergency.style.display="block"; emergency.innerHTML="🚨 고립대원 "+iso.length+"명 · "+iso.map(m=>escapeHtml(getMemberDisplay(m.memberId,m.memberName))+" / "+escapeHtml(m.floor||"미지정")+" / "+escapeHtml(m.direction||"미지정")).join(" · ");}
@@ -7153,14 +7161,25 @@ function closeTeamBoardV29(){
 }
 
 async function refreshTeamBoardV29(){
-  // 기존 안정화된 현황 조회 함수를 그대로 사용
-  await loadDashboard(false);
-  // loadDashboard가 dashboardPage 표시를 건드리지 않으므로 상태판을 다시 표시
-  const dashboard=document.getElementById("dashboardPage");
-  const board=document.getElementById("teamBoardPageV29");
-  if(dashboard)dashboard.style.display="none";
-  if(board)board.style.display="block";
-  drawTeamBoardV29();
+  const btn=document.querySelector("#teamBoardPageV29 .v29BoardRefresh");
+  const info=document.getElementById("v250BoardRefreshInfo");
+  const oldText=btn?btn.textContent:"";
+  if(btn){btn.disabled=true;btn.classList.add("isLoading");btn.textContent="⏳ 새로고침 중...";}
+  if(info)info.textContent="⏳ 현황 새로고침 중...";
+  try{
+    await loadDashboard(false);
+    const dashboard=document.getElementById("dashboardPage");
+    const board=document.getElementById("teamBoardPageV29");
+    if(dashboard)dashboard.style.display="none";
+    if(board)board.style.display="block";
+    drawTeamBoardV29();
+    v250UpdateBoardRefreshTime(new Date());
+  }catch(e){
+    if(info)info.textContent="⚠️ 새로고침 실패 · 기존 현황 유지";
+    alert((e&&e.message)||"현황 새로고침에 실패했습니다.");
+  }finally{
+    if(btn){btn.disabled=false;btn.classList.remove("isLoading");btn.textContent=oldText||"🔄 새로고침";}
+  }
 }
 
 
