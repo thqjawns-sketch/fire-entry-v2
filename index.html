@@ -1626,9 +1626,10 @@ PPE 점검 대기
 <button
   id="insideRefreshBtn"
   class="refresh"
-  onclick="loadInsideMembers()"
+  onclick="loadInsideMembers(false)"
 >
-🔄 현황 새로고침
+<span class="refreshMainV22">🔄 현황 새로고침</span>
+<span id="insideRefreshInfo" class="refreshSubV22">수동 갱신 · 마지막 갱신 --:--:--</span>
 </button>
 
 <div id="v23InsideSummary" class="v23Summary">활동 중 조·위치 요약은 현장현황을 불러오면 표시됩니다.</div>
@@ -1749,7 +1750,7 @@ PPE 점검 대기
   onclick="loadDashboard(false)"
 >
 <span class="refreshMainV22">🔄 현황 새로고침</span>
-<span id="dashboardAutoRefreshInfo" class="refreshSubV22">60초 자동갱신 · 마지막 갱신 --:--:--</span>
+<span id="dashboardAutoRefreshInfo" class="refreshSubV22">10초 자동갱신 · 마지막 갱신 --:--:--</span>
 </button>
 <button
   class="back"
@@ -1860,6 +1861,10 @@ PPE 점검 대기
     <img src="./wanju-fire-logo.png" alt="완주소방서 WANJU FIRE STATION">
   </div>
   <button type="button" class="back v249ExitedTopBack" onclick="closeExitedPage()">⬅ 현장 활동 현황으로 돌아가기</button>
+  <button type="button" id="exitedRefreshBtn" class="refresh" onclick="loadExitedStatus(false)">
+    <span class="refreshMainV22">🔄 현황 새로고침</span>
+    <span id="exitedAutoRefreshInfo" class="refreshSubV22">10초 자동갱신 · 마지막 갱신 --:--:--</span>
+  </button>
   <div class="card">
     <div class="sectionTitle">철수 완료 대원</div>
     <div id="dashboardExited"></div>
@@ -2009,7 +2014,7 @@ function v2AggregateExited(rows){
    V2.49L40-R4 동기화 안정화
    - 네트워크 일시 오류 시 최대 3회 자동 재시도
    - POST 응답이 끊긴 경우 현재상태를 먼저 확인하여 중복 저장 방지
-   - 쓰기 처리 중에는 60초 자동갱신과 충돌하지 않도록 보류
+   - 쓰기 처리 중에는 자동갱신과 충돌하지 않도록 보류
 ===================================================== */
 let v249L38WritePending=0;
 const V249L38_RETRY_DELAYS=[0,1200,2500];
@@ -2282,6 +2287,17 @@ window.fetch = async function(input, init){
     }
   }
 
+  /* R8: 기타 서버 기록(안전관리/위치변경 등)도 기록 중으로 통합 관리.
+     자동 현황갱신은 이 값이 0일 때만 실행한다. */
+  if(method==="POST"){
+    v249L38WritePending++;
+    try{
+      return await V2_NATIVE_FETCH(input,init);
+    }finally{
+      v249L38WritePending=Math.max(0,v249L38WritePending-1);
+    }
+  }
+
   return V2_NATIVE_FETCH(input,init);
 };
 
@@ -2375,14 +2391,23 @@ function v249InvalidateActiveCheck(){
   // L11부터 활동상태 캐시를 사용하지 않음.
 }
 /* =====================================================
-현장 현황 60초 자동갱신
+현장 현황 10초 자동갱신
 ===================================================== */
 
 let dashboardAutoRefreshTimer = null;
+let exitedAutoRefreshTimer = null;
+let exitedLoading = false;
 
 const DASHBOARD_AUTO_REFRESH_MS =
-60000;
+10000;
 
+function v249R8NowText(){
+  return new Date().toLocaleTimeString("ko-KR",{hour:"2-digit",minute:"2-digit",second:"2-digit",hour12:false});
+}
+
+function v249R8WriteBusy(){
+  return v249L38WritePending>0 || entrySubmitting || exitSubmitting;
+}
 
 const CHOSUNG = [
 "ㄱ","ㄲ","ㄴ","ㄷ","ㄸ",
@@ -5309,7 +5334,20 @@ function v19AddTeamDivider(target,team,activityNo,count,locationText){
   target.appendChild(d);
 }
 
-async function loadInsideMembers(){
+async function loadInsideMembers(isAutoRefresh = false){
+
+  /* R8: 1페이지는 자동갱신하지 않는다. 기록 중 수동조회도 서버와 겹치지 않게 보류 */
+  if(v249L38WritePending>0 || entrySubmitting || exitSubmitting){
+    if(!isAutoRefresh){
+      const b=document.getElementById("insideRefreshBtn");
+      const m=b&&b.querySelector(".refreshMainV22");
+      if(m){
+        m.textContent="⏳ 기록 처리중...";
+        setTimeout(()=>{ if(!insideLoading) m.textContent="🔄 현황 새로고침"; },900);
+      }
+    }
+    return;
+  }
 
   if(
     insideLoading
@@ -5546,6 +5584,11 @@ async function loadInsideMembers(){
 
 
     updateV23Summary(data.members);
+
+    const insideInfo=document.getElementById("insideRefreshInfo");
+    if(insideInfo){
+      insideInfo.textContent="수동 갱신 · 마지막 갱신 "+v249R8NowText();
+    }
 
     selectAllState =
       false;
@@ -6198,7 +6241,7 @@ async function openDashboard(){
   );
 
 
-  // 그 다음부터 60초마다 자동갱신
+  // 그 다음부터 10초마다 자동갱신
   startDashboardAutoRefresh();
 
 }
@@ -6239,7 +6282,7 @@ function closeDashboard(){
 
 
 /* =====================================================
-60초 자동갱신 시작
+10초 자동갱신 시작
 ===================================================== */
 
 function startDashboardAutoRefresh(){
@@ -6263,9 +6306,7 @@ function startDashboardAutoRefresh(){
           dashboardPage.style.display !==
           "none" &&
           !document.hidden &&
-          v249L38WritePending===0 &&
-          !entrySubmitting &&
-          !exitSubmitting
+          !v249R8WriteBusy()
         ){
 
           loadDashboard(
@@ -6284,7 +6325,7 @@ function startDashboardAutoRefresh(){
 
 
 /* =====================================================
-60초 자동갱신 중지
+10초 자동갱신 중지
 ===================================================== */
 
 function stopDashboardAutoRefresh(){
@@ -6330,15 +6371,18 @@ document.addEventListener(
         dashboardPage &&
         dashboardPage.style.display !==
         "none" &&
-        v249L38WritePending===0 &&
-        !entrySubmitting &&
-        !exitSubmitting
+        !v249R8WriteBusy()
       ){
 
         loadDashboard(
           true
         );
 
+      }else{
+        const exitedPage=document.getElementById("exitedPageV23");
+        if(exitedPage && exitedPage.style.display!=="none" && !v249R8WriteBusy()){
+          void loadExitedStatus(true);
+        }
       }
 
     }
@@ -6371,8 +6415,18 @@ async function loadDashboard(
   /* 저장 처리 중 자동갱신이 동시에 서버를 호출하지 않도록 보류 */
   if(
     isAutoRefresh &&
-    (v249L38WritePending>0 || entrySubmitting || exitSubmitting)
+    v249R8WriteBusy()
   ){
+    return;
+  }
+
+  if(!isAutoRefresh && v249R8WriteBusy()){
+    const b=document.getElementById("dashboardRefreshBtn");
+    const m=b&&b.querySelector(".refreshMainV22");
+    if(m){
+      m.textContent="⏳ 기록 처리중...";
+      setTimeout(()=>{ if(!dashboardLoading) m.textContent="🔄 현황 새로고침"; },900);
+    }
     return;
   }
 
@@ -6626,21 +6680,8 @@ async function loadDashboard(
       autoInfo
     ){
 
-      const now =
-        new Date();
-
-
       autoInfo.innerText =
-        "60초 자동갱신 · 마지막 갱신 " +
-        now.toLocaleTimeString(
-          "ko-KR",
-          {
-            hour:"2-digit",
-            minute:"2-digit",
-            second:"2-digit",
-            hour12:false
-          }
-        );
+        "10초 자동갱신 · 마지막 갱신 " + v249R8NowText();
 
     }
 
@@ -7101,7 +7142,7 @@ function v237AddDashboardTeamDivider(target,team,activityNo,count,locationText){
     '<span class="teamBadgeV19">'+escapeHtml(team)+'</span>'+
     '<span class="teamMetaV19">'+Number(activityNo||1)+'차 활동 · '+Number(count||0)+'명</span>'+
     '<span class="teamLocationV20">'+escapeHtml(locationText||"위치 미지정")+'</span>'+
-    '<button type="button" class="dashboardTeamMoveBtn">📍 조 위치변경</button>';
+    '<button type="button" class="dashboardTeamMoveBtn">🛡️ 조 정보변경</button>';
   const btn=d.querySelector(".dashboardTeamMoveBtn");
   btn.addEventListener("click",function(e){
     e.preventDefault();
@@ -7234,7 +7275,7 @@ function openDashboardMemberDetail(memberId,memberName){
         '<div class="v237InfoRow"><span class="v237InfoLabel">안전상태</span><span class="v237InfoValue '+(stay.className==="normal"?"safe":"")+'">'+stay.icon+' '+escapeHtml(stay.text)+'</span></div>'+
       '</div>'+
       '<div class="sheetActions">'+
-        '<button type="button" id="v238MemberEditBtn" class="sheetEdit">✏️ 위치정보 수정</button>'+
+        '<button type="button" id="v238MemberEditBtn" class="sheetEdit">🛡️ 대원정보변경</button>'+
         '<button type="button" id="v238MemberCloseBtn" class="v237CloseBtn">닫기</button>'+
       '</div>'+
     '</div>';
@@ -7408,7 +7449,7 @@ function editDashboardMemberLocation(memberId,memberName){
 
   overlay.innerHTML=
     '<div class="dashboardDetailSheet">'+
-      '<div class="sheetHeader"><b>위치정보 수정</b><button type="button" id="v238MemberEditClose" class="sheetClose">×</button></div>'+
+      '<div class="sheetHeader"><b>대원정보변경</b><button type="button" id="v238MemberEditClose" class="sheetClose">×</button></div>'+
       '<div class="sheetMemberTitle">🟢 '+escapeHtml(getMemberDisplay(memberId,memberName))+'</div>'+
       '<div class="locationEditForm">'+
         '<label>조 편성<select id="editTeam"><option value="">미지정</option>'+
@@ -7507,17 +7548,76 @@ function openExitedPage(){
   exitedPage.style.display="block";
   v249NavPush("exited");
 
+  stopDashboardAutoRefresh();
+
   // 철수대원은 3번째 창을 클릭해 들어왔을 때만 화면에 생성한다.
   drawDashboardExited(window.__dashboardExitedMembers || []);
   window.scrollTo({top:0,behavior:"smooth"});
+
+  // 화면은 즉시 열고, 최신 현황은 뒤에서 갱신한다.
+  void loadExitedStatus(true);
+  startExitedAutoRefresh();
 }
 
 function closeExitedPage(){
+  stopExitedAutoRefresh();
   const dashboardPage=document.getElementById("dashboardPage");
   const exitedPage=document.getElementById("exitedPageV23");
   if(exitedPage) exitedPage.style.display="none";
   if(dashboardPage) dashboardPage.style.display="block";
+  startDashboardAutoRefresh();
   window.scrollTo({top:0,behavior:"smooth"});
+}
+
+async function loadExitedStatus(isAutoRefresh=false){
+  if(isAutoRefresh && v249R8WriteBusy()) return;
+  if(exitedLoading || dashboardLoading) return;
+
+  const btn=document.getElementById("exitedRefreshBtn");
+  const main=btn&&btn.querySelector(".refreshMainV22");
+
+  if(!isAutoRefresh && v249R8WriteBusy()){
+    if(main){
+      main.textContent="⏳ 기록 처리중...";
+      setTimeout(()=>{ if(!exitedLoading) main.textContent="🔄 현황 새로고침"; },900);
+    }
+    return;
+  }
+
+  const site=(document.getElementById("site")||{}).value||"";
+  if(!site) return;
+
+  exitedLoading=true;
+  if(btn && !isAutoRefresh){ btn.disabled=true; if(main) main.textContent="⏳ 처리중..."; }
+
+  try{
+    const data=await v218FetchDashboard(site,true);
+    if(!data || !data.success) throw new Error("철수 현황 조회 실패");
+    window.__dashboardExitedMembers=(data.dashboard&&data.dashboard.exitedMembers)||[];
+    drawDashboardExited(window.__dashboardExitedMembers);
+    const info=document.getElementById("exitedAutoRefreshInfo");
+    if(info) info.textContent="10초 자동갱신 · 마지막 갱신 "+v249R8NowText();
+  }catch(error){
+    console.error(error);
+    if(!isAutoRefresh) alert("철수 현황 통신 오류");
+  }finally{
+    exitedLoading=false;
+    if(btn){ btn.disabled=false; if(main) main.textContent="🔄 현황 새로고침"; }
+  }
+}
+
+function startExitedAutoRefresh(){
+  stopExitedAutoRefresh();
+  exitedAutoRefreshTimer=setInterval(function(){
+    const page=document.getElementById("exitedPageV23");
+    if(page && page.style.display!=="none" && !document.hidden && !v249R8WriteBusy() && !exitedLoading && !dashboardLoading){
+      void loadExitedStatus(true);
+    }
+  },DASHBOARD_AUTO_REFRESH_MS);
+}
+
+function stopExitedAutoRefresh(){
+  if(exitedAutoRefreshTimer){ clearInterval(exitedAutoRefreshTimer); exitedAutoRefreshTimer=null; }
 }
 
 function drawDashboardExited(
@@ -8020,6 +8120,48 @@ document.addEventListener("focusin",v249L22DetailQuickEdit);
   <div id="v249l31ReportBody">보고서를 불러오는 중입니다.</div>
  </div>
 </div>
+
+
+<style id="v249r9-safety-style">
+/* R9: 2페이지 조/대원 정보변경 + 고립 + 31분 안전확인 */
+.v251OfficerBox{margin:2px 0 12px;padding:12px 13px;border:1px solid #bfd2e5;border-radius:11px;background:#f6faff}
+.v251OfficerLabel{font-size:16px;font-weight:950;color:#173d67;margin-bottom:7px}.v251OfficerInput{margin:0!important;background:#fff!important;font-weight:900!important}.v251OfficerHint{margin-top:6px;font-size:11px;font-weight:750;color:#607387;line-height:1.45}
+.v251SafetyTargets{margin:0 0 12px}.v251SafetyBox{border:1px solid #e4c36a;border-radius:11px;background:#fffaf0;overflow:hidden}.v251SafetyHead{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 12px;background:#fff3d6;color:#6b4d00;font-weight:950}.v251SafetyList{padding:6px 10px}.v251SafetyItem{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:9px;padding:9px 4px;border-bottom:1px solid #f1e2b9}.v251SafetyItem:last-child{border-bottom:0}.v251SafetyItem input{width:20px;height:20px}.v251SafetyName{font-size:14px;font-weight:950;color:#263b50}.v251SafetyMeta{margin-top:3px;font-size:11px;font-weight:800;color:#66788a}.v251SafetyState{font-size:12px;font-weight:950;text-align:right;color:#b3261e;white-space:nowrap}.v251SafetyState.confirmed{color:#9a5b00}.v251SafetyActions{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:0 10px 10px}.v251SafetyActions button{margin:0!important;padding:11px 8px!important;font-size:13px!important}.v251SafetySelectAll{background:#fff!important;color:#6b4d00!important;border:1px solid #d7b85f!important}.v251BatchConfirm{background:#b42318!important;color:#fff!important}.v251NoTargets{padding:10px 12px;border:1px solid #dce5ee;border-radius:10px;background:#f8fafc;color:#607387;font-size:12px;font-weight:850}
+.v251NeedsCheck{animation:dangerBlink 1s infinite!important}.v251IsolationBlink{animation:dangerBlink 1s infinite!important}.memberRow.v251SafetyConfirmed,.insideStatus.v251SafetyConfirmed{animation:none!important;background:#fce8e6!important;color:#b3261e!important;border-left-color:#d93025!important}.criticalSummary.v251StableCritical{animation:none!important;background:#fce8e6!important;color:#b3261e!important;border-color:#d93025!important}
+.v251R9State{margin:6px 0 10px;padding:9px 10px;border-radius:9px;background:#f6f8fa;font-size:13px;font-weight:850;color:#44546a}.v251R9IsoBox{margin-top:4px;padding:12px;border:1px solid #e0a7a3;border-radius:10px;background:#fff8f7}.v251R9IsoBox label{margin:0 0 6px!important;color:#8b1d1d!important}.v251R9Note{margin-top:8px;font-size:12px;line-height:1.5;color:#607387;font-weight:700}
+@media(max-width:560px){.v251SafetyItem{grid-template-columns:auto 1fr}.v251SafetyState{grid-column:2;text-align:left}.v251SafetyActions{grid-template-columns:1fr}}
+</style>
+<script>
+(function(){
+const KEY='fire_app_status_officer_v249r9', RECHECK=10;
+function esc(v){return typeof escapeHtml==='function'?escapeHtml(String(v??'')):String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+function attr(v){return esc(v).replace(/`/g,'&#96;');}
+function siteId(){const raw=((document.getElementById('site')||{}).value||'');return typeof v2SiteId==='function'?v2SiteId(raw):raw;}
+function officer(required){const el=document.getElementById('v251StatusOfficer');let v=((el&&el.value)||localStorage.getItem(KEY)||'').trim();if(!v){const main=document.getElementById('officer');v=((main&&main.value)||'').trim();}if(required&&!v)alert('현황 확인자 성명을 입력하세요.');return v;}
+function remember(){const el=document.getElementById('v251StatusOfficer');if(el&&el.value.trim())localStorage.setItem(KEY,el.value.trim());}
+function parseTime(v){if(!v)return NaN;const t=Date.parse(String(v).includes('T')?String(v):String(v).replace(' ','T'));return t;}
+function hm(v){const t=parseTime(v);return Number.isFinite(t)?new Date(t).toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit',hour12:false}):'';}
+function teamName(m){try{return v19TeamInfo(m).team||m.team||'미지정';}catch(e){return (m&&m.team)||'미지정';}}
+function info(m){try{return v19TeamInfo(m);}catch(e){return {team:m.team||'',activityNo:m.activityNo||m.entryCount||1,direction:m.direction||'',floor:m.floor||'',detail:m.detail||''};}}
+function find(id){return (window.__dashboardInsideMembers||[]).find(m=>String(m.memberId)===String(id));}
+function state(m){const mins=Number(m&&m.currentMinutes)||0;if(m&&m.isolated)return {icon:'🚨',text:'고립대원',due:true,isolated:true,confirmed:false};if(mins<=30)return {icon:mins<=20?'🟢':mins<=25?'🟠':'🔴',text:mins<=20?'정상':mins<=25?'주의':'경고',due:false,confirmed:false};const t=parseTime(m&&m.safetyCheckedAt);if(Number.isFinite(t)){const elapsed=Math.max(0,(Date.now()-t)/60000);if(elapsed<RECHECK){const remain=Math.max(1,Math.ceil(RECHECK-elapsed));return {icon:'🔴',text:'안전확인 완료 '+hm(m.safetyCheckedAt)+' · 재확인 '+remain+'분 후',due:false,confirmed:true};}return {icon:'🚨',text:'재확인 필요',due:true,recheck:true,confirmed:false};}return {icon:'🚨',text:'즉시확인',due:true,confirmed:false};}
+function ensureUI(){const teamStatus=document.getElementById('teamStatusV28');if(!teamStatus||document.getElementById('v251StatusOfficer'))return;const wrap=document.createElement('div');wrap.innerHTML='<div class="v251OfficerBox"><div class="v251OfficerLabel">현황 확인자</div><input type="text" id="v251StatusOfficer" class="v251OfficerInput" placeholder="현황 확인자 성명" autocomplete="name"><div class="v251OfficerHint">조·대원 정보변경 · 안전확인 · 고립 설정/해제 기록에 공통 적용됩니다.</div></div><div id="v251SafetyTargets" class="v251SafetyTargets"></div>';teamStatus.parentNode.insertBefore(wrap,teamStatus);const el=document.getElementById('v251StatusOfficer');if(el){el.value=localStorage.getItem(KEY)||((document.getElementById('officer')||{}).value||'');el.addEventListener('input',remember);}}
+async function post(action,ids,extra,btn){const o=officer(true);if(!o)return null;const sid=siteId();if(!sid){alert('화재현장을 선택하세요.');return null;}const f=new URLSearchParams();f.set('action',action);f.set('siteId',sid);f.set('officer',o);f.set('members',JSON.stringify((ids||[]).map(id=>({id:String(id)}))));Object.keys(extra||{}).forEach(k=>f.set(k,extra[k]));const old=btn?btn.textContent:'';if(btn){btn.disabled=true;btn.textContent='⏳ 반영중...';}try{const d=await v2CallPost(f);if(!d||(!d.ok&&!d.success))throw new Error((d&&d.error)||(d&&d.message)||'처리 실패');if(btn)btn.textContent='✅ 반영완료';await loadDashboard(false);refresh();return d;}catch(e){alert((e&&e.message)||'반영 실패');return null;}finally{if(btn)setTimeout(()=>{btn.disabled=false;btn.textContent=old;},500);}}
+async function safety(ids){if(!ids||!ids.length)return;if(!confirm(ids.length+'명을 안전확인 완료 처리하시겠습니까?\n확인 후 10분 동안 빨간 깜빡임이 중지되고, 10분 후 재확인 대상이 됩니다.'))return;await post('setSafetyCheck',ids,{},null);}
+function renderTargets(){const box=document.getElementById('v251SafetyTargets');if(!box)return;const list=(window.__dashboardInsideMembers||[]).filter(m=>m.isolated||Number(m.currentMinutes)>=31);if(!list.length){box.innerHTML='<div class="v251NoTargets">✅ 31분 이상 또는 고립대원 확인대상 0명</div>';return;}list.sort((a,b)=>(b.isolated-a.isolated)||Number(b.currentMinutes||0)-Number(a.currentMinutes||0));const rows=list.map(m=>{const s=state(m),disabled=s.confirmed&&!s.isolated?' disabled':'';return '<div class="v251SafetyItem"><input type="checkbox" class="v251SafetyCheck" data-id="'+attr(m.memberId)+'"'+disabled+'><div><div class="v251SafetyName">'+esc(getMemberDisplay(m.memberId,m.memberName||m.name||''))+'</div><div class="v251SafetyMeta">'+esc(teamName(m)+' · '+(m.direction||'미지정')+' · '+(m.floor||'미지정')+' · '+Number(m.currentMinutes||0)+'분')+'</div></div><div class="v251SafetyState '+(s.confirmed?'confirmed':'')+'">'+esc(s.text)+'</div></div>';}).join('');box.innerHTML='<div class="v251SafetyBox"><div class="v251SafetyHead"><strong>🚨 확인대상 '+list.length+'명</strong><button type="button" id="v251SelAll" class="v251SafetySelectAll">전체선택</button></div><div class="v251SafetyList">'+rows+'</div><div class="v251SafetyActions"><button type="button" id="v251Toggle" class="v251SafetySelectAll">선택 전환</button><button type="button" id="v251Confirm" class="v251BatchConfirm">✅ 선택 대원 안전확인</button></div></div>';const toggle=()=>{const bs=[...box.querySelectorAll('.v251SafetyCheck:not(:disabled)')],all=bs.length&&bs.every(x=>x.checked);bs.forEach(x=>x.checked=!all);};document.getElementById('v251SelAll').onclick=toggle;document.getElementById('v251Toggle').onclick=toggle;document.getElementById('v251Confirm').onclick=()=>safety([...box.querySelectorAll('.v251SafetyCheck:checked')].map(x=>x.dataset.id));}
+function applyRows(){const root=document.getElementById('dashboardInside');if(!root)return;root.querySelectorAll('.memberRow').forEach(row=>{const idEl=row.querySelector('.compactId');if(!idEl)return;const m=find(idEl.textContent.trim());if(!m)return;const s=state(m);row.classList.remove('v251NeedsCheck','v251SafetyConfirmed','v251IsolationBlink');if(s.isolated)row.classList.add('v251IsolationBlink');else if(s.due)row.classList.add('v251NeedsCheck');else if(s.confirmed)row.classList.add('v251SafetyConfirmed');const st=row.querySelector('.insideStatus');if(st){if(s.confirmed)st.classList.add('v251SafetyConfirmed');else st.classList.remove('v251SafetyConfirmed');st.textContent=s.icon+' '+s.text;}});}
+function summary(){const box=document.getElementById('criticalSummary');if(!box)return;const targets=(window.__dashboardInsideMembers||[]).filter(m=>m.isolated||Number(m.currentMinutes)>=31),due=targets.filter(m=>state(m).due).length,confirmed=targets.filter(m=>state(m).confirmed).length;box.classList.remove('v251StableCritical');if(due){box.classList.add('hasCritical');box.textContent='⚠️ 31분 이상 또는 고립대원 확인대상 '+due+'명';}else if(confirmed){box.classList.remove('hasCritical');box.classList.add('v251StableCritical');box.textContent='🔴 31분 이상 '+confirmed+'명 · 안전확인 완료 · 10분 후 재확인';}else{box.classList.remove('hasCritical');box.textContent='✅ 31분 이상 또는 고립대원 확인대상 0명';}}
+function refresh(){ensureUI();renderTargets();applyRows();summary();}
+function overlay(){let o=document.getElementById('dashboardDetailOverlay');if(!o){o=document.createElement('div');o.id='dashboardDetailOverlay';o.className='dashboardDetailOverlay';document.body.appendChild(o);}return o;}
+function floorOptions(cur){return ['','옥상','상층부','직상층','화점층','직하층','하층부','지하층'].map(v=>'<option value="'+attr(v)+'" '+(v===cur?'selected':'')+'>'+(v||'현재 위치 유지')+'</option>').join('');}
+window.v251R9OpenTeam=function(team){const ms=(window.__dashboardInsideMembers||[]).filter(m=>teamName(m)===team);if(!ms.length)return;const infos=ms.map(info),first=infos[0],act=Math.max(...infos.map(x=>Number(x.activityNo)||1)),iso=ms.filter(m=>m.isolated).length,o=overlay();o.innerHTML='<div class="dashboardDetailSheet"><div class="sheetHeader"><b>🛡️ '+esc(team)+' · 조 정보변경</b><button type="button" id="r9Close" class="sheetClose">×</button></div><div class="v251R9State">현재 고립 '+iso+'명 · 조 전체 '+ms.length+'명</div><div class="locationEditForm"><label>방면<select id="r9Dir"><option value="">현재 위치 유지</option>'+['A방면','B방면','C방면','D방면'].map(v=>'<option value="'+v+'" '+(v===first.direction?'selected':'')+'>'+v+'</option>').join('')+'</select></label><label>활동층<select id="r9Floor">'+floorOptions(first.floor||'')+'</select></label><label>세부장소<input id="r9Detail" value="'+attr(first.detail||'')+'" placeholder="예: 기계실 / 1203호 / 계단실"></label><div class="v251R9IsoBox"><label>조 전체 고립 설정/해제</label><select id="r9Iso"><option value="KEEP">변경없음</option><option value="Y">🚨 조 전체 고립 설정</option><option value="N">✅ 조 전체 고립 해제</option></select></div></div><div class="v251R9Note">위치정보와 고립상태를 한 번에 반영할 수 있습니다.</div><button type="button" id="r9Save" class="sheetSave">조 정보변경 반영</button></div>';o.classList.add('show');document.getElementById('r9Close').onclick=()=>o.classList.remove('show');document.getElementById('r9Save').onclick=async function(){const d=await post('updateSafetyManagement',ms.map(m=>m.memberId),{team:team,activityNo:String(act),direction:document.getElementById('r9Dir').value,floor:document.getElementById('r9Floor').value,detail:document.getElementById('r9Detail').value,isolationMode:document.getElementById('r9Iso').value},this);if(d)setTimeout(()=>o.classList.remove('show'),300);};};
+window.v251R9OpenMember=function(id,name){const m=find(id);if(!m)return;const i=info(m),meta=(typeof v23LoadMeta==='function'?v23LoadMeta():{}),old=meta[String(id)]||{},team=old.teamName||i.team||'',dir=old.entryDirection||i.direction||'',floor=old.activityFloor||i.floor||'',detail=old.detailLocation||i.detail||'',act=Number(old.teamActivityNo||i.activityNo||m.entryCount||1)||1,o=overlay();o.innerHTML='<div class="dashboardDetailSheet"><div class="sheetHeader"><b>🛡️ 대원정보변경</b><button type="button" id="r9MClose" class="sheetClose">×</button></div><div class="sheetMemberTitle">'+esc(getMemberDisplay(id,name||m.memberName||''))+'</div><div class="v251R9State">현재 상태: '+(m.isolated?'🚨 고립대원':'정상')+'</div><div class="locationEditForm"><label>조<input id="r9MTeam" value="'+attr(team)+'"></label><label>진입방면<select id="r9MDir"><option value="">현재 위치 유지</option>'+['A방면','B방면','C방면','D방면'].map(v=>'<option value="'+v+'" '+(v===dir?'selected':'')+'>'+v+'</option>').join('')+'</select></label><label>활동층<select id="r9MFloor">'+floorOptions(floor)+'</select></label><label>세부장소<input id="r9MDetail" value="'+attr(detail)+'" placeholder="예: 기계실 / 1203호 / 계단실"></label><div class="v251R9IsoBox"><label>고립대원 설정/해제</label><select id="r9MIso"><option value="KEEP">변경없음</option><option value="Y">🚨 고립대원 설정</option><option value="N">✅ 고립대원 해제</option></select></div></div><button type="button" id="r9MSave" class="sheetSave">대원정보변경 반영</button></div>';o.classList.add('show');document.getElementById('r9MClose').onclick=()=>o.classList.remove('show');document.getElementById('r9MSave').onclick=async function(){const d=await post('updateSafetyManagement',[id],{team:document.getElementById('r9MTeam').value,activityNo:String(act),direction:document.getElementById('r9MDir').value,floor:document.getElementById('r9MFloor').value,detail:document.getElementById('r9MDetail').value,isolationMode:document.getElementById('r9MIso').value},this);if(d)setTimeout(()=>o.classList.remove('show'),300);};};
+const oldTeam=window.openDashboardTeamLocationEdit;window.openDashboardTeamLocationEdit=function(team){v251R9OpenTeam(team);};
+const oldDetail=window.openDashboardMemberDetail;if(typeof oldDetail==='function'){window.openDashboardMemberDetail=function(id,name){oldDetail(id,name);const actions=document.querySelector('#dashboardDetailOverlay .sheetActions');if(!actions)return;const edit=actions.querySelector('#v238MemberEditBtn');if(edit){edit.textContent='🛡️ 대원정보변경';edit.onclick=function(e){e.preventDefault();v251R9OpenMember(id,name);};}if(!document.getElementById('r9SafetyBtn')){const b=document.createElement('button');b.type='button';b.id='r9SafetyBtn';b.className='sheetEdit';b.textContent='✅ 대원 안전확인';b.onclick=()=>safety([id]);actions.insertBefore(b,actions.lastElementChild);}};}
+const oldLoad=window.loadDashboard;if(typeof oldLoad==='function'){window.loadDashboard=async function(){const r=await oldLoad.apply(this,arguments);setTimeout(refresh,0);return r;};}
+document.addEventListener('DOMContentLoaded',()=>setTimeout(refresh,0));setInterval(refresh,30000);
+})();
+</script>
 
 </body>
 </html>
