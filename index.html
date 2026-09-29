@@ -4765,7 +4765,8 @@ async function quickEntryMembers(){
       entryQueue=entryQueue.filter(m=>!successIds.has(String(m.id)));
       renderQueue();
       if(entryQueue.length===0) resetPPE(); else { checkPPE(); renderTeamMembers(); }
-      void loadInsideMembers();
+      /* R12: 투입 처리 플래그가 해제된 직후 현재 현장 내부만 1회 자동 갱신 */
+      setTimeout(()=>{ void loadInsideMembers(true); },0);
     }
   }catch(e){console.error(e);alert("즉시 투입 기록 오류");}
   finally{entrySubmitting=false;if(qbtn){qbtn.innerText="⚡ 즉시 투입";qbtn.disabled=!(entryQueue.length>0&&isPPEComplete());} updateTeamSetupState();}
@@ -5149,7 +5150,9 @@ async function batchEntryMembers(){
         if(card)card.classList.add("modeOpen");
       }
 
-      void loadInsideMembers();
+      /* R12: entrySubmitting=true 상태에서는 loadInsideMembers가 보호상 건너뛴다.
+         이벤트 루프 다음 차례에 실행하여 finally에서 플래그가 해제된 뒤 현재 내부만 자동 반영한다. */
+      setTimeout(()=>{ void loadInsideMembers(true); },0);
 
     }
 
@@ -6159,7 +6162,8 @@ async function batchExitMembers(){
     );
 
 
-    void loadInsideMembers();
+    /* R12: exitSubmitting 해제 뒤 현재 현장 내부만 1회 자동 갱신 */
+    setTimeout(()=>{ void loadInsideMembers(true); },0);
 
   }catch(error){
 
