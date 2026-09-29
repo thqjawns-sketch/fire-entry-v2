@@ -4884,10 +4884,10 @@ async function batchEntryMembers(){
     true;
 
   button.innerText =
-    "⏳ 일괄 진입 처리중...";
+    "⏳ 조 투입 승인중...";
 
   progress.innerText =
-    "⏳ 투입중... 서버 안전확인 및 진입 기록 중";
+    "⏳ 조 투입 승인중... 서버 안전확인 및 진입 기록 중";
 
   // 브라우저가 '투입중' 문구를 먼저 그릴 시간을 준 뒤 서버 최종확인을 수행
   await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
