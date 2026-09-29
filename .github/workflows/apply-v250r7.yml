@@ -1,0 +1,31 @@
+name: Apply V2.50-R7 floor roster restore
+on:
+  push:
+    branches: [ main ]
+    paths: [ '.github/workflows/apply-v250r7.yml' ]
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Restore selected-floor roster
+        run: python .github/scripts/patch_v250r7.py
+      - name: Validate
+        run: |
+          grep -q 'V2.50-R7' index.html
+          grep -q 'id="v34FloorMembers"' index.html
+          grep -q '층을 선택하면 해당 층의 활동대원이 표시됩니다' index.html
+          grep -q '👥 인원현황' index.html
+          grep -q '🗺️ 위치 관제' index.html
+          git diff --check
+      - name: Commit
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git commit -m 'Apply V2.50-R7 floor roster restore' || exit 0
+          git push origin HEAD:main
