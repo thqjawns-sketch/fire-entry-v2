@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>QR기반-진·출입 안전관리앱 V2.50-R5</title>
+<title>QR기반-진·출입 안전관리앱 V2.50-R6</title>
 
 <script src="https://unpkg.com/html5-qrcode" type="text/javascript" onerror="this.onerror=null;this.src='https://cdn.jsdelivr.net/npm/html5-qrcode/html5-qrcode.min.js';"></script>
 <script>
@@ -1219,7 +1219,7 @@ button:disabled{
 
 
 
-/* V2.50-R5 조 활동현황판 : 지휘자용 헤더 + 가로형 인원현황 */
+/* V2.50-R6 조 활동현황판 : 지휘자용 헤더 + 가로형 인원현황 */
 .v29BoardHeader{
   display:grid;grid-template-columns:minmax(190px,1fr) auto minmax(220px,1fr);
   align-items:center;gap:16px;min-height:74px;padding:12px 18px;
@@ -1263,7 +1263,7 @@ button:disabled{
 .v250TeamSummaryList{display:flex;gap:8px;align-items:center;overflow-x:auto;white-space:nowrap;scrollbar-width:thin}
 .v250TeamChip{display:inline-flex;align-items:center;gap:5px;padding:5px 9px;border:1px solid #d6e1ec;border-radius:999px;background:#fff;color:#173d67}
 .v250TeamChip strong{font-size:13px}.v250TeamChip.isolated{border-color:#d93025;background:#fff1f0;color:#b42318}.v29BoardRefresh.isLoading{opacity:.75;cursor:wait}
-/* ===== V2.50-R5 지휘관 관제용 상세 조별현황 ===== */
+/* ===== V2.50-R6 지휘관 관제용 상세 조별현황 ===== */
 .v250TeamSummaryRow{display:none!important}
 .v250CommanderTeamsWrap{grid-column:1/-1;margin-top:10px;padding:12px;border:1px solid #d9e3ee;border-radius:12px;background:#f8fbff}
 .v250CommanderTeamsHead{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:9px;color:#173d67;font-weight:950;font-size:15px}
@@ -1290,6 +1290,23 @@ button:disabled{
 @media(min-width:1500px){.v250CommanderTeamsGrid{grid-template-columns:repeat(4,minmax(0,1fr))}.v250CommanderTeamCard{padding:14px}.v250CommanderTeamName{font-size:20px}}
 @media(max-width:900px){.v250CommanderTeamsGrid{grid-template-columns:1fr 1fr}}
 @media(max-width:620px){.v250CommanderTeamsGrid{grid-template-columns:1fr}}
+/* ===== V2.50-R6 지휘관 관제판 정리 ===== */
+.v250CommanderSectionTitle{margin:6px 0 10px;font-size:20px;font-weight:950;color:#173d67;letter-spacing:-.3px}
+.v250CommanderTeamsHead>span:first-child{font-size:20px!important;font-weight:950!important;color:#173d67}
+.v250CommanderTeamsSub{font-size:17px!important;font-weight:950!important;color:#173d67!important}
+.v250CommanderTeamsGrid{display:flex!important;flex-direction:column!important;gap:9px!important}
+.v250CommanderTeamCard{width:100%;box-sizing:border-box;display:grid!important;grid-template-columns:155px minmax(260px,1.15fr) 235px minmax(390px,1.7fr);align-items:center;gap:12px;padding:11px 14px!important}
+.v250CommanderTeamTop{margin:0!important}
+.v250CommanderTeamLoc,.v250CommanderTeamMeta,.v250CommanderMembers{margin:0!important}
+.v250CommanderMembers{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.v250CommanderMember{font-size:12px;padding:6px 8px}
+.v250CommanderTeamMeta{display:flex;flex-wrap:wrap;gap:6px}
+.v250CommanderTeamCard .v250CommanderTeamName{font-size:18px}
+.v250CommanderTeamCard .v250CommanderTeamCount{font-size:14px}
+.v250BoardVisualTitle{margin:0 0 10px;font-size:19px;font-weight:950;color:#173d67}
+@media(max-width:1100px){.v250CommanderTeamCard{grid-template-columns:140px 1fr 200px}.v250CommanderMembers{grid-column:1/-1}}
+@media(max-width:760px){.v250CommanderTeamCard{grid-template-columns:1fr}.v250CommanderTeamLoc,.v250CommanderTeamMeta,.v250CommanderMembers{grid-column:1}}
+
 
 @media(max-width:980px){
   .v29BoardHeader{grid-template-columns:1fr auto;gap:10px}
@@ -1887,6 +1904,7 @@ PPE 점검 대기
 
 <div class="v250CommanderPanel">
   <div id="v29BoardSite" class="v250CommanderSite">현장 : -</div>
+  <div class="v250CommanderSectionTitle">👥 인원현황</div>
   <div id="v250BoardLiveSummary" class="v250CommanderMetrics"></div>
   <div id="v250BoardEmergency" style="display:none;width:100%;padding:10px;border-radius:10px;background:#b42318;color:#fff;text-align:center;font-weight:950"></div>
   <div class="v250CommanderTeamsWrap">
@@ -1900,6 +1918,7 @@ PPE 점검 대기
 </div>
 
 <div class="v29BoardCard">
+    <div class="v250BoardVisualTitle">🗺️ 위치 관제</div>
     <div class="v33BoardCardScroll">
       <div class="v33BoardLayout">
         <div id="v33FloorPanel" class="v33SidePanel v33FloorPanel"></div>
@@ -1908,20 +1927,6 @@ PPE 점검 대기
       </div>
     </div>
 
-    <div id="v29BoardDetail" class="v29BoardDetail">
-      <div class="v29DetailEmpty">조를 누르면 현재 위치 상세정보가 표시됩니다.</div>
-    </div>
-
-    <div id="v34FloorMembers" class="v34FloorMembers">
-      <div class="v34FloorMembersHead">선택 층 활동대원</div>
-      <div class="v34FloorMemberEmpty">층을 선택하면 해당 층의 활동대원이 표시됩니다.</div>
-    </div>
-
-    <div id="v33BoardStats" class="v33BoardStats"></div>
-
-    <div class="v29BoardFoot">
-      ※ 층을 선택하면 해당 층의 현재 활동 조와 대원을 확인할 수 있습니다. 방면은 아래쪽 A방면을 기준으로 시계방향 B → C → D 순서입니다.
-    </div>
   </div>
 
 </div>
@@ -6980,15 +6985,19 @@ function v250RenderBoardSummary(members){
       const team=String(m.team||"조 미지정");
       const activityNo=Number(m.activityNo||m.entryCount||1)||1;
       const key=team+"|"+activityNo;
-      if(!gm.has(key))gm.set(key,{team,activityNo,direction:m.direction||"미지정",floor:m.floor||"미지정",detail:m.detail||"세부장소 미지정",members:[],maxMinutes:0,isolated:false});
+      if(!gm.has(key))gm.set(key,{team,activityNo,direction:m.direction||"미지정",floor:m.floor||"미지정",detail:m.detail||"세부장소 미지정",entryTime:m.entryTime||"",members:[],maxMinutes:0,isolated:false});
       const g=gm.get(key);
       const mins=Number(m.currentMinutes)||v2MinutesBetween(m.entryTime,"")||0;
       g.maxMinutes=Math.max(g.maxMinutes,mins);
       g.isolated=g.isolated||!!m.isolated;
       g.members.push({id:m.memberId,name:m.memberName||m.name||"",mins,isolated:!!m.isolated});
+      if(m.entryTime && (!g.entryTime || String(m.entryTime)<String(g.entryTime)))g.entryTime=m.entryTime;
       if((!g.detail || g.detail==="세부장소 미지정") && m.detail)g.detail=m.detail;
     });
     const groups=[...gm.values()].sort((a,b)=>{
+      const ta=String(a.entryTime||"9999-99-99 99:99:99"), tb=String(b.entryTime||"9999-99-99 99:99:99");
+      const byEntry=ta.localeCompare(tb);
+      if(byEntry!==0)return byEntry;
       const na=parseInt(String(a.team).match(/\d+/)?.[0]||"999",10), nb=parseInt(String(b.team).match(/\d+/)?.[0]||"999",10);
       return na-nb || a.activityNo-b.activityNo || String(a.team).localeCompare(String(b.team),"ko");
     });
@@ -7022,6 +7031,8 @@ function v250RenderBoardSummary(members){
 }
 
 async function v250ToggleIsolation(memberId,memberName){
+  const boardPage=document.getElementById("teamBoardPageV29");
+  if(boardPage && getComputedStyle(boardPage).display!=="none")return;
   const m=(window.__dashboardInsideMembers||[]).find(x=>String(x.memberId)===String(memberId)); if(!m)return;
   const officer=((document.getElementById("officer")||{}).value||"").trim();
   if(!officer){alert("고립대원 지정/해제를 확인한 지휘관 또는 안전점검관 성명을 입력하세요.");return;}
