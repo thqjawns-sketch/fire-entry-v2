@@ -2244,39 +2244,39 @@ async function v249L38VerifyWrite(params){
   const ids=v249L38ParseMemberIds(params);
   if(!siteId || !ids.length) return null;
 
+  /* V2.51-R11: 투입 완료 확인용 GET은 재시도 함수에 넣지 않는다.
+     1회 확인을 짧게 끝내고 다음 폴링으로 넘어가 현장 체감 지연을 줄인다. */
+  const controller=(typeof AbortController!=="undefined")?new AbortController():null;
+  const timer=controller?setTimeout(()=>controller.abort(),1800):null;
   try{
-    const d=await v249L38NativeJson(
+    const res=await V2_NATIVE_FETCH(
       API+"?action=current&siteId="+encodeURIComponent(siteId)+"&t="+Date.now(),
-      {cache:"no-store"},
-      "저장상태 확인"
+      {cache:"no-store",signal:controller?controller.signal:undefined}
     );
+    if(!res||!res.ok)return null;
+    const d=await res.json();
     const activeIds=new Set(
       (d.members||[])
         .filter(m=>m.status==="활동중")
         .map(m=>String(m.memberId||m.id||"").trim())
         .filter(Boolean)
     );
-
-    const completed = action==="batchEntry"
+    const completed=action==="batchEntry"
       ? ids.every(id=>activeIds.has(id))
       : ids.every(id=>!activeIds.has(id));
-
-    if(!completed) return null;
-
+    if(!completed)return null;
     return {
-      ok:true,
-      success:true,
-      successCount:ids.length,
-      succeeded:ids.map(id=>({id:id})),
-      failed:[],
-      message: action==="batchEntry"
-        ? "✅ 서버 저장은 완료되었습니다. 통신 응답만 지연되어 상태 확인으로 복구했습니다."
-        : "✅ 서버 철수 저장은 완료되었습니다. 통신 응답만 지연되어 상태 확인으로 복구했습니다.",
+      ok:true,success:true,successCount:ids.length,
+      succeeded:ids.map(id=>({id:id})),failed:[],
+      message:action==="batchEntry"
+        ? "✅ 투입 완료"
+        : "✅ 철수 완료",
       recovered:true
     };
   }catch(error){
-    console.warn("저장상태 확인 실패",error);
     return null;
+  }finally{
+    if(timer)clearTimeout(timer);
   }
 }
 
@@ -2284,7 +2284,7 @@ async function v2CallPost(params){
   v249L38WritePending++;
   const action=String(params.get("action")||"");
   try{
-    /* V2.51-R9 현장투입 응답 안정화
+    /* V2.51-R10 현장투입 응답 고속확인
        batchEntry/batchExit은 같은 POST를 재전송하지 않는다.
        최초 POST는 그대로 진행시키고, 2.5초부터 현재상태를 병행 확인한다.
        서버 저장이 끝나는 즉시 화면을 성공 처리하여 '투입 처리중' 장기 대기를 줄인다. */
@@ -2299,15 +2299,16 @@ async function v2CallPost(params){
       let postDone=false, postValue=null, postError=null;
       postPromise.then(v=>{postDone=true;postValue=v;}).catch(e=>{postDone=true;postError=e;});
 
-      await v249L38Sleep(2500);
-      for(let i=0;i<18;i++){
+      /* R10: 0.6초 후부터 저장 여부를 빠르게 확인한다. */
+      await v249L38Sleep(600);
+      for(let i=0;i<24;i++){
         if(postDone){
           if(postError) throw postError;
           return postValue;
         }
         const verified=await v249L38VerifyWrite(params);
         if(verified) return verified;
-        await v249L38Sleep(700);
+        await v249L38Sleep(350);
       }
 
       /* 상태확인 시간 안에 끝나지 않은 경우에도 중복 POST는 하지 않고
@@ -4932,7 +4933,9 @@ async function quickEntryMembers(){
       entryQueue=entryQueue.filter(m=>!successIds.has(String(m.id)));
       renderQueue();
       if(entryQueue.length===0) resetPPE(); else { checkPPE(); renderTeamMembers(); }
-      void loadInsideMembers();
+      /* V2.51-R11: 투입 직후 현재 현장 내부 조회를 호출하지 않음.
+         투입 저장/대기명단 정리와 현재내부 조회를 분리하여 연속 투입 지연을 방지한다.
+         현재내부는 현황 새로고침 또는 별도 현황 갱신에서 조회한다. */
     }
   }catch(e){console.error(e);alert("즉시 투입 기록 오류");}
   finally{entrySubmitting=false;if(qbtn){qbtn.innerText="⚡ 즉시 투입";qbtn.disabled=!(entryQueue.length>0&&isPPEComplete());} updateTeamSetupState();}
@@ -5316,7 +5319,9 @@ async function batchEntryMembers(){
         if(card)card.classList.add("modeOpen");
       }
 
-      void loadInsideMembers();
+      /* V2.51-R11: 투입 직후 현재 현장 내부 조회를 호출하지 않음.
+         투입 저장/대기명단 정리와 현재내부 조회를 분리하여 연속 투입 지연을 방지한다.
+         현재내부는 현황 새로고침 또는 별도 현황 갱신에서 조회한다. */
 
     }
 
