@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>QR기반-진·출입 안전관리앱 V2.51-R2</title>
+<title>QR기반-진·출입 안전관리앱 V2.51-R3</title>
 
 <script src="https://unpkg.com/html5-qrcode" type="text/javascript" onerror="this.onerror=null;this.src='https://cdn.jsdelivr.net/npm/html5-qrcode/html5-qrcode.min.js';"></script>
 <script>
@@ -1411,7 +1411,7 @@ button:disabled{
 .v249l34SiteItem.selected{border-color:#111;background:#f1f3f5}
 .v249l34SiteItem .sub{display:block;margin-top:4px;font-size:12px;font-weight:500;color:#667085}
 
-.v250Isolated{outline:4px solid #b42318!important;background:#fff0f0!important;box-shadow:0 0 0 3px #ffd2d2 inset!important;cursor:pointer}.v250Isolated .memberLine{color:#b42318!important;font-weight:950!important}
+.v250Isolated{outline:4px solid #b42318!important;cursor:pointer}.v250Isolated .memberLine{font-weight:950!important}
 
 /* ===== V2.51-R1 현황 확인자 / 안전확인 / 고립관리 ===== */
 .v251OfficerBox{margin:2px 0 12px;padding:12px 13px;border:1px solid #bfd2e5;border-radius:11px;background:#f6faff}
@@ -1441,7 +1441,7 @@ button:disabled{
 .v251IsolationBtn{background:#fff0f0!important;color:#b42318!important;border:1px solid #d93025!important}
 .v251IsolationReleaseBtn{background:#eef7f0!important;color:#137333!important;border:1px solid #188038!important}
 .v251NeedsCheck{animation:dangerBlink 1s infinite!important}
-.v251IsolationBlink{animation:dangerBlink .8s infinite!important;outline:4px solid #8b0000!important}
+.v251IsolationBlink{animation:dangerBlink 1s infinite!important;outline:none!important;box-shadow:none!important}.v251IsolationBlink .memberLine,.v251IsolationBlink .insideStatus{color:inherit!important}
 .memberRow.v251SafetyConfirmed,.insideStatus.v251SafetyConfirmed{animation:none!important;background:#fce8e6!important;color:#b3261e!important;border-left-color:#d93025!important}
 .v250CommanderTeamCard.v251SafetyConfirmed{animation:none!important;border-left-color:#d93025!important;background:#fff8f7!important}
 .v250CommanderTeamCard.v251NeedsCheck,.v250CommanderTeamCard.v251IsolationBlink{animation:dangerBlink 1s infinite!important}
@@ -1876,7 +1876,7 @@ PPE 점검 대기
   onclick="loadDashboard(false)"
 >
 <span class="refreshMainV22">🔄 현황 새로고침</span>
-<span id="dashboardAutoRefreshInfo" class="refreshSubV22">60초 자동갱신 · 마지막 갱신 --:--:--</span>
+<span id="dashboardAutoRefreshInfo" class="refreshSubV22">10초 자동갱신 · 마지막 갱신 --:--:--</span>
 </button>
 <button
   class="back"
@@ -1961,7 +1961,7 @@ PPE 점검 대기
     </div>
     <div id="v250CommanderTeams" class="v250CommanderTeamsGrid"></div>
   </div>
-  <div id="v250BoardRefreshInfo" style="width:100%;font-size:12px;font-weight:800">60초 자동갱신 · 마지막 갱신 --:--:--</div>
+  <div id="v250BoardRefreshInfo" style="width:100%;font-size:12px;font-weight:800">10초 자동갱신 · 마지막 갱신 --:--:--</div>
 </div>
 
 <div class="v29BoardCard">
@@ -2144,7 +2144,7 @@ function v2AggregateExited(rows){
    V2.49L40-R4 동기화 안정화
    - 네트워크 일시 오류 시 최대 3회 자동 재시도
    - POST 응답이 끊긴 경우 현재상태를 먼저 확인하여 중복 저장 방지
-   - 쓰기 처리 중에는 60초 자동갱신과 충돌하지 않도록 보류
+   - 쓰기 처리 중에는 10초 자동갱신과 충돌하지 않도록 보류
 ===================================================== */
 let v249L38WritePending=0;
 const V249L38_RETRY_DELAYS=[0,1200,2500];
@@ -2512,13 +2512,13 @@ function v249InvalidateActiveCheck(){
   // L11부터 활동상태 캐시를 사용하지 않음.
 }
 /* =====================================================
-현장 현황 60초 자동갱신
+현장 현황 10초 자동갱신
 ===================================================== */
 
 let dashboardAutoRefreshTimer = null;
 
 const DASHBOARD_AUTO_REFRESH_MS =
-60000;
+10000;
 
 
 const CHOSUNG = [
@@ -6308,7 +6308,7 @@ async function openDashboard(){
   );
 
 
-  // 그 다음부터 60초마다 자동갱신
+  // 그 다음부터 10초마다 자동갱신
   startDashboardAutoRefresh();
 
 }
@@ -6349,7 +6349,7 @@ function closeDashboard(){
 
 
 /* =====================================================
-60초 자동갱신 시작
+10초 자동갱신 시작
 ===================================================== */
 
 function startDashboardAutoRefresh(){
@@ -6391,7 +6391,7 @@ function startDashboardAutoRefresh(){
 
 
 /* =====================================================
-60초 자동갱신 중지
+10초 자동갱신 중지
 ===================================================== */
 
 function stopDashboardAutoRefresh(){
@@ -6739,7 +6739,7 @@ async function loadDashboard(
       v250UpdateBoardRefreshTime(now);
 
       autoInfo.innerText =
-        "60초 자동갱신 · 마지막 갱신 " +
+        "10초 자동갱신 · 마지막 갱신 " +
         now.toLocaleTimeString(
           "ko-KR",
           {
@@ -6994,7 +6994,7 @@ function selectTeamBoardFloorV33(floor){
 function v250UpdateBoardRefreshTime(now){
   const el=document.getElementById("v250BoardRefreshInfo");
   const t=now instanceof Date?now:new Date();
-  if(el)el.textContent="60초 자동갱신 · 마지막 정상갱신 "+t.toLocaleTimeString("ko-KR",{hour:"2-digit",minute:"2-digit",second:"2-digit",hour12:false});
+  if(el)el.textContent="10초 자동갱신 · 마지막 정상갱신 "+t.toLocaleTimeString("ko-KR",{hour:"2-digit",minute:"2-digit",second:"2-digit",hour12:false});
 }
 function v250RenderBoardSummary(members){
   const sum=document.getElementById("v250BoardLiveSummary"), emergency=document.getElementById("v250BoardEmergency");
@@ -8343,7 +8343,9 @@ async function v251Post(action,ids,extra){
     const d=await (v251BaseCall?v251BaseCall(form):v2CallPost(form));
     if(!d||(!d.ok&&!d.success))throw new Error((d&&d.error)||(d&&d.message)||'처리 실패');
     if(typeof closeDashboardMemberDetail==='function')closeDashboardMemberDetail();
-    await loadDashboard(false);
+    if(action!=='setIsolationBatch'){
+      await loadDashboard(false);
+    }
     v251RefreshEnhancements();
     return d;
   }catch(e){alert((e&&e.message)||'처리에 실패했습니다.');return null;}
@@ -8356,7 +8358,28 @@ async function v251SafetyCheckIds(ids){
 async function v251IsolationIds(ids,isolated,label){
   if(!ids||!ids.length)return;
   if(!confirm((label||ids.length+'명')+'을 '+(isolated?'고립대원으로 지정':'고립상태 해제')+'하시겠습니까?'))return;
-  await v251Post('setIsolationBatch',ids,{isolated:isolated?'Y':'N'});
+
+  const wanted=new Set((ids||[]).map(v=>String(v)));
+  const list=window.__dashboardInsideMembers||[];
+  const prev=[];
+  list.forEach(m=>{
+    if(!wanted.has(String(m.memberId)))return;
+    prev.push({m:m,isolated:!!m.isolated,isolatedAt:m.isolatedAt||'',isolatedOfficer:m.isolatedOfficer||''});
+    m.isolated=!!isolated;
+    if(isolated){
+      m.isolatedAt=new Date().toISOString();
+      m.isolatedOfficer=v251GetOfficer? v251GetOfficer() : (document.getElementById('v251StatusOfficer')||{}).value||'';
+    }else{
+      m.isolatedAt='';
+    }
+  });
+
+  v251RefreshEnhancements();
+  const d=await v251Post('setIsolationBatch',ids,{isolated:isolated?'Y':'N'});
+  if(!d){
+    prev.forEach(x=>{x.m.isolated=x.isolated;x.m.isolatedAt=x.isolatedAt;x.m.isolatedOfficer=x.isolatedOfficer;});
+    v251RefreshEnhancements();
+  }
 }
 function v251SelectAllSafety(){
   const boxes=[...document.querySelectorAll('#v251SafetyTargets .v251SafetyCheck:not(:disabled)')];
