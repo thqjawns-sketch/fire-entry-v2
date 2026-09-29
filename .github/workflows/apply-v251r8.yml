@@ -1,0 +1,30 @@
+name: Apply V2.51-R8 safety UX and alarms
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - '.github/workflows/apply-v251r8.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply V2.51-R8 patch
+        run: python .github/scripts/patch_v251r8.py
+      - name: Commit changes
+        run: |
+          if git diff --quiet -- index.html; then
+            echo "No index changes"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "Apply V2.51-R8 alarm and safety UX improvements"
+          git push
