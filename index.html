@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>QR기반-진·출입 안전관리앱 V2.49L40-R4</title>
+<title>QR기반-진·출입 안전관리앱 V2.51-R7.1</title>
 
 <script src="https://unpkg.com/html5-qrcode" type="text/javascript" onerror="this.onerror=null;this.src='https://cdn.jsdelivr.net/npm/html5-qrcode/html5-qrcode.min.js';"></script>
 <script>
@@ -1219,24 +1219,113 @@ button:disabled{
 
 
 
-/* V2.49L4 조 활동현황판 헤더 중앙 완주소방서 로고 */
-.v29BoardHeader{position:relative;min-height:72px}
-.v249BoardBrand{
-  position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
-  display:flex;align-items:center;justify-content:center;
-  width:min(300px,34vw);padding:5px 12px;
-  border-radius:9px;background:#fff;
-  box-shadow:0 2px 7px rgba(0,0,0,.10);
-  pointer-events:none;
+/* V2.51-R1 조 활동현황판 : 지휘자용 헤더 + 가로형 인원현황 */
+.v29BoardHeader{
+  display:grid;grid-template-columns:minmax(190px,1fr) auto minmax(220px,1fr);
+  align-items:center;gap:16px;min-height:74px;padding:12px 18px;
 }
-.v249BoardBrand img{display:block;width:100%;height:auto;max-height:54px;object-fit:contain}
-@media(max-width:760px){
-  .v29BoardHeader{flex-wrap:wrap;padding-top:12px}
-  .v249BoardBrand{
-    position:static;transform:none;order:3;width:100%;max-width:none;
-    margin-top:6px;padding:5px 10px;
-  }
-  .v249BoardBrand img{width:min(270px,78vw);max-height:48px}
+.v29BoardHeaderMain{min-width:0}
+.v29BoardTitle{font-size:24px;font-weight:950;white-space:nowrap}
+.v249BoardBrand{
+  position:static;transform:none;display:flex;align-items:center;justify-content:center;
+  width:280px;max-width:34vw;padding:5px 12px;border-radius:9px;background:#fff;
+  box-shadow:0 2px 7px rgba(0,0,0,.10);pointer-events:none;justify-self:center;
+}
+.v249BoardBrand img{display:block;width:100%;height:auto;max-height:50px;object-fit:contain}
+.v29BoardHeaderBtns{justify-self:end}
+.v250CommanderPanel{
+  margin:0 0 12px;padding:12px 14px 10px;border:1px solid #d9e3ee;border-radius:14px;
+  background:#fff;box-shadow:0 3px 12px rgba(20,50,80,.06);
+}
+.v250CommanderSite{
+  margin:0 0 9px;font-size:15px;font-weight:950;color:#173d67;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.v250CommanderMetrics{display:grid;grid-template-columns:repeat(7,minmax(105px,1fr));gap:8px}
+.v250Metric{min-width:0;padding:10px 8px;border:1px solid #e1e8f0;border-radius:11px;background:#f8fafc;text-align:center}
+.v250MetricLabel{font-size:12px;font-weight:900;color:#526476;white-space:nowrap}
+.v250MetricValue{margin-top:3px;font-size:25px;line-height:1.15;font-weight:950;color:#173d67;white-space:nowrap}
+.v250MetricInside .v250MetricValue{color:#d93025}
+.v250MetricExited .v250MetricValue{color:#188038}
+.v250MetricGreen{background:#f1fbf5;border-color:#cfead9}
+.v250MetricGreen .v250MetricValue{color:#188038}
+.v250MetricOrange{background:#fff8ef;border-color:#f7dfc1}
+.v250MetricOrange .v250MetricValue{color:#e37400}
+.v250MetricRed{background:#fff3f3;border-color:#f2cdcd}
+.v250MetricRed .v250MetricValue{color:#d93025}
+.v250MetricCritical{background:#fff0f0;border-color:#e9b6b6}
+.v250MetricCritical .v250MetricValue{color:#b42318}
+.v250FloorSummary{margin-top:9px;padding:7px 10px;border-radius:9px;background:#eef4fa;color:#29435f;text-align:center;font-size:13px;font-weight:900;line-height:1.5}
+#v250BoardEmergency{margin-top:9px!important}
+#v250BoardRefreshInfo{margin-top:7px!important;text-align:right!important;color:#66788a!important;opacity:1!important}
+.v250TeamSummaryRow{grid-column:1/-1;display:flex;align-items:center;gap:10px;margin-top:1px;padding:8px 10px;border-radius:9px;background:#eef4fa;color:#29435f;font-size:13px;font-weight:900;overflow:hidden}
+.v250TeamSummaryLabel{flex:0 0 auto;color:#173d67;font-weight:950}
+.v250TeamSummaryList{display:flex;gap:8px;align-items:center;overflow-x:auto;white-space:nowrap;scrollbar-width:thin}
+.v250TeamChip{display:inline-flex;align-items:center;gap:5px;padding:5px 9px;border:1px solid #d6e1ec;border-radius:999px;background:#fff;color:#173d67}
+.v250TeamChip strong{font-size:13px}.v250TeamChip.isolated{border-color:#d93025;background:#fff1f0;color:#b42318}.v29BoardRefresh.isLoading{opacity:.75;cursor:wait}
+/* ===== V2.51-R1 지휘관 관제용 상세 조별현황 ===== */
+.v250TeamSummaryRow{display:none!important}
+.v250CommanderTeamsWrap{grid-column:1/-1;margin-top:10px;padding:12px;border:1px solid #d9e3ee;border-radius:12px;background:#f8fbff}
+.v250CommanderTeamsHead{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:9px;color:#173d67;font-weight:950;font-size:15px}
+.v250CommanderTeamsSub{font-size:12px;color:#66788a;font-weight:800}
+.v250CommanderTeamsGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px}
+.v250CommanderTeamCard{min-width:0;padding:12px 13px;border:1px solid #d6e1ec;border-left:6px solid #188038;border-radius:11px;background:#fff;box-shadow:0 2px 7px rgba(20,50,80,.05)}
+.v250CommanderTeamCard.caution{border-left-color:#f9ab00;background:#fffdf8}
+.v250CommanderTeamCard.warning{border-left-color:#d93025;background:#fff8f7}
+.v250CommanderTeamCard.critical,.v250CommanderTeamCard.isolated{border-left-color:#8b0000;background:#fff0f0}
+.v250CommanderTeamTop{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.v250CommanderTeamName{font-size:19px;font-weight:950;color:#173d67}
+.v250CommanderTeamCount{font-size:14px;font-weight:950;color:#334e68;white-space:nowrap}
+.v250CommanderTeamLoc{margin-top:7px;font-size:14px;font-weight:900;color:#263b50;line-height:1.45}
+.v250CommanderTeamMeta{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.v250CommanderTeamBadge{display:inline-block;padding:4px 7px;border-radius:999px;background:#eef4fa;color:#29435f;font-size:12px;font-weight:900}
+.v250CommanderTeamBadge.normal{background:#e6f4ea;color:#137333}
+.v250CommanderTeamBadge.caution{background:#fff3e0;color:#b06000}
+.v250CommanderTeamBadge.warning{background:#fce8e6;color:#b3261e}
+.v250CommanderTeamBadge.critical{background:#d93025;color:#fff}
+.v250CommanderTeamBadge.isolated{background:#8b0000;color:#fff}
+.v250CommanderMembers{margin-top:9px;display:flex;flex-wrap:wrap;gap:6px}
+.v250CommanderMember{padding:6px 8px;border:1px solid #e1e7ee;border-radius:8px;background:#f8fafc;color:#263b50;font-size:12px;font-weight:850;line-height:1.35}
+.v250CommanderMember.isolated{border-color:#d93025;background:#fff0f0;color:#b42318}
+@media(min-width:1500px){.v250CommanderTeamsGrid{grid-template-columns:repeat(4,minmax(0,1fr))}.v250CommanderTeamCard{padding:14px}.v250CommanderTeamName{font-size:20px}}
+@media(max-width:900px){.v250CommanderTeamsGrid{grid-template-columns:1fr 1fr}}
+@media(max-width:620px){.v250CommanderTeamsGrid{grid-template-columns:1fr}}
+/* ===== V2.51-R1 지휘관 관제판 정리 ===== */
+.v250CommanderSectionTitle{margin:6px 0 10px;font-size:20px;font-weight:950;color:#173d67;letter-spacing:-.3px}
+.v250CommanderTeamsHead>span:first-child{font-size:20px!important;font-weight:950!important;color:#173d67}
+.v250CommanderTeamsSub{font-size:17px!important;font-weight:950!important;color:#173d67!important}
+.v250CommanderTeamsGrid{display:flex!important;flex-direction:column!important;gap:9px!important}
+.v250CommanderTeamCard{width:100%;box-sizing:border-box;display:grid!important;grid-template-columns:155px minmax(260px,1.15fr) 235px minmax(390px,1.7fr);align-items:center;gap:12px;padding:11px 14px!important}
+.v250CommanderTeamTop{margin:0!important}
+.v250CommanderTeamLoc,.v250CommanderTeamMeta,.v250CommanderMembers{margin:0!important}
+.v250CommanderMembers{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.v250CommanderMember{font-size:12px;padding:6px 8px}
+.v250CommanderTeamMeta{display:flex;flex-wrap:wrap;gap:6px}
+.v250CommanderTeamCard .v250CommanderTeamName{font-size:18px}
+.v250CommanderTeamCard .v250CommanderTeamCount{font-size:14px}
+.v250BoardVisualTitle{margin:0 0 10px;font-size:19px;font-weight:950;color:#173d67}
+/* ===== V2.51-R1 선택층 활동대원 복원 ===== */
+#teamBoardPageV29 #v34FloorMembers{margin-top:12px}
+#teamBoardPageV29 #v34FloorMembers .memberRow{cursor:default!important}
+
+@media(max-width:1100px){.v250CommanderTeamCard{grid-template-columns:140px 1fr 200px}.v250CommanderMembers{grid-column:1/-1}}
+@media(max-width:760px){.v250CommanderTeamCard{grid-template-columns:1fr}.v250CommanderTeamLoc,.v250CommanderTeamMeta,.v250CommanderMembers{grid-column:1}}
+
+
+@media(max-width:980px){
+  .v29BoardHeader{grid-template-columns:1fr auto;gap:10px}
+  .v249BoardBrand{grid-column:1 / -1;grid-row:2;width:min(290px,72vw);max-width:none}
+  .v29BoardHeaderBtns{grid-column:2;grid-row:1}
+  .v250CommanderMetrics{grid-template-columns:repeat(4,minmax(105px,1fr))}
+}
+@media(max-width:620px){
+  .v29BoardHeader{grid-template-columns:1fr;padding:12px}
+  .v29BoardTitle{text-align:center;font-size:21px}
+  .v29BoardHeaderBtns{grid-column:1;grid-row:3;justify-self:center}
+  .v249BoardBrand{grid-column:1;grid-row:2;width:min(270px,82vw)}
+  .v250CommanderMetrics{grid-template-columns:repeat(2,minmax(110px,1fr))}
+  .v250MetricValue{font-size:23px}
+  #v250BoardRefreshInfo{text-align:center!important}
 }
 
 
@@ -1321,6 +1410,89 @@ button:disabled{
 .v249l34SiteItem{width:100%;text-align:left;border:2px solid #d9dee7;background:#fff;border-radius:10px;padding:12px 14px;font-size:15px;font-weight:700;cursor:pointer}
 .v249l34SiteItem.selected{border-color:#111;background:#f1f3f5}
 .v249l34SiteItem .sub{display:block;margin-top:4px;font-size:12px;font-weight:500;color:#667085}
+
+.v250Isolated{outline:4px solid #b42318!important;cursor:pointer}.v250Isolated .memberLine{font-weight:950!important}
+
+/* ===== V2.51-R1 현황 확인자 / 안전확인 / 고립관리 ===== */
+.v251OfficerBox{margin:2px 0 12px;padding:12px 13px;border:1px solid #bfd2e5;border-radius:11px;background:#f6faff}
+.v251OfficerLabel{font-size:16px;font-weight:950;color:#173d67;margin-bottom:7px}
+.v251OfficerInput{margin:0!important;background:#fff!important;font-weight:900!important}
+.v251OfficerHint{margin-top:6px;font-size:11px;font-weight:750;color:#607387;line-height:1.45}
+.v251SafetyTargets{margin:0 0 12px}
+.v251SafetyBox{border:1px solid #e4c36a;border-radius:11px;background:#fffaf0;overflow:hidden}
+.v251SafetyHead{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 12px;background:#fff3d6;color:#6b4d00;font-weight:950}
+.v251SafetyHead strong{font-size:15px}
+.v251SafetySelectAll{width:auto!important;margin:0!important;padding:7px 10px!important;font-size:12px!important;background:#fff!important;color:#6b4d00!important;border:1px solid #d7b85f!important}
+.v251SafetyList{padding:6px 10px}
+.v251SafetyItem{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:9px;padding:9px 4px;border-bottom:1px solid #f1e2b9}
+.v251SafetyItem:last-child{border-bottom:0}
+.v251SafetyItem input{width:20px;height:20px}
+.v251SafetyName{font-size:14px;font-weight:950;color:#263b50}
+.v251SafetyMeta{margin-top:3px;font-size:11px;font-weight:800;color:#66788a}
+.v251SafetyState{font-size:12px;font-weight:950;text-align:right;color:#b3261e;white-space:nowrap}
+.v251SafetyState.confirmed{color:#9a5b00}
+.v251SafetyActions{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:0 10px 10px}
+.v251SafetyActions button{margin:0!important;padding:11px 8px!important;font-size:13px!important}
+.v251BatchConfirm{background:#b42318!important;color:#fff!important}
+.v251NoTargets{padding:10px 12px;border:1px solid #dce5ee;border-radius:10px;background:#f8fafc;color:#607387;font-size:12px;font-weight:850}
+.v251ManageActions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.v251ManageActions button{margin:0!important;padding:12px 8px!important;font-size:13px!important;min-height:46px}
+.v251SafetyBtn{background:#fff7e6!important;color:#8a5a00!important;border:1px solid #e5b94e!important}
+.v251IsolationBtn{background:#fff0f0!important;color:#b42318!important;border:1px solid #d93025!important}
+.v251IsolationReleaseBtn{background:#eef7f0!important;color:#137333!important;border:1px solid #188038!important}
+.v251NeedsCheck{animation:dangerBlink 1s infinite!important}
+.v251IsolationBlink{animation:dangerBlink 1s infinite!important;outline:none!important;box-shadow:none!important}.v251IsolationBlink .memberLine,.v251IsolationBlink .insideStatus{color:inherit!important}
+.memberRow.v251SafetyConfirmed,.insideStatus.v251SafetyConfirmed{animation:none!important;background:#fce8e6!important;color:#b3261e!important;border-left-color:#d93025!important}
+.v250CommanderTeamCard.v251SafetyConfirmed{animation:none!important;border-left-color:#d93025!important;background:#fff8f7!important}
+.v250CommanderTeamCard.v251NeedsCheck,.v250CommanderTeamCard.v251IsolationBlink{animation:dangerBlink 1s infinite!important}
+.v33FaceChip.v251NeedsCheck,.v33FaceChip.v251IsolationBlink{animation:dangerBlink 1s infinite!important}
+.criticalSummary.v251StableCritical{animation:none!important;background:#fce8e6!important;color:#b3261e!important;border-color:#d93025!important}
+@media(max-width:560px){.v251SafetyItem{grid-template-columns:auto 1fr}.v251SafetyState{grid-column:2;text-align:left}.v251ManageActions{grid-template-columns:1fr}}
+</style>
+
+
+<style id="v251r5-style">
+/* ===== V2.51-R5 2번화면 즉시확인 가시성 + 지휘관 고립표시 정리 ===== */
+.v251R5SafetyAlert{
+  margin:0 0 12px;padding:15px 14px;border-radius:11px;text-align:center;
+  font-size:18px;font-weight:950;line-height:1.35;border:2px solid #188038;
+  background:#eef9f1;color:#137333;
+}
+.v251R5SafetyAlert.due{
+  border-color:#b42318;background:#d93025;color:#fff;animation:dangerBlink 1s infinite;
+}
+.v251R5SafetyAlert.confirmed{
+  border-color:#d93025;background:#fce8e6;color:#b3261e;animation:none;
+}
+#v250BoardEmergency.v251R5IsolationPanel{
+  display:block!important;width:100%;box-sizing:border-box;margin-top:10px!important;padding:12px!important;
+  border:2px solid #d93025!important;border-radius:12px!important;background:#fff7f7!important;
+  color:#1f2937!important;text-align:left!important;font-weight:800!important;animation:none!important;
+}
+.v251R5IsolationHead{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:9px}
+.v251R5IsolationTitle{font-size:18px;font-weight:950;color:#9f1d16}
+.v251R5IsolationCount{
+  flex:0 0 auto;padding:5px 10px;border-radius:999px;background:#d93025;color:#fff;
+  font-size:14px;font-weight:950;animation:dangerBlink 1s infinite;
+}
+.v251R5IsolationGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.v251R5IsolationItem{
+  min-width:0;padding:9px 11px;border:1px solid #efb7b3;border-left:5px solid #d93025;
+  border-radius:9px;background:#fff;line-height:1.35;
+}
+.v251R5IsolationName{font-size:15px;font-weight:950;color:#8b1e18;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.v251R5IsolationMeta{margin-top:4px;font-size:12px;font-weight:850;color:#5a6673;white-space:normal}
+/* 지휘관 화면은 큰 카드 전체가 깜빡이지 않고 고립 배지만 깜빡이게 */
+#teamBoardPageV29 .v250CommanderTeamCard.v251IsolationBlink{
+  animation:none!important;background:#fff5f5!important;border-color:#d93025!important;border-left:7px solid #b42318!important;
+}
+#teamBoardPageV29 .v250CommanderTeamCard.v251IsolationBlink .v250CommanderTeamBadge.isolated{
+  animation:dangerBlink 1s infinite!important;
+}
+#teamBoardPageV29 .v33FaceChip.v251IsolationBlink{
+  animation:none!important;background:#fff0f0!important;color:#b42318!important;border:2px solid #d93025!important;
+}
+@media(max-width:760px){.v251R5IsolationGrid{grid-template-columns:1fr}}
 </style>
 
 <link rel="manifest" href="./manifest.json">
@@ -1328,6 +1500,19 @@ button:disabled{
 <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
 <link rel="apple-touch-icon" href="./icon-192.png">
 
+
+<style>
+/* V2.51-R5 통합 안전관리 / 반영상태 */
+.v251R4ApplyStatus{position:fixed;left:50%;top:14px;transform:translateX(-50%);z-index:30000;min-width:210px;max-width:90vw;padding:12px 18px;border-radius:12px;text-align:center;font-size:16px;font-weight:950;box-shadow:0 4px 18px rgba(0,0,0,.22);display:none}
+.v251R4ApplyStatus.busy{display:block;background:#fff3cd;color:#7a4b00;border:2px solid #e0a800}
+.v251R4ApplyStatus.done{display:block;background:#e6f4ea;color:#137333;border:2px solid #188038}
+.v251R4ApplyStatus.error{display:block;background:#fce8e6;color:#b3261e;border:2px solid #d93025}
+.v251R4IsoBox{margin-top:4px;padding:12px;border:1px solid #e0a7a3;border-radius:10px;background:#fff8f7}
+.v251R4IsoBox label{margin:0 0 6px!important;color:#8b1d1d!important}
+.v251R4CurrentState{margin:6px 0 10px;padding:9px 10px;border-radius:9px;background:#f6f8fa;font-size:13px;font-weight:850;color:#44546a}
+.v251R4FormNote{margin-top:8px;font-size:12px;line-height:1.5;color:#607387;font-weight:700}
+.v251R4Save{background:#1769c2!important;color:#fff!important}
+</style>
 </head>
 
 <body>
@@ -1339,7 +1524,7 @@ button:disabled{
 <div id="mainPage">
 
 <div class="title">
-🚒 QR기반-진·출입 안전관리앱 V2.49L40-R4
+🚒 QR기반-진·출입 안전관리앱 V2.51-R7.1
 </div>
 
 <div class="stationLogo">
@@ -1749,7 +1934,7 @@ PPE 점검 대기
   onclick="loadDashboard(false)"
 >
 <span class="refreshMainV22">🔄 현황 새로고침</span>
-<span id="dashboardAutoRefreshInfo" class="refreshSubV22">60초 자동갱신 · 마지막 갱신 --:--:--</span>
+<span id="dashboardAutoRefreshInfo" class="refreshSubV22">10초 자동갱신 · 마지막 갱신 --:--:--</span>
 </button>
 <button
   class="back"
@@ -1766,8 +1951,15 @@ PPE 점검 대기
 <div class="card">
 
 <div class="v29TeamHeader">
-  <div class="v29TeamHeaderTitle">👥 2. 조별현황</div>
+  <div class="v29TeamHeaderTitle">🛡️ 2. 조·대원 안전관리</div>
 </div>
+
+<div class="v251OfficerBox">
+  <div class="v251OfficerLabel">현황 확인자</div>
+  <input type="text" id="v251StatusOfficer" class="v251OfficerInput" placeholder="대응단 현황 확인자 성명" autocomplete="name">
+  <div class="v251OfficerHint">위치변경 · 안전확인 · 고립지정/해제 기록에 공통 적용됩니다.</div>
+</div>
+<div id="v251SafetyTargets" class="v251SafetyTargets"></div>
 
 <div id="teamStatusV28"></div>
 
@@ -1803,27 +1995,35 @@ PPE 점검 대기
 <div id="teamBoardPageV29">
 
   <div class="v29BoardHeader">
-    <div class="v29BoardHeaderMain">
-      <div class="v29BoardTitle">🗺️ 조 활동현황판 <span style="font-size:11px;opacity:.75">V2.43</span></div>
-      <div id="v29BoardSite" class="v29BoardSite">-</div>
-    </div>
-    <div class="v249BoardBrand" aria-label="완주소방서">
-      <img src="./wanju-fire-logo.png" alt="완주소방서 WANJU FIRE STATION">
-    </div>
-    <div class="v29BoardHeaderBtns">
-      <button type="button" class="v29BoardRefresh" onclick="refreshTeamBoardV29()">🔄 새로고침</button>
-      <button type="button" class="v29BoardClose" onclick="closeTeamBoardV29()">✕ 현황판 닫기</button>
-    </div>
+  <div class="v29BoardHeaderMain">
+    <div class="v29BoardTitle">🗺️ 조 활동현황판</div>
   </div>
+  <div class="v249BoardBrand" aria-label="완주소방서">
+    <img src="./wanju-fire-logo.png" alt="완주소방서 WANJU FIRE STATION">
+  </div>
+  <div class="v29BoardHeaderBtns">
+    <button type="button" class="v29BoardRefresh" onclick="refreshTeamBoardV29()">🔄 새로고침</button>
+    <button type="button" class="v29BoardClose" onclick="closeTeamBoardV29()">✕ 현황판 닫기</button>
+  </div>
+</div>
 
-  <div class="v29BoardCard">
-    <div class="v29BoardGuide">
-      <div>현재 활동 중인 조의 <b>층 · 방면 · 진입차수 · 체류시간</b>을 한눈에 확인합니다.</div>
-      <div class="v29Legend">
-        <span>🟢 0~20분</span><span>🟠 21~25분</span><span>🔴 26~30분</span><span>🚨 31분 이상</span>
-      </div>
+<div class="v250CommanderPanel">
+  <div id="v29BoardSite" class="v250CommanderSite">현장 : -</div>
+  <div class="v250CommanderSectionTitle">👥 인원현황</div>
+  <div id="v250BoardLiveSummary" class="v250CommanderMetrics"></div>
+  <div id="v250BoardEmergency" style="display:none;width:100%;padding:10px;border-radius:10px;background:#b42318;color:#fff;text-align:center;font-weight:950"></div>
+  <div class="v250CommanderTeamsWrap">
+    <div class="v250CommanderTeamsHead">
+      <span>👥 조별 활동현황</span>
+      <span id="v250CommanderTeamsCount" class="v250CommanderTeamsSub">현재 활동 0개조 · 0명</span>
     </div>
+    <div id="v250CommanderTeams" class="v250CommanderTeamsGrid"></div>
+  </div>
+  <div id="v250BoardRefreshInfo" style="width:100%;font-size:12px;font-weight:800">10초 자동갱신 · 마지막 갱신 --:--:--</div>
+</div>
 
+<div class="v29BoardCard">
+    <div class="v250BoardVisualTitle">🗺️ 위치 관제</div>
     <div class="v33BoardCardScroll">
       <div class="v33BoardLayout">
         <div id="v33FloorPanel" class="v33SidePanel v33FloorPanel"></div>
@@ -1832,19 +2032,9 @@ PPE 점검 대기
       </div>
     </div>
 
-    <div id="v29BoardDetail" class="v29BoardDetail">
-      <div class="v29DetailEmpty">조를 누르면 현재 위치 상세정보가 표시됩니다.</div>
-    </div>
-
     <div id="v34FloorMembers" class="v34FloorMembers">
       <div class="v34FloorMembersHead">선택 층 활동대원</div>
       <div class="v34FloorMemberEmpty">층을 선택하면 해당 층의 활동대원이 표시됩니다.</div>
-    </div>
-
-    <div id="v33BoardStats" class="v33BoardStats"></div>
-
-    <div class="v29BoardFoot">
-      ※ 층을 선택하면 해당 층의 현재 활동 조와 대원을 확인할 수 있습니다. 방면은 아래쪽 A방면을 기준으로 시계방향 B → C → D 순서입니다.
     </div>
   </div>
 
@@ -1967,7 +2157,10 @@ function v2OldInsideMember(m){
     activityNo:Number(m.activityNo)||1,
     direction:m.direction||"미지정",
     floor:m.floor||"미지정",
-    detail:m.detail||"세부장소 미지정"
+    detail:m.detail||"세부장소 미지정",
+    isolated:!!m.isolated,
+    isolatedAt:m.isolatedAt||"",
+    isolatedOfficer:m.isolatedOfficer||""
   };
 }
 
@@ -2009,7 +2202,7 @@ function v2AggregateExited(rows){
    V2.49L40-R4 동기화 안정화
    - 네트워크 일시 오류 시 최대 3회 자동 재시도
    - POST 응답이 끊긴 경우 현재상태를 먼저 확인하여 중복 저장 방지
-   - 쓰기 처리 중에는 60초 자동갱신과 충돌하지 않도록 보류
+   - 쓰기 처리 중에는 10초 자동갱신과 충돌하지 않도록 보류
 ===================================================== */
 let v249L38WritePending=0;
 const V249L38_RETRY_DELAYS=[0,1200,2500];
@@ -2051,62 +2244,89 @@ async function v249L38VerifyWrite(params){
   const ids=v249L38ParseMemberIds(params);
   if(!siteId || !ids.length) return null;
 
+  /* V2.51-R12: 투입 완료 확인용 GET은 재시도 함수에 넣지 않는다.
+     1회 확인을 짧게 끝내고 다음 폴링으로 넘어가 현장 체감 지연을 줄인다. */
+  const controller=(typeof AbortController!=="undefined")?new AbortController():null;
+  const timer=controller?setTimeout(()=>controller.abort(),1800):null;
   try{
-    const d=await v249L38NativeJson(
+    const res=await V2_NATIVE_FETCH(
       API+"?action=current&siteId="+encodeURIComponent(siteId)+"&t="+Date.now(),
-      {cache:"no-store"},
-      "저장상태 확인"
+      {cache:"no-store",signal:controller?controller.signal:undefined}
     );
+    if(!res||!res.ok)return null;
+    const d=await res.json();
     const activeIds=new Set(
       (d.members||[])
         .filter(m=>m.status==="활동중")
         .map(m=>String(m.memberId||m.id||"").trim())
         .filter(Boolean)
     );
-
-    const completed = action==="batchEntry"
+    const completed=action==="batchEntry"
       ? ids.every(id=>activeIds.has(id))
       : ids.every(id=>!activeIds.has(id));
-
-    if(!completed) return null;
-
+    if(!completed)return null;
     return {
-      ok:true,
-      success:true,
-      successCount:ids.length,
-      succeeded:ids.map(id=>({id:id})),
-      failed:[],
-      message: action==="batchEntry"
-        ? "✅ 서버 저장은 완료되었습니다. 통신 응답만 지연되어 상태 확인으로 복구했습니다."
-        : "✅ 서버 철수 저장은 완료되었습니다. 통신 응답만 지연되어 상태 확인으로 복구했습니다.",
+      ok:true,success:true,successCount:ids.length,
+      succeeded:ids.map(id=>({id:id})),failed:[],
+      message:action==="batchEntry"
+        ? "✅ 투입 완료"
+        : "✅ 철수 완료",
       recovered:true
     };
   }catch(error){
-    console.warn("저장상태 확인 실패",error);
     return null;
+  }finally{
+    if(timer)clearTimeout(timer);
   }
 }
 
 async function v2CallPost(params){
   v249L38WritePending++;
-  let lastError=null;
+  const action=String(params.get("action")||"");
   try{
+    /* V2.51-R10 현장투입 응답 고속확인
+       batchEntry/batchExit은 같은 POST를 재전송하지 않는다.
+       최초 POST는 그대로 진행시키고, 2.5초부터 현재상태를 병행 확인한다.
+       서버 저장이 끝나는 즉시 화면을 성공 처리하여 '투입 처리중' 장기 대기를 줄인다. */
+    if(action==="batchEntry" || action==="batchExit"){
+      const cloned=new URLSearchParams(params.toString());
+      const postPromise=V2_NATIVE_FETCH(API,{method:"POST",body:cloned,cache:"no-store"})
+        .then(async res=>{
+          if(!res || !res.ok) throw new Error("서버 응답 오류"+(res?" ("+res.status+")":""));
+          return await res.json();
+        });
+
+      let postDone=false, postValue=null, postError=null;
+      postPromise.then(v=>{postDone=true;postValue=v;}).catch(e=>{postDone=true;postError=e;});
+
+      /* R10: 0.6초 후부터 저장 여부를 빠르게 확인한다. */
+      await v249L38Sleep(600);
+      for(let i=0;i<24;i++){
+        if(postDone){
+          if(postError) throw postError;
+          return postValue;
+        }
+        const verified=await v249L38VerifyWrite(params);
+        if(verified) return verified;
+        await v249L38Sleep(350);
+      }
+
+      /* 상태확인 시간 안에 끝나지 않은 경우에도 중복 POST는 하지 않고
+         최초 요청의 응답만 기다린다. */
+      return await postPromise;
+    }
+
+    let lastError=null;
     for(let attempt=0;attempt<V249L38_RETRY_DELAYS.length;attempt++){
       if(attempt>0) await v249L38Sleep(V249L38_RETRY_DELAYS[attempt]);
       try{
         const cloned=new URLSearchParams(params.toString());
         const res=await V2_NATIVE_FETCH(API,{method:"POST",body:cloned,cache:"no-store"});
         if(!res || !res.ok) throw new Error("서버 응답 오류"+(res?" ("+res.status+")":""));
-        const d=await res.json();
-        return d;
+        return await res.json();
       }catch(error){
         lastError=error;
         console.warn("POST 동기화 재시도 "+(attempt+1)+"/"+V249L38_RETRY_DELAYS.length,error);
-
-        /* 응답만 유실된 경우 바로 다시 POST하면 중복 기록 위험이 있으므로
-           현재상태를 먼저 확인하고, 이미 반영되었으면 성공으로 종료한다. */
-        const verified=await v249L38VerifyWrite(params);
-        if(verified) return verified;
       }
     }
     throw lastError||new Error("동기화 실패");
@@ -2208,6 +2428,7 @@ window.fetch = async function(input, init){
       p.set("action","batchEntry");
       p.set("siteId",v2SiteId(old.get("site")));
       p.set("members",old.get("members")||"[]");
+      p.set("officer",old.get("officer")||"");
       p.set("teamName",old.get("teamName")||"");
       p.set("activityNo",old.get("activityNo")||"");
       p.set("entryDirection",old.get("entryDirection")||"");
@@ -2231,6 +2452,7 @@ window.fetch = async function(input, init){
       p.set("action","batchExit");
       p.set("siteId",v2SiteId(old.get("site")));
       p.set("members",old.get("members")||"[]");
+      p.set("officer",old.get("officer")||"");
 
       const d=await v2CallPost(p);
       return v2JsonResponse({
@@ -2375,13 +2597,13 @@ function v249InvalidateActiveCheck(){
   // L11부터 활동상태 캐시를 사용하지 않음.
 }
 /* =====================================================
-현장 현황 60초 자동갱신
+현장 현황 10초 자동갱신
 ===================================================== */
 
 let dashboardAutoRefreshTimer = null;
 
 const DASHBOARD_AUTO_REFRESH_MS =
-60000;
+10000;
 
 
 const CHOSUNG = [
@@ -2398,7 +2620,7 @@ const CHOSUNG = [
 
 
 /* =====================================================
-V2.49L40-R4 현장대응단 현장관리 + 진·출입 활동 종합보고서
+V2.50-R2 현장대응단 현장관리 + 진·출입 활동 종합보고서
 ===================================================== */
 const V249L31_AREA = {
  "삼례읍":["삼례리","후정리","해전리","신금리","석전리","수계리","하리"],
@@ -2500,7 +2722,7 @@ async function v249L34LoadActiveSites(){
       const id=x.siteId||"";
       const state=x.__closed?"⚫ 종료":"🟢 진행중";
       const actions=x.__closed
-        ? '<button type="button" onclick="v249L37Report(event,\''+v249L31Esc(name)+'\',\''+v249L31Esc(id)+'\')">📄 종합보고서</button> <button type="button" onclick="v249L37Reset(event,\''+v249L31Esc(name)+'\',\''+v249L31Esc(id)+'\')">🗑️ 기록 초기화</button>'
+        ? '<button type="button" onclick="v249L37Report(event,\''+v249L31Esc(name)+'\',\''+v249L31Esc(id)+'\')">📄 종합보고서 / 인쇄</button> <button type="button" onclick="v249L37Reset(event,\''+v249L31Esc(name)+'\',\''+v249L31Esc(id)+'\')">🗑️ 기록 초기화</button>'
         : '<button type="button" onclick="v249L37Close(event,\''+v249L31Esc(name)+'\')">🔴 활동 종료</button> <button type="button" onclick="v249L37Report(event,\''+v249L31Esc(name)+'\',\''+v249L31Esc(id)+'\')">📄 종합보고서</button>';
       return '<div class="v249l34SiteItem"><b>🔥 '+v249L31Esc(name)+'</b><span class="sub">'+state+'</span><div style="margin-top:9px">'+actions+'</div></div>';
     }).join("");
@@ -2541,10 +2763,10 @@ async function v249L31CloseSite(){
  try{
   const d=await v2CallPost(p);
   if(!d.ok)throw new Error(d.error||d.message||"현장 종료 실패");
-  v249L31CloseSiteManager();
   document.getElementById("site").value="";
   await loadSites();
-  alert("✅ "+siteName+"\\n현장활동을 종료했습니다.\\n활동 데이터와 종합보고서는 그대로 보존됩니다.");
+  await v249L34LoadActiveSites();
+  alert("✅ "+siteName+"\\n현장활동을 종료했습니다.\\n현장관리 화면에서 종합보고서·인쇄·기록 초기화를 계속할 수 있습니다.");
  }catch(e){alert(e.message||"현장 종료 실패");}
 }
 function v249L31Esc(x){return String(x??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));}
@@ -2553,9 +2775,7 @@ function v249L31Mins(a,b){
  return (!a||isNaN(x)||isNaN(y))?"-":Math.max(0,Math.floor((y-x)/60000));
 }
 async function v249L31OpenReport(siteIdOverride,siteNameOverride){
-  const siteModal=document.getElementById("v249l31SiteModal");
-  if(siteModal) siteModal.style.display="none";
-
+  /* V2.50-R2: 현장관리 화면은 그대로 유지하고 보고서 모달만 위에 표시 */
   let siteId=String(siteIdOverride||"").trim();
   let siteName=String(siteNameOverride||"").trim();
 
@@ -2617,7 +2837,9 @@ async function v249L31OpenReport(siteIdOverride,siteNameOverride){
         "<td>"+v249L31Esc(r.department||"-")+"</td>"+
         "<td>"+v249L31Esc(r.team||"미지정")+" "+Number(r.activityNo||1)+"차</td>"+
         "<td>"+v249L31Esc(r.entryTime||"-")+"</td>"+
+        "<td>"+v249L31Esc(r.entryOfficer||"-")+"</td>"+
         "<td>"+v249L31Esc(r.exitTime||"활동중")+"</td>"+
+        "<td>"+v249L31Esc(r.exitOfficer||"-")+"</td>"+
         "<td>"+v249L31Mins(r.entryTime,r.exitTime)+"분</td>"+
         "<td>"+v249L31Esc([r.direction,r.floor,r.detail].filter(Boolean).join(" / ")||"-")+"</td>"+
       "</tr>";
@@ -2666,9 +2888,9 @@ async function v249L31OpenReport(siteIdOverride,siteNameOverride){
 
       "<h3>개인별 진·출입 현황</h3>"+
       "<table><thead><tr>"+
-      "<th>성명</th><th>소속</th><th>조</th><th>진입</th><th>철수</th><th>체류</th><th>활동위치</th>"+
+      "<th>성명</th><th>소속</th><th>조</th><th>진입</th><th>투입 확인자</th><th>철수</th><th>철수 확인자</th><th>체류</th><th>활동위치</th>"+
       "</tr></thead><tbody>"+
-      (rows||'<tr><td colspan="7">기록 없음</td></tr>')+
+      (rows||'<tr><td colspan="9">기록 없음</td></tr>')+
       "</tbody></table>";
 
   }catch(e){
@@ -3415,9 +3637,13 @@ async function addMemberToQueue(member){
       entryQueue[idx].__activeCheckPending=false; renderQueue();
       showTemporaryMessage("✅ "+member.name+" 대원 활동상태 확인 완료");
     }catch(e){
+      console.warn("대원 활동상태 확인 지연",memberId,e);
       const idx=entryQueue.findIndex(x=>String(x.id).trim()===memberId);
-      if(idx>=0){ entryQueue.splice(idx,1); selectedTeamMemberIds.delete(memberId); renderQueue(); }
-      showTemporaryMessage("⚠️ "+member.name+" 대원 활동상태 확인 실패 · 투입대기에서 제외했습니다.");
+      if(idx>=0){
+        entryQueue[idx].__activeCheckPending=false;
+        renderQueue();
+      }
+      showTemporaryMessage("⚠️ "+member.name+" 대원 활동상태 확인 지연 · 투입대기 유지");
     }finally{ v249QueueAddPending.delete(memberId); }
   })();
   return true;
@@ -4609,6 +4835,9 @@ function checkPPE(){
     status.style.color =
       "#188038";
 
+    // V2.50: 안전점검 완료 즉시 QR 카메라 실제 점유 해제
+    if(scanning){ void stopScanner(); }
+
   }else{
 
     status.innerText =
@@ -4704,7 +4933,9 @@ async function quickEntryMembers(){
       entryQueue=entryQueue.filter(m=>!successIds.has(String(m.id)));
       renderQueue();
       if(entryQueue.length===0) resetPPE(); else { checkPPE(); renderTeamMembers(); }
-      void loadInsideMembers();
+      /* V2.51-R12: 투입 직후 현재 현장 내부 조회를 호출하지 않음.
+         투입 저장/대기명단 정리와 현재내부 조회를 분리하여 연속 투입 지연을 방지한다.
+         현재내부는 현황 새로고침 또는 별도 현황 갱신에서 조회한다. */
     }
   }catch(e){console.error(e);alert("즉시 투입 기록 오류");}
   finally{entrySubmitting=false;if(qbtn){qbtn.innerText="⚡ 즉시 투입";qbtn.disabled=!(entryQueue.length>0&&isPPEComplete());} updateTeamSetupState();}
@@ -5088,7 +5319,9 @@ async function batchEntryMembers(){
         if(card)card.classList.add("modeOpen");
       }
 
-      void loadInsideMembers();
+      /* V2.51-R12: 투입 직후 현재 현장 내부 조회를 호출하지 않음.
+         투입 저장/대기명단 정리와 현재내부 조회를 분리하여 연속 투입 지연을 방지한다.
+         현재내부는 현황 새로고침 또는 별도 현황 갱신에서 조회한다. */
 
     }
 
@@ -5284,9 +5517,13 @@ async function loadInsideMembers(){
   if(
     insideLoading
   ){
-
     return;
+  }
 
+  /* V2.51-R12: 투입/철수 저장 중 현재내부 조회가 서버와 경쟁하지 않도록 보류 */
+  if(v249L38WritePending>0 || entrySubmitting || exitSubmitting){
+    showTemporaryMessage("⏳ 투입·철수 저장 완료 후 현황을 갱신합니다.");
+    return;
   }
 
 
@@ -6168,7 +6405,7 @@ async function openDashboard(){
   );
 
 
-  // 그 다음부터 60초마다 자동갱신
+  // 그 다음부터 10초마다 자동갱신
   startDashboardAutoRefresh();
 
 }
@@ -6209,7 +6446,7 @@ function closeDashboard(){
 
 
 /* =====================================================
-60초 자동갱신 시작
+10초 자동갱신 시작
 ===================================================== */
 
 function startDashboardAutoRefresh(){
@@ -6222,25 +6459,24 @@ function startDashboardAutoRefresh(){
 
       function(){
 
-        const dashboardPage =
-          document.getElementById(
-            "dashboardPage"
-          );
-
+        const dashboardPage = document.getElementById("dashboardPage");
+        const teamBoardPage = document.getElementById("teamBoardPageV29");
+        const dashboardVisible = dashboardPage && dashboardPage.style.display !== "none";
+        const boardVisible = teamBoardPage && teamBoardPage.style.display !== "none";
 
         if(
-          dashboardPage &&
-          dashboardPage.style.display !==
-          "none" &&
+          (dashboardVisible || boardVisible) &&
           !document.hidden &&
           v249L38WritePending===0 &&
           !entrySubmitting &&
-          !exitSubmitting
+          !exitSubmitting &&
+          !dashboardLoading &&
+          !insideLoading
         ){
 
-          loadDashboard(
-            true
-          );
+          loadDashboard(true).then(function(){
+            if(boardVisible){ drawTeamBoardV29(); }
+          });
 
         }
 
@@ -6254,7 +6490,7 @@ function startDashboardAutoRefresh(){
 
 
 /* =====================================================
-60초 자동갱신 중지
+10초 자동갱신 중지
 ===================================================== */
 
 function stopDashboardAutoRefresh(){
@@ -6302,7 +6538,9 @@ document.addEventListener(
         "none" &&
         v249L38WritePending===0 &&
         !entrySubmitting &&
-        !exitSubmitting
+        !exitSubmitting &&
+        !dashboardLoading &&
+        !insideLoading
       ){
 
         loadDashboard(
@@ -6325,13 +6563,37 @@ isAutoRefresh = true이면
 ===================================================== */
 
 let v218DashboardCache=null,v218DashboardCacheAt=0,v218DashboardCacheSite="";
+/* V2.51-R12 현황 통신 안정화
+   - 같은 현장의 dashboard 요청은 동시에 1개만 전송
+   - 10초 자동갱신/수동갱신이 겹쳐도 기존 요청을 함께 사용
+   - 직전 정상 응답은 아주 짧게 재사용하여 연속 클릭/화면전환 폭주 방지 */
+let v251R12DashboardPromise=null;
+let v251R12DashboardPromiseSite="";
 async function v218FetchDashboard(site,force){
   const now=Date.now();
-  if(!force&&v218DashboardCache&&v218DashboardCacheSite===site&&(now-v218DashboardCacheAt)<2000)return v218DashboardCache;
-  const response=await fetch(API+"?action=dashboard&site="+encodeURIComponent(site)+"&t="+now,{cache:"no-store"});
-  const data=await response.json();
-  if(data&&data.success){v218DashboardCache=data;v218DashboardCacheAt=Date.now();v218DashboardCacheSite=site;}
-  return data;
+  if(v218DashboardCache&&v218DashboardCacheSite===site&&(now-v218DashboardCacheAt)<2500){
+    return v218DashboardCache;
+  }
+  if(v251R12DashboardPromise && v251R12DashboardPromiseSite===site){
+    return v251R12DashboardPromise;
+  }
+  v251R12DashboardPromiseSite=site;
+  v251R12DashboardPromise=(async function(){
+    try{
+      const response=await fetch(API+"?action=dashboard&site="+encodeURIComponent(site)+"&t="+Date.now(),{cache:"no-store"});
+      const data=await response.json();
+      if(data&&data.success){
+        v218DashboardCache=data;
+        v218DashboardCacheAt=Date.now();
+        v218DashboardCacheSite=site;
+      }
+      return data;
+    }finally{
+      v251R12DashboardPromise=null;
+      v251R12DashboardPromiseSite="";
+    }
+  })();
+  return v251R12DashboardPromise;
 }
 
 async function loadDashboard(
@@ -6599,9 +6861,10 @@ async function loadDashboard(
       const now =
         new Date();
 
+      v250UpdateBoardRefreshTime(now);
 
       autoInfo.innerText =
-        "60초 자동갱신 · 마지막 갱신 " +
+        "10초 자동갱신 · 마지막 갱신 " +
         now.toLocaleTimeString(
           "ko-KR",
           {
@@ -6783,18 +7046,27 @@ function v29GroupTeams(list){
   const meta=v23LoadMeta(), groups={};
   (list||[]).forEach(m=>{
     const vm=meta[String(m.memberId)]||{};
-    const team=vm.teamName||"조 미지정";
-    (groups[team]||(groups[team]=[])).push({m,vm});
+    /* 서버(구글시트) 값을 우선 사용하고 localStorage는 예비값으로만 사용 */
+    const team=m.team||vm.teamName||"조 미지정";
+    const row={
+      m:m,
+      team:team,
+      activityNo:Number(m.activityNo||m.entryCount||vm.teamActivityNo||1)||1,
+      direction:m.direction||vm.entryDirection||"미지정",
+      floor:m.floor||vm.activityFloor||"미지정",
+      detail:m.detail||vm.detailLocation||"세부장소 미지정"
+    };
+    (groups[team]||(groups[team]=[])).push(row);
   });
 
   return Object.keys(groups).sort((a,b)=>v28TeamNo(a)-v28TeamNo(b)).map(team=>{
     const g=groups[team];
-    const unique=(key,fallback)=>[...new Set(g.map(x=>String(x.vm[key]||fallback)))];
-    const dirs=unique("entryDirection","미지정");
-    const floors=unique("activityFloor","미지정");
-    const details=unique("detailLocation","세부장소 미지정");
+    const unique=(key)=>[...new Set(g.map(x=>String(x[key]||"")))];
+    const dirs=unique("direction");
+    const floors=unique("floor");
+    const details=unique("detail");
     const maxMin=Math.max(...g.map(x=>Number(x.m.currentMinutes)||0));
-    const actNo=Math.max(...g.map(x=>Number(x.vm.teamActivityNo)||1));
+    const actNo=Math.max(...g.map(x=>Number(x.activityNo)||1));
     return {
       team,
       count:g.length,
@@ -6803,6 +7075,7 @@ function v29GroupTeams(list){
       direction:dirs.length===1?dirs[0]:"위치 분산",
       floor:floors.length===1?floors[0]:"위치 분산",
       detail:details.length===1?details[0]:"위치 분산",
+      isolated:g.some(x=>!!x.m.isolated),
       dispersed:dirs.length>1||floors.length>1||details.length>1
     };
   });
@@ -6843,6 +7116,108 @@ function selectTeamBoardFloorV33(floor){
 }
 
 
+function v250UpdateBoardRefreshTime(now){
+  const el=document.getElementById("v250BoardRefreshInfo");
+  const t=now instanceof Date?now:new Date();
+  if(el)el.textContent="10초 자동갱신 · 마지막 정상갱신 "+t.toLocaleTimeString("ko-KR",{hour:"2-digit",minute:"2-digit",second:"2-digit",hour12:false});
+}
+function v250RenderBoardSummary(members){
+  const sum=document.getElementById("v250BoardLiveSummary"), emergency=document.getElementById("v250BoardEmergency");
+  const list=members||[];
+  const meta=v23LoadMeta(), counts={};
+  let green=0,orange=0,red=0,critical=0;
+  list.forEach(m=>{
+    const vm=meta[String(m.memberId)]||{};
+    const f=m.floor||vm.activityFloor||"미지정";
+    counts[f]=(counts[f]||0)+1;
+    const minutes=Number(m.currentMinutes)||0;
+    if(minutes<=20)green++;
+    else if(minutes<=25)orange++;
+    else if(minutes<=30)red++;
+    else critical++;
+  });
+  const order=["화점층","직상층","직하층","상층","하층","상층부","하층부","지하층","옥상","미지정"];
+  const floorText=order.filter((f,i,a)=>counts[f]&&a.indexOf(f)===i).map(f=>escapeHtml(f)+" "+counts[f]+"명").join(" · ");
+  const uniqueEl=document.getElementById("dashUnique"), exitedEl=document.getElementById("dashExited");
+  const unique=uniqueEl?String(uniqueEl.textContent||"0").replace(/[^0-9]/g,"")||"0":"0";
+  const exited=exitedEl?String(exitedEl.textContent||"0").replace(/[^0-9]/g,"")||"0":"0";
+  const teams=v29GroupTeams(list);
+  const teamText=teams.length?teams.map(t=>'<span class="v250TeamChip '+(t.isolated?'isolated':'')+'">'+(t.isolated?'🚨 ':'')+'<strong>'+escapeHtml(t.team)+'</strong> '+t.count+'명 · '+escapeHtml(t.direction||'미지정')+' · '+escapeHtml(t.floor||'미지정')+' · '+Number(t.minutes||0)+'분</span>').join(''):'<span class="v250TeamChip">활동 중인 조 없음</span>';
+  if(sum)sum.innerHTML=
+    '<div class="v250Metric v250MetricInside"><div class="v250MetricLabel">현재 내부</div><div class="v250MetricValue">'+list.length+'명</div></div>'+ 
+    '<div class="v250Metric"><div class="v250MetricLabel">현장 참여대원</div><div class="v250MetricValue">'+escapeHtml(unique)+'명</div></div>'+ 
+    '<div class="v250Metric v250MetricExited"><div class="v250MetricLabel">철수 완료</div><div class="v250MetricValue">'+escapeHtml(exited)+'명</div></div>'+ 
+    '<div class="v250Metric v250MetricGreen"><div class="v250MetricLabel">🟢 0~20분</div><div class="v250MetricValue">'+green+'명</div></div>'+ 
+    '<div class="v250Metric v250MetricOrange"><div class="v250MetricLabel">🟠 21~25분</div><div class="v250MetricValue">'+orange+'명</div></div>'+ 
+    '<div class="v250Metric v250MetricRed"><div class="v250MetricLabel">🔴 26~30분</div><div class="v250MetricValue">'+red+'명</div></div>'+ 
+    '<div class="v250Metric v250MetricCritical"><div class="v250MetricLabel">🚨 31분 이상</div><div class="v250MetricValue">'+critical+'명</div></div>'+ 
+    '<div class="v250FloorSummary" style="grid-column:1/-1">층별 현재 인원 · '+(floorText||"활동대원 없음")+'</div>'+
+    '<div class="v250TeamSummaryRow"><span class="v250TeamSummaryLabel">조별현황</span><div class="v250TeamSummaryList">'+teamText+'</div></div>';
+  const teamBoard=document.getElementById("v250CommanderTeams");
+  const teamCount=document.getElementById("v250CommanderTeamsCount");
+  if(teamBoard){
+    const gm=new Map();
+    list.forEach(m=>{
+      const team=String(m.team||"조 미지정");
+      const activityNo=Number(m.activityNo||m.entryCount||1)||1;
+      const key=team+"|"+activityNo;
+      if(!gm.has(key))gm.set(key,{team,activityNo,direction:m.direction||"미지정",floor:m.floor||"미지정",detail:m.detail||"세부장소 미지정",entryTime:m.entryTime||"",members:[],maxMinutes:0,isolated:false});
+      const g=gm.get(key);
+      const mins=Number(m.currentMinutes)||v2MinutesBetween(m.entryTime,"")||0;
+      g.maxMinutes=Math.max(g.maxMinutes,mins);
+      g.isolated=g.isolated||!!m.isolated;
+      g.members.push({id:m.memberId,name:m.memberName||m.name||"",mins,isolated:!!m.isolated});
+      if(m.entryTime && (!g.entryTime || String(m.entryTime)<String(g.entryTime)))g.entryTime=m.entryTime;
+      if((!g.detail || g.detail==="세부장소 미지정") && m.detail)g.detail=m.detail;
+    });
+    const groups=[...gm.values()].sort((a,b)=>{
+      const ta=String(a.entryTime||"9999-99-99 99:99:99"), tb=String(b.entryTime||"9999-99-99 99:99:99");
+      const byEntry=ta.localeCompare(tb);
+      if(byEntry!==0)return byEntry;
+      const na=parseInt(String(a.team).match(/\d+/)?.[0]||"999",10), nb=parseInt(String(b.team).match(/\d+/)?.[0]||"999",10);
+      return na-nb || a.activityNo-b.activityNo || String(a.team).localeCompare(String(b.team),"ko");
+    });
+    if(teamCount)teamCount.textContent="현재 활동 "+groups.length+"개조 · "+list.length+"명";
+    if(!groups.length){
+      teamBoard.innerHTML='<div class="v29DetailEmpty" style="grid-column:1/-1">현재 활동 중인 조가 없습니다.</div>';
+    }else{
+      teamBoard.innerHTML=groups.map(g=>{
+        const mins=Number(g.maxMinutes)||0;
+        let cls="normal",icon="🟢",label="정상";
+        if(mins>=31){cls="critical";icon="🚨";label="즉시확인";}
+        else if(mins>=26){cls="warning";icon="🔴";label="경고";}
+        else if(mins>=21){cls="caution";icon="🟠";label="주의";}
+        const cardCls=g.isolated?"isolated":cls;
+        const membersHtml=g.members.map(x=>'<span class="v250CommanderMember '+(x.isolated?'isolated':'')+'">'+(x.isolated?'🚨 ':'')+escapeHtml(getMemberDisplay(x.id,x.name))+' · '+x.mins+'분</span>').join('');
+        return '<div class="v250CommanderTeamCard '+cardCls+'">'+
+          '<div class="v250CommanderTeamTop"><div class="v250CommanderTeamName">'+escapeHtml(g.team)+' <span style="font-size:13px;color:#60758b">'+g.activityNo+'차</span></div><div class="v250CommanderTeamCount">'+g.members.length+'명</div></div>'+
+          '<div class="v250CommanderTeamLoc">📍 '+escapeHtml(g.direction)+' · '+escapeHtml(g.floor)+' · '+escapeHtml(g.detail||"세부장소 미지정")+'</div>'+
+          '<div class="v250CommanderTeamMeta"><span class="v250CommanderTeamBadge '+cls+'">'+icon+' 최장 '+mins+'분 · '+label+'</span>'+(g.isolated?'<span class="v250CommanderTeamBadge isolated">🚨 고립대원 포함</span>':'')+'</div>'+
+          '<div class="v250CommanderMembers">'+membersHtml+'</div>'+
+          '</div>';
+      }).join('');
+    }
+  }
+
+  const iso=list.filter(m=>m.isolated);
+  if(emergency){
+    if(iso.length){emergency.style.display="block"; emergency.innerHTML="🚨 고립대원 "+iso.length+"명 · "+iso.map(m=>escapeHtml(getMemberDisplay(m.memberId,m.memberName))+" / "+escapeHtml(m.floor||"미지정")+" / "+escapeHtml(m.direction||"미지정")).join(" · ");}
+    else {emergency.style.display="none"; emergency.innerHTML="";}
+  }
+}
+
+async function v250ToggleIsolation(memberId,memberName){
+  const boardPage=document.getElementById("teamBoardPageV29");
+  if(boardPage && getComputedStyle(boardPage).display!=="none")return;
+  const m=(window.__dashboardInsideMembers||[]).find(x=>String(x.memberId)===String(memberId)); if(!m)return;
+  const officer=((document.getElementById("officer")||{}).value||"").trim();
+  if(!officer){alert("고립대원 지정/해제를 확인한 지휘관 또는 안전점검관 성명을 입력하세요.");return;}
+  const next=!m.isolated;
+  if(!confirm((memberName||m.memberName||memberId)+" 대원을 "+(next?"고립대원으로 표시":"고립상태 해제")+"하시겠습니까?"))return;
+  const form=new URLSearchParams(); form.set("action","setIsolation"); form.set("siteId",v2SiteId((document.getElementById("site")||{}).value||"")); form.set("memberId",memberId); form.set("isolated",next?"Y":"N"); form.set("officer",officer);
+  try{const d=await v2CallPost(form); if(!d.ok)throw new Error(d.error||d.message||"처리 실패"); await loadDashboard(false); drawTeamBoardV29();}
+  catch(e){alert(e.message||"고립상태 처리 실패");}
+}
 function drawTeamBoardV29(){
   const board=document.getElementById("v29LocationBoard");
   const detail=document.getElementById("v29BoardDetail");
@@ -6853,6 +7228,7 @@ function drawTeamBoardV29(){
   if(!board||!floorPanel||!summary)return;
 
   const members=window.__dashboardInsideMembers||[];
+  v250RenderBoardSummary(members);
   const teams=v29GroupTeams(members);
   const floors=["옥상","상층","직상층","화점층","직하층","하층","지하층"];
   const occupied=floors.filter(f=>v33FloorTeams(teams,f).length);
@@ -6872,7 +7248,7 @@ function drawTeamBoardV29(){
     const here=selected.filter(t=>v29DirectionKey(t.direction)===dir);
     return '<div class="v33Face '+cls+'">'+here.map(t=>{
       const st=v29StayState(t.minutes);
-      return '<div class="v33FaceChip '+v33TeamClass(t.team)+'" onclick="showTeamBoardDetailV29(\''+escapeAttr(t.team)+'\')" title="'+escapeAttr(st.text+' '+t.minutes+'분')+'">'+
+      return '<div class="v33FaceChip '+v33TeamClass(t.team)+(t.isolated?' v250Isolated':'')+'" onclick="showTeamBoardDetailV29(\''+escapeAttr(t.team)+'\')" title="'+escapeAttr(st.text+' '+t.minutes+'분')+'">'+
         escapeHtml(t.team)+' <span>'+Number(t.activityNo)+'차</span>'+
       '</div>';
     }).join("")+'</div>';
@@ -6922,7 +7298,7 @@ function drawTeamBoardV29(){
     const meta=v23LoadMeta();
     const floorMembers=members.filter(m=>{
       const vm=meta[String(m.memberId)]||{};
-      return v29FloorKey(vm.activityFloor)===v33SelectedFloor;
+      return v29FloorKey(m.floor||vm.activityFloor)===v33SelectedFloor;
     });
 
     memberArea.innerHTML=
@@ -6967,22 +7343,23 @@ function drawTeamBoardV29(){
 
         const row=document.createElement("div");
         const stay=getStayStatus(member.currentMinutes);
-        row.className="memberRow "+stay.className;
+        row.className="memberRow "+stay.className+(member.isolated?" v250Isolated":"");
 
         row.innerHTML=
           '<div class="memberDetail">'+
             '<div class="memberLine">'+
-              escapeHtml(getMemberDisplay(member.memberId,member.memberName))+
+              (member.isolated?'🚨 고립대원 · ':'')+escapeHtml(getMemberDisplay(member.memberId,member.memberName))+
             '</div>'+
             '<span class="memberId compactId">'+escapeHtml(member.memberId)+'</span>'+
             (function(){
               const vm=meta[String(member.memberId)]||{};
-              const floor=vm.activityFloor||"미지정";
-              const team=vm.teamName||"미지정";
-              const dir=vm.entryDirection||"미지정";
-              const detailLoc=vm.detailLocation||"세부장소 미지정";
+              const floor=member.floor||vm.activityFloor||"미지정";
+              const team=member.team||vm.teamName||"미지정";
+              const activityNo=Number(member.activityNo||member.entryCount||vm.teamActivityNo||1)||1;
+              const dir=member.direction||vm.entryDirection||"미지정";
+              const detailLoc=member.detail||vm.detailLocation||"세부장소 미지정";
               return '<div class="insideCompactLocation">'+
-                '<span class="insideLocText">'+escapeHtml(team)+(vm.teamActivityNo?' · '+Number(vm.teamActivityNo)+'차':'')+' · '+escapeHtml(dir)+' / </span>'+
+                '<span class="insideLocText">'+escapeHtml(team)+' · '+activityNo+'차 · '+escapeHtml(dir)+' / </span>'+
                 '<span class="floorMini '+v23FloorClass(floor)+'">'+escapeHtml(floor)+'</span>'+
                 '<span class="insideLocText"> / '+escapeHtml(detailLoc)+'</span>'+
               '</div>';
@@ -6994,6 +7371,7 @@ function drawTeamBoardV29(){
           '</div>';
 
         
+        row.addEventListener("click",()=>v250ToggleIsolation(member.memberId,getMemberDisplay(member.memberId,member.memberName)));
         roster.appendChild(row);
       });
     }
@@ -7026,9 +7404,15 @@ function openTeamBoardV29(){
 
   const site=document.getElementById("v29BoardSite");
   const dashSite=document.getElementById("dashboardSiteName");
-  if(site)site.textContent=dashSite?dashSite.textContent:"";
+  if(site)site.textContent="현장 : "+(dashSite?dashSite.textContent:"-");
 
   drawTeamBoardV29();
+  const boardInfo=document.getElementById("v250BoardRefreshInfo");
+  const dashInfo=document.getElementById("dashboardAutoRefreshInfo");
+  if(boardInfo&&dashInfo&&dashInfo.textContent){
+    boardInfo.textContent=dashInfo.textContent.replace("마지막 갱신","마지막 정상갱신");
+  }
+  startDashboardAutoRefresh();
   window.scrollTo({top:0,behavior:"smooth"});
 }
 
@@ -7041,14 +7425,25 @@ function closeTeamBoardV29(){
 }
 
 async function refreshTeamBoardV29(){
-  // 기존 안정화된 현황 조회 함수를 그대로 사용
-  await loadDashboard(false);
-  // loadDashboard가 dashboardPage 표시를 건드리지 않으므로 상태판을 다시 표시
-  const dashboard=document.getElementById("dashboardPage");
-  const board=document.getElementById("teamBoardPageV29");
-  if(dashboard)dashboard.style.display="none";
-  if(board)board.style.display="block";
-  drawTeamBoardV29();
+  const btn=document.querySelector("#teamBoardPageV29 .v29BoardRefresh");
+  const info=document.getElementById("v250BoardRefreshInfo");
+  const oldText=btn?btn.textContent:"";
+  if(btn){btn.disabled=true;btn.classList.add("isLoading");btn.textContent="⏳ 새로고침 중...";}
+  if(info)info.textContent="⏳ 현황 새로고침 중...";
+  try{
+    await loadDashboard(false);
+    const dashboard=document.getElementById("dashboardPage");
+    const board=document.getElementById("teamBoardPageV29");
+    if(dashboard)dashboard.style.display="none";
+    if(board)board.style.display="block";
+    drawTeamBoardV29();
+    v250UpdateBoardRefreshTime(new Date());
+  }catch(e){
+    if(info)info.textContent="⚠️ 새로고침 실패 · 기존 현황 유지";
+    alert((e&&e.message)||"현황 새로고침에 실패했습니다.");
+  }finally{
+    if(btn){btn.disabled=false;btn.classList.remove("isLoading");btn.textContent=oldText||"🔄 새로고침";}
+  }
 }
 
 
@@ -7071,7 +7466,7 @@ function v237AddDashboardTeamDivider(target,team,activityNo,count,locationText){
     '<span class="teamBadgeV19">'+escapeHtml(team)+'</span>'+
     '<span class="teamMetaV19">'+Number(activityNo||1)+'차 활동 · '+Number(count||0)+'명</span>'+
     '<span class="teamLocationV20">'+escapeHtml(locationText||"위치 미지정")+'</span>'+
-    '<button type="button" class="dashboardTeamMoveBtn">📍 조 위치변경</button>';
+    '<button type="button" class="dashboardTeamMoveBtn">🛡️ 조 안전관리</button>';
   const btn=d.querySelector(".dashboardTeamMoveBtn");
   btn.addEventListener("click",function(e){
     e.preventDefault();
@@ -7378,7 +7773,7 @@ function editDashboardMemberLocation(memberId,memberName){
 
   overlay.innerHTML=
     '<div class="dashboardDetailSheet">'+
-      '<div class="sheetHeader"><b>위치정보 수정</b><button type="button" id="v238MemberEditClose" class="sheetClose">×</button></div>'+
+      '<div class="sheetHeader"><b>대원정보 수정</b><button type="button" id="v238MemberEditClose" class="sheetClose">×</button></div>'+
       '<div class="sheetMemberTitle">🟢 '+escapeHtml(getMemberDisplay(memberId,memberName))+'</div>'+
       '<div class="locationEditForm">'+
         '<label>조 편성<select id="editTeam"><option value="">미지정</option>'+
@@ -7991,5 +8386,667 @@ document.addEventListener("focusin",v249L22DetailQuickEdit);
  </div>
 </div>
 
+
+<script>
+/* ===== V2.51-R1 현황 안전관리 ===== */
+const V251_STATUS_OFFICER_KEY='fire_app_status_officer_v251';
+const V251_RECHECK_MINUTES=10;
+
+function v251StatusOfficerValue(required){
+  const el=document.getElementById('v251StatusOfficer');
+  const value=((el&&el.value)||localStorage.getItem(V251_STATUS_OFFICER_KEY)||'').trim();
+  if(required&&!value)alert('현황 확인자 성명을 먼저 입력하세요.');
+  return value;
+}
+function v251RememberStatusOfficer(){
+  const el=document.getElementById('v251StatusOfficer');
+  if(!el)return;
+  const value=(el.value||'').trim();
+  if(value)localStorage.setItem(V251_STATUS_OFFICER_KEY,value);
+  else localStorage.removeItem(V251_STATUS_OFFICER_KEY);
+}
+function v251CurrentSiteId(){
+  const raw=((document.getElementById('site')||{}).value||'');
+  return typeof v2SiteId==='function'?v2SiteId(raw):raw;
+}
+function v251ParseTime(v){
+  if(!v)return NaN;
+  if(v instanceof Date)return v.getTime();
+  const s=String(v).trim();
+  if(!s)return NaN;
+  const t=Date.parse(s.includes('T')?s:s.replace(' ','T'));
+  return t;
+}
+function v251TimeHM(v){
+  const t=v251ParseTime(v); if(!Number.isFinite(t))return '';
+  return new Date(t).toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit',hour12:false});
+}
+function v251MemberSafetyState(m){
+  const mins=Number(m&&m.currentMinutes)||0;
+  if(m&&m.isolated)return {className:'stayCritical',icon:'🚨',text:'고립대원',isolated:true,due:true,confirmed:false};
+  if(mins<=20)return {className:'stayNormal',icon:'🟢',text:'정상',due:false,confirmed:false};
+  if(mins<=25)return {className:'stayCaution',icon:'🟠',text:'주의',due:false,confirmed:false};
+  if(mins<=30)return {className:'stayWarning',icon:'🔴',text:'경고',due:false,confirmed:false};
+  const checked=v251ParseTime(m&&m.safetyCheckedAt);
+  if(Number.isFinite(checked)){
+    const elapsed=Math.max(0,(Date.now()-checked)/60000);
+    if(elapsed<V251_RECHECK_MINUTES){
+      const remain=Math.max(1,Math.ceil(V251_RECHECK_MINUTES-elapsed));
+      return {className:'stayCritical',icon:'🔴',text:'안전확인 완료 '+v251TimeHM(m.safetyCheckedAt)+' · 재확인 '+remain+'분 후',due:false,confirmed:true};
+    }
+    return {className:'stayCritical',icon:'🚨',text:'재확인 필요',due:true,recheck:true,confirmed:false};
+  }
+  return {className:'stayCritical',icon:'🚨',text:'즉시확인',due:true,confirmed:false};
+}
+function v251FindMember(id){return (window.__dashboardInsideMembers||[]).find(m=>String(m.memberId)===String(id));}
+function v251TeamName(m){
+  try{return v19TeamInfo(m).team||m.team||'미지정';}catch(e){return (m&&m.team)||'미지정';}
+}
+function v251NeedOfficer(){const o=v251StatusOfficerValue(true);if(o)v251RememberStatusOfficer();return o;}
+
+const v251BaseCall=(typeof v2CallPost==='function')?v2CallPost:null;
+if(v251BaseCall){
+  window.v2CallPost=async function(form){
+    const action=form&&form.get?String(form.get('action')||''):'';
+    if(['updateLocation','batchUpdateLocation','updateTeam'].includes(action)){
+      const officer=v251NeedOfficer();
+      if(!officer)throw new Error('현황 확인자를 입력하세요.');
+      if(!form.get('officer'))form.set('officer',officer);
+    }
+    return v251BaseCall(form);
+  };
+}
+
+async function v251Post(action,ids,extra){
+  const officer=v251NeedOfficer(); if(!officer)return null;
+  const siteId=v251CurrentSiteId(); if(!siteId){alert('화재현장을 선택하세요.');return null;}
+  const form=new URLSearchParams();
+  form.set('action',action); form.set('siteId',siteId); form.set('officer',officer);
+  form.set('members',JSON.stringify((ids||[]).map(id=>({id:String(id)}))));
+  Object.keys(extra||{}).forEach(k=>form.set(k,extra[k]));
+  try{
+    const d=await (v251BaseCall?v251BaseCall(form):v2CallPost(form));
+    if(!d||(!d.ok&&!d.success))throw new Error((d&&d.error)||(d&&d.message)||'처리 실패');
+    if(typeof closeDashboardMemberDetail==='function')closeDashboardMemberDetail();
+    if(action!=='setIsolationBatch'){
+      await loadDashboard(false);
+    }
+    v251RefreshEnhancements();
+    return d;
+  }catch(e){alert((e&&e.message)||'처리에 실패했습니다.');return null;}
+}
+async function v251SafetyCheckIds(ids){
+  if(!ids||!ids.length){alert('안전확인할 대원을 선택하세요.');return;}
+  if(!confirm(ids.length+'명을 안전확인 완료 처리하시겠습니까?\n10분 후 다시 재확인 대상이 됩니다.'))return;
+  await v251Post('setSafetyCheck',ids,{});
+}
+async function v251IsolationIds(ids,isolated,label){
+  if(!ids||!ids.length)return;
+  if(!confirm((label||ids.length+'명')+'을 '+(isolated?'고립대원으로 지정':'고립상태 해제')+'하시겠습니까?'))return;
+
+  const wanted=new Set((ids||[]).map(v=>String(v)));
+  const list=window.__dashboardInsideMembers||[];
+  const prev=[];
+  list.forEach(m=>{
+    if(!wanted.has(String(m.memberId)))return;
+    prev.push({m:m,isolated:!!m.isolated,isolatedAt:m.isolatedAt||'',isolatedOfficer:m.isolatedOfficer||''});
+    m.isolated=!!isolated;
+    if(isolated){
+      m.isolatedAt=new Date().toISOString();
+      m.isolatedOfficer=v251GetOfficer? v251GetOfficer() : (document.getElementById('v251StatusOfficer')||{}).value||'';
+    }else{
+      m.isolatedAt='';
+    }
+  });
+
+  v251RefreshEnhancements();
+  const d=await v251Post('setIsolationBatch',ids,{isolated:isolated?'Y':'N'});
+  if(!d){
+    prev.forEach(x=>{x.m.isolated=x.isolated;x.m.isolatedAt=x.isolatedAt;x.m.isolatedOfficer=x.isolatedOfficer;});
+    v251RefreshEnhancements();
+  }
+}
+function v251SelectAllSafety(){
+  const boxes=[...document.querySelectorAll('#v251SafetyTargets .v251SafetyCheck:not(:disabled)')];
+  const all=boxes.length&&boxes.every(x=>x.checked); boxes.forEach(x=>x.checked=!all);
+}
+function v251BatchConfirmSelected(){
+  const ids=[...document.querySelectorAll('#v251SafetyTargets .v251SafetyCheck:checked')].map(x=>x.dataset.id);
+  v251SafetyCheckIds(ids);
+}
+function v251RenderSafetyTargets(){
+  const box=document.getElementById('v251SafetyTargets'); if(!box)return;
+  const list=(window.__dashboardInsideMembers||[]).filter(m=>Number(m.currentMinutes)>=31);
+  if(!list.length){box.innerHTML='<div class="v251NoTargets">✅ 현재 31분 이상 안전확인 대상이 없습니다.</div>';return;}
+  list.sort((a,b)=>Number(b.currentMinutes||0)-Number(a.currentMinutes||0));
+  const rows=list.map(m=>{
+    const st=v251MemberSafetyState(m), id=String(m.memberId||''), team=v251TeamName(m);
+    const disabled=st.confirmed&&!st.isolated?' disabled':'';
+    const meta=escapeHtml(team+' · '+(m.direction||'미지정')+' · '+(m.floor||'미지정')+' · '+Number(m.currentMinutes||0)+'분');
+    return '<div class="v251SafetyItem"><input type="checkbox" class="v251SafetyCheck" data-id="'+escapeAttr(id)+'"'+disabled+'><div><div class="v251SafetyName">'+escapeHtml(getMemberDisplay(m.memberId,m.memberName||m.name||''))+'</div><div class="v251SafetyMeta">'+meta+'</div></div><div class="v251SafetyState '+(st.confirmed?'confirmed':'')+'">'+escapeHtml(st.text)+'</div></div>';
+  }).join('');
+  const due=list.filter(m=>v251MemberSafetyState(m).due&&!m.isolated).length;
+  box.innerHTML='<div class="v251SafetyBox"><div class="v251SafetyHead"><strong>🚨 안전확인 대상 '+list.length+'명</strong><button type="button" class="v251SafetySelectAll" onclick="v251SelectAllSafety()">전체선택</button></div><div class="v251SafetyList">'+rows+'</div><div class="v251SafetyActions"><button type="button" class="v251SafetySelectAll" onclick="v251SelectAllSafety()">선택 전환</button><button type="button" class="v251BatchConfirm" onclick="v251BatchConfirmSelected()">✅ 선택 대원 안전확인 완료</button></div></div>';
+}
+function v251ApplyMemberRows(){
+  ['dashboardInside','v34FloorMembers'].forEach(rootId=>{
+    const root=document.getElementById(rootId); if(!root)return;
+    root.querySelectorAll('.memberRow').forEach(row=>{
+      const idEl=row.querySelector('.compactId'); if(!idEl)return;
+      const m=v251FindMember(idEl.textContent.trim()); if(!m)return;
+      const st=v251MemberSafetyState(m);
+      row.classList.remove('stayNormal','stayCaution','stayWarning','stayCritical','v250Isolated','v251SafetyConfirmed','v251NeedsCheck','v251IsolationBlink');
+      row.classList.add(st.className);
+      if(st.confirmed)row.classList.add('v251SafetyConfirmed');
+      if(st.due&&!st.isolated)row.classList.add('v251NeedsCheck');
+      if(st.isolated)row.classList.add('v250Isolated','v251IsolationBlink');
+      const status=row.querySelector('.insideStatus');
+      if(status){
+        status.className='insideStatus '+st.className+(st.confirmed?' v251SafetyConfirmed':'')+(st.due&&!st.isolated?' v251NeedsCheck':'');
+        status.textContent=st.icon+' '+st.text;
+      }
+    });
+  });
+}
+function v251UpdateCriticalSummary(){
+  const box=document.getElementById('criticalSummary'); if(!box)return;
+  const over=(window.__dashboardInsideMembers||[]).filter(m=>Number(m.currentMinutes)>=31);
+  const due=over.filter(m=>v251MemberSafetyState(m).due).length;
+  box.classList.remove('v251StableCritical');
+  if(due>0){box.classList.add('hasCritical');box.textContent='⚠️ 안전확인 필요 '+due+'명 · 확인 후 10분 재확인';}
+  else if(over.length){box.classList.remove('hasCritical');box.classList.add('v251StableCritical');box.textContent='🔴 31분 이상 '+over.length+'명 · 안전확인 완료';}
+  else{box.classList.remove('hasCritical');box.textContent='✅ 31분 이상 즉시 확인 대상 0명';}
+}
+function v251ApplyCommanderCards(){
+  const members=window.__dashboardInsideMembers||[];
+  document.querySelectorAll('#v250CommanderTeams .v250CommanderTeamCard').forEach(card=>{
+    const nameEl=card.querySelector('.v250CommanderTeamName'); if(!nameEl)return;
+    const txt=nameEl.textContent.trim();
+    const teams=[...new Set(members.map(v251TeamName))].sort((a,b)=>b.length-a.length);
+    const team=teams.find(t=>txt.indexOf(t)===0); if(!team)return;
+    const group=members.filter(m=>v251TeamName(m)===team);
+    const states=group.map(v251MemberSafetyState);
+    const isolated=states.some(x=>x.isolated), due=states.some(x=>x.due&&!x.isolated), confirmed=group.some(m=>Number(m.currentMinutes)>=31)&&!due&&!isolated;
+    card.classList.remove('v251NeedsCheck','v251SafetyConfirmed','v251IsolationBlink');
+    if(isolated)card.classList.add('v251IsolationBlink'); else if(due)card.classList.add('v251NeedsCheck'); else if(confirmed)card.classList.add('v251SafetyConfirmed');
+    const badge=card.querySelector('.v250CommanderTeamBadge:not(.isolated)');
+    if(badge){
+      if(isolated)badge.textContent='🚨 고립대원 포함';
+      else if(due){const re=states.some(x=>x.recheck);badge.textContent='🚨 '+(re?'재확인 필요':'즉시확인');}
+      else if(confirmed){const last=group.filter(m=>m.safetyCheckedAt).sort((a,b)=>v251ParseTime(b.safetyCheckedAt)-v251ParseTime(a.safetyCheckedAt))[0];badge.textContent='🔴 안전확인 완료 '+(last?v251TimeHM(last.safetyCheckedAt):'');}
+    }
+  });
+  document.querySelectorAll('#v29LocationBoard .v33FaceChip').forEach(chip=>{
+    const text=chip.textContent.trim();
+    const teams=[...new Set(members.map(v251TeamName))].sort((a,b)=>b.length-a.length);
+    const team=teams.find(t=>text.indexOf(t)===0); if(!team)return;
+    const group=members.filter(m=>v251TeamName(m)===team), states=group.map(v251MemberSafetyState);
+    chip.classList.remove('v251NeedsCheck','v251SafetyConfirmed','v251IsolationBlink');
+    if(states.some(x=>x.isolated))chip.classList.add('v251IsolationBlink');
+    else if(states.some(x=>x.due))chip.classList.add('v251NeedsCheck');
+    else if(group.some(m=>Number(m.currentMinutes)>=31))chip.classList.add('v251SafetyConfirmed');
+  });
+}
+function v251RefreshEnhancements(){v251RenderSafetyTargets();v251ApplyMemberRows();v251UpdateCriticalSummary();v251ApplyCommanderCards();}
+
+const v251OriginalMemberDetail=(typeof openDashboardMemberDetail==='function')?openDashboardMemberDetail:null;
+if(v251OriginalMemberDetail){
+  window.openDashboardMemberDetail=function(memberId,memberName){
+    v251OriginalMemberDetail(memberId,memberName);
+    const m=v251FindMember(memberId); if(!m)return;
+    const actions=document.querySelector('#dashboardDetailOverlay .sheetActions'); if(!actions)return;
+    const edit=actions.querySelector('#v238MemberEditBtn'); if(edit)edit.textContent='📍 개별 위치변경';
+    if(!document.getElementById('v251MemberSafetyBtn')){
+      const safe=document.createElement('button'); safe.type='button'; safe.id='v251MemberSafetyBtn'; safe.className='v251SafetyBtn'; safe.textContent='✅ 개별 안전확인';
+      safe.onclick=()=>v251SafetyCheckIds([memberId]); actions.insertBefore(safe,actions.lastElementChild);
+      const iso=document.createElement('button'); iso.type='button'; iso.id='v251MemberIsolationBtn'; iso.className=m.isolated?'v251IsolationReleaseBtn':'v251IsolationBtn'; iso.textContent=m.isolated?'✅ 고립상태 해제':'🚨 개별 고립지정';
+      iso.onclick=()=>v251IsolationIds([memberId],!m.isolated,getMemberDisplay(m.memberId,m.memberName||m.name||'')); actions.insertBefore(iso,actions.lastElementChild);
+    }
+  };
+}
+function v251EnsureOverlay(){
+  let overlay=document.getElementById('dashboardDetailOverlay');
+  if(!overlay){overlay=document.createElement('div');overlay.id='dashboardDetailOverlay';overlay.className='dashboardDetailOverlay';document.body.appendChild(overlay);}
+  return overlay;
+}
+const v251OriginalTeamLocationEdit=(typeof openDashboardTeamLocationEdit==='function')?openDashboardTeamLocationEdit:null;
+if(v251OriginalTeamLocationEdit){
+  window.openDashboardTeamLocationEdit=function(team){
+    const members=(window.__dashboardInsideMembers||[]).filter(m=>v251TeamName(m)===team);
+    if(!members.length){alert('해당 조의 현재 활동대원을 찾지 못했습니다.');return;}
+    const first=members[0], allIsolated=members.every(m=>m.isolated);
+    const overlay=v251EnsureOverlay();
+    overlay.innerHTML='<div class="dashboardDetailSheet"><div class="sheetHeader"><b>🛡️ '+escapeHtml(team)+' · 조·대원 안전관리</b><button type="button" id="v251TeamManageClose" class="sheetClose">×</button></div><div class="v237TeamMoveTitle">'+escapeHtml(team)+' · '+members.length+'명</div><div class="v237TeamMoveSub">'+escapeHtml((first.direction||'미지정')+' · '+(first.floor||'미지정')+' · '+(first.detail||'세부장소 미지정'))+'</div><div class="v251ManageActions"><button type="button" id="v251TeamMove" class="sheetEdit">📍 조 위치변경</button><button type="button" id="v251TeamSafety" class="v251SafetyBtn">✅ 조 전체 안전확인</button><button type="button" id="v251TeamIsolation" class="'+(allIsolated?'v251IsolationReleaseBtn':'v251IsolationBtn')+'">'+(allIsolated?'✅ 조 전체 고립해제':'🚨 조 전체 고립지정')+'</button><button type="button" id="v251TeamClose" class="v237CloseBtn">닫기</button></div></div>';
+    overlay.classList.add('show');
+    const close=()=>overlay.classList.remove('show');
+    document.getElementById('v251TeamManageClose').onclick=close; document.getElementById('v251TeamClose').onclick=close;
+    document.getElementById('v251TeamMove').onclick=()=>{if(!v251NeedOfficer())return;close();v251OriginalTeamLocationEdit(team);};
+    document.getElementById('v251TeamSafety').onclick=()=>v251SafetyCheckIds(members.map(m=>m.memberId));
+    document.getElementById('v251TeamIsolation').onclick=()=>v251IsolationIds(members.map(m=>m.memberId),!allIsolated,team+' '+members.length+'명');
+  };
+}
+
+function v251Init(){
+  const el=document.getElementById('v251StatusOfficer');
+  if(el){el.value=localStorage.getItem(V251_STATUS_OFFICER_KEY)||'';el.addEventListener('input',v251RememberStatusOfficer);}
+  v251RefreshEnhancements();
+}
+document.addEventListener('DOMContentLoaded',()=>setTimeout(v251Init,0));
+if(typeof loadDashboard==='function'){
+  const v251OriginalLoadDashboard=loadDashboard;
+  window.loadDashboard=async function(){const r=await v251OriginalLoadDashboard.apply(this,arguments);setTimeout(v251RefreshEnhancements,0);return r;};
+}
+if(typeof drawDashboardInside==='function'){
+  const v251OriginalDrawDashboardInside=drawDashboardInside;
+  window.drawDashboardInside=function(list){const r=v251OriginalDrawDashboardInside.apply(this,arguments);setTimeout(v251RefreshEnhancements,0);return r;};
+}
+if(typeof drawTeamBoardV29==='function'){
+  const v251OriginalDrawTeamBoard=drawTeamBoardV29;
+  window.drawTeamBoardV29=function(){const r=v251OriginalDrawTeamBoard.apply(this,arguments);setTimeout(v251RefreshEnhancements,0);return r;};
+}
+setInterval(v251RefreshEnhancements,30000);
+</script>
+
+<!-- V2.51-R5 SAFETY-MANAGEMENT UI -->
+<script>
+(function(){
+  function r4Esc(v){return typeof escapeHtml==='function'?escapeHtml(String(v??'')):String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+  function r4Attr(v){return typeof escapeAttr==='function'?escapeAttr(String(v??'')):r4Esc(v);}
+  function r4Overlay(){return typeof v251EnsureOverlay==='function'?v251EnsureOverlay():document.getElementById('dashboardDetailOverlay');}
+  function r4Officer(){return typeof v251NeedOfficer==='function'?v251NeedOfficer():((document.getElementById('v251StatusOfficer')||{}).value||'').trim();}
+  function r4Site(){return typeof v251CurrentSiteId==='function'?v251CurrentSiteId():'';}
+  function r4Status(text,type,autoHide){
+    let el=document.getElementById('v251R4ApplyStatus');
+    if(!el){el=document.createElement('div');el.id='v251R4ApplyStatus';el.className='v251R4ApplyStatus';document.body.appendChild(el);}
+    el.className='v251R4ApplyStatus '+(type||'busy');el.textContent=text||'';
+    clearTimeout(window.__v251R4StatusTimer);
+    if(autoHide)window.__v251R4StatusTimer=setTimeout(()=>{el.style.display='none';el.className='v251R4ApplyStatus';},autoHide);
+    else el.style.display='block';
+  }
+  async function r4Post(action,ids,extra,btn){
+    const officer=r4Officer(); if(!officer)return null;
+    const siteId=r4Site(); if(!siteId){alert('화재현장을 선택하세요.');return null;}
+    const form=new URLSearchParams();
+    form.set('action',action);form.set('siteId',siteId);form.set('officer',officer);
+    form.set('members',JSON.stringify((ids||[]).map(id=>({id:String(id)}))));
+    Object.keys(extra||{}).forEach(k=>form.set(k,extra[k]));
+    const oldText=btn?btn.textContent:'';
+    if(btn){btn.disabled=true;btn.textContent='⏳ 반영중...';}
+    r4Status('⏳ 반영중...','busy');
+    try{
+      const call=(window.v2CallPost||((typeof v2CallPost==='function')?v2CallPost:null));
+      if(!call)throw new Error('서버 호출 함수를 찾을 수 없습니다.');
+      const d=await call(form);
+      if(!d||(!d.ok&&!d.success))throw new Error((d&&d.error)||(d&&d.message)||'처리 실패');
+      if(btn)btn.textContent='✅ 반영완료';
+      r4Status('✅ 반영완료','done',1300);
+      await loadDashboard(false);
+      if(typeof v251RefreshEnhancements==='function')v251RefreshEnhancements();
+      return d;
+    }catch(e){
+      r4Status('❌ 반영 실패','error',2200);
+      alert((e&&e.message)||'반영에 실패했습니다.');
+      return null;
+    }finally{
+      if(btn){setTimeout(()=>{btn.disabled=false;btn.textContent=oldText;},700);}
+    }
+  }
+  window.v251R4Post=r4Post;
+
+  function commonVal(members,key){
+    const vals=[...new Set(members.map(m=>String((m&&m[key])||'')))];
+    return vals.length===1?vals[0]:'';
+  }
+  function teamInfo(m){try{return v19TeamInfo(m);}catch(e){return {team:m.team||'',activityNo:m.activityNo||m.entryCount||1,direction:m.direction||'',floor:m.floor||'',detail:m.detail||''};}}
+
+  window.v251R4OpenTeamSafety=function(team){
+    const members=(window.__dashboardInsideMembers||[]).filter(m=>(typeof v251TeamName==='function'?v251TeamName(m):teamInfo(m).team)===team);
+    if(!members.length){alert('해당 조의 현재 활동대원을 찾지 못했습니다.');return;}
+    if(!r4Officer())return;
+    const infos=members.map(teamInfo);
+    const dir=[...new Set(infos.map(x=>String(x.direction||'')))];
+    const floor=[...new Set(infos.map(x=>String(x.floor||'')))];
+    const detail=[...new Set(infos.map(x=>String(x.detail||'')))];
+    const curDir=dir.length===1?dir[0]:'';
+    const curFloor=floor.length===1?floor[0]:'';
+    const curDetail=detail.length===1?detail[0]:'';
+    const activityNo=Math.max(...infos.map(x=>Number(x.activityNo)||1));
+    const isoCount=members.filter(m=>m.isolated).length;
+    const floors=['','옥상','상층','직상층','화점층','직하층','하층','지하층'];
+    const ov=r4Overlay(); if(!ov)return;
+    ov.innerHTML='<div class="dashboardDetailSheet">'+
+      '<div class="sheetHeader"><b>🛡️ '+r4Esc(team)+' · 조 안전관리</b><button type="button" id="r4TeamClose" class="sheetClose">×</button></div>'+ 
+      '<div class="v237TeamMoveTitle">'+r4Esc(team)+' 전체 · '+members.length+'명</div>'+ 
+      '<div class="v251R4CurrentState">현재 고립 '+isoCount+'명 · 위치와 고립상태를 한 번에 반영합니다.</div>'+ 
+      '<div class="locationEditForm">'+
+        '<label>방면<select id="r4TeamDirection"><option value="">현재 위치 유지</option>'+['A방면','B방면','C방면','D방면'].map(v=>'<option value="'+v+'" '+(v===curDir?'selected':'')+'>'+v+'</option>').join('')+'</select></label>'+ 
+        '<label>활동층<select id="r4TeamFloor">'+floors.map(v=>'<option value="'+r4Attr(v)+'" '+(v===curFloor?'selected':'')+'>'+(v||'현재 위치 유지')+'</option>').join('')+'</select></label>'+ 
+        '<label>세부장소<input id="r4TeamDetail" value="'+r4Attr(curDetail)+'" placeholder="예: 기계실 / 1203호 / 계단실"></label>'+ 
+        '<div class="v251R4IsoBox"><label>고립상태</label><select id="r4TeamIsolation"><option value="KEEP">변경없음</option><option value="Y">🚨 조 전체 고립지정</option><option value="N">✅ 조 전체 고립해제</option></select></div>'+ 
+      '</div>'+ 
+      '<div class="v251R4FormNote">위치만 바꾸거나, 고립상태만 바꾸거나, 둘을 동시에 변경할 수 있습니다.</div>'+ 
+      '<button type="button" id="r4TeamSave" class="sheetSave v251R4Save">조 안전관리 반영</button>'+ 
+      '</div>';
+    ov.classList.add('show');
+    document.getElementById('r4TeamClose').onclick=()=>ov.classList.remove('show');
+    document.getElementById('r4TeamSave').onclick=async function(){
+      const extra={team:team,activityNo:String(activityNo),direction:document.getElementById('r4TeamDirection').value,floor:document.getElementById('r4TeamFloor').value,detail:document.getElementById('r4TeamDetail').value,isolationMode:document.getElementById('r4TeamIsolation').value};
+      const d=await r4Post('updateSafetyManagement',members.map(m=>m.memberId),extra,this);
+      if(d)setTimeout(()=>ov.classList.remove('show'),350);
+    };
+  };
+
+  window.v251R4OpenMemberSafety=function(memberId,memberName){
+    const m=(typeof v251FindMember==='function'?v251FindMember(memberId):(window.__dashboardInsideMembers||[]).find(x=>String(x.memberId)===String(memberId)));
+    if(!m){alert('현재 활동대원을 찾지 못했습니다.');return;}
+    if(!r4Officer())return;
+    const info=teamInfo(m), meta=(typeof v23LoadMeta==='function'?v23LoadMeta():{}), old=meta[String(memberId)]||{};
+    const team=old.teamName||info.team||'';
+    const dir=old.entryDirection||info.direction||'';
+    const floor=old.activityFloor||info.floor||'';
+    const detail=old.detailLocation||info.detail||'';
+    const activityNo=Number(old.teamActivityNo||info.activityNo||m.entryCount||1)||1;
+    const teams=[...new Set((window.__dashboardInsideMembers||[]).map(x=>{try{return v19TeamInfo(x).team}catch(e){return x.team||''}}).filter(Boolean))];
+    if(team&&!teams.includes(team))teams.push(team);
+    teams.sort((a,b)=>{try{return v19TeamNumber(a)-v19TeamNumber(b)}catch(e){return String(a).localeCompare(String(b))}});
+    const floors=['','옥상','상층','직상층','화점층','직하층','하층','지하층'];
+    const ov=r4Overlay(); if(!ov)return;
+    ov.innerHTML='<div class="dashboardDetailSheet">'+
+      '<div class="sheetHeader"><b>🛡️ 대원정보 수정</b><button type="button" id="r4MemberClose" class="sheetClose">×</button></div>'+ 
+      '<div class="sheetMemberTitle">'+r4Esc(typeof getMemberDisplay==='function'?getMemberDisplay(memberId,memberName):memberName||memberId)+'</div>'+ 
+      '<div class="v251R4CurrentState">현재 상태: '+(m.isolated?'🚨 고립대원':'정상')+' · 위치와 고립상태를 한 번에 반영합니다.</div>'+ 
+      '<div class="locationEditForm">'+
+        '<label>조 편성<select id="r4MemberTeam"><option value="">현재 조 유지</option>'+teams.map(v=>'<option value="'+r4Attr(v)+'" '+(v===team?'selected':'')+'>'+r4Esc(v)+'</option>').join('')+'</select></label>'+ 
+        '<label>진입방면<select id="r4MemberDirection"><option value="">현재 위치 유지</option>'+['A방면','B방면','C방면','D방면'].map(v=>'<option value="'+v+'" '+(v===dir?'selected':'')+'>'+v+'</option>').join('')+'</select></label>'+ 
+        '<label>활동층<select id="r4MemberFloor">'+floors.map(v=>'<option value="'+r4Attr(v)+'" '+(v===floor?'selected':'')+'>'+(v||'현재 위치 유지')+'</option>').join('')+'</select></label>'+ 
+        '<label>세부장소<input id="r4MemberDetail" value="'+r4Attr(detail)+'" placeholder="예: 기계실 / 1203호 / 계단실"></label>'+ 
+        '<div class="v251R4IsoBox"><label>고립상태</label><select id="r4MemberIsolation"><option value="KEEP">변경없음</option><option value="Y">🚨 고립대원 지정</option><option value="N">✅ 고립상태 해제</option></select></div>'+ 
+      '</div>'+ 
+      '<div class="v251R4FormNote">위치와 고립상태를 한 번의 반영으로 저장합니다.</div>'+ 
+      '<button type="button" id="r4MemberSave" class="sheetSave v251R4Save">개별 안전관리 반영</button>'+ 
+      '</div>';
+    ov.classList.add('show');
+    document.getElementById('r4MemberClose').onclick=()=>ov.classList.remove('show');
+    document.getElementById('r4MemberSave').onclick=async function(){
+      const extra={team:document.getElementById('r4MemberTeam').value,activityNo:String(activityNo),direction:document.getElementById('r4MemberDirection').value,floor:document.getElementById('r4MemberFloor').value,detail:document.getElementById('r4MemberDetail').value,isolationMode:document.getElementById('r4MemberIsolation').value};
+      const d=await r4Post('updateSafetyManagement',[memberId],extra,this);
+      if(d)setTimeout(()=>ov.classList.remove('show'),350);
+    };
+  };
+
+  // 조 카드: 조 안전관리 + 조 전체 안전확인. 고립은 조 안전관리 안으로 통합
+  window.openDashboardTeamLocationEdit=function(team){
+    const members=(window.__dashboardInsideMembers||[]).filter(m=>(typeof v251TeamName==='function'?v251TeamName(m):teamInfo(m).team)===team);
+    if(!members.length){alert('해당 조의 현재 활동대원을 찾지 못했습니다.');return;}
+    const ov=r4Overlay(); if(!ov)return;
+    const first=teamInfo(members[0]);
+    ov.innerHTML='<div class="dashboardDetailSheet"><div class="sheetHeader"><b>🛡️ '+r4Esc(team)+' · 조·대원 안전관리</b><button type="button" id="r4TeamMenuClose" class="sheetClose">×</button></div>'+ 
+      '<div class="v237TeamMoveTitle">'+r4Esc(team)+' · '+members.length+'명</div>'+ 
+      '<div class="v237TeamMoveSub">'+r4Esc((first.direction||'미지정')+' · '+(first.floor||'미지정')+' · '+(first.detail||'세부장소 미지정'))+'</div>'+ 
+      '<div class="v251ManageActions"><button type="button" id="r4TeamManage" class="sheetEdit">🛡️ 조 안전관리</button><button type="button" id="r4TeamSafety" class="v251SafetyBtn">✅ 조 전체 안전확인</button><button type="button" id="r4TeamMenuDone" class="v237CloseBtn">닫기</button></div></div>';
+    ov.classList.add('show');
+    const close=()=>ov.classList.remove('show');
+    document.getElementById('r4TeamMenuClose').onclick=close;document.getElementById('r4TeamMenuDone').onclick=close;
+    document.getElementById('r4TeamManage').onclick=()=>v251R4OpenTeamSafety(team);
+    document.getElementById('r4TeamSafety').onclick=()=>{if(typeof v251SafetyCheckIds==='function')v251SafetyCheckIds(members.map(m=>m.memberId));};
+  };
+
+  // 개별 상세: 개별 안전관리 + 개별 안전확인. 별도 고립 버튼은 제거
+  const prevDetail=window.openDashboardMemberDetail;
+  if(typeof prevDetail==='function'){
+    window.openDashboardMemberDetail=function(memberId,memberName){
+      prevDetail(memberId,memberName);
+      const actions=document.querySelector('#dashboardDetailOverlay .sheetActions');if(!actions)return;
+      const edit=actions.querySelector('#v238MemberEditBtn');
+      if(edit){edit.textContent='🛡️ 개별 안전관리';edit.onclick=function(ev){if(ev)ev.preventDefault();v251R4OpenMemberSafety(memberId,memberName);};}
+      const iso=document.getElementById('v251MemberIsolationBtn');if(iso)iso.remove();
+      const safe=document.getElementById('v251MemberSafetyBtn');if(safe)safe.textContent='✅ 개별 안전확인';
+    };
+  }
+
+  // 혹시 남아있는 고립 단독 호출도 반영중 표시 + R4 최적화 서버 action 사용
+  window.v251IsolationIds=async function(ids,isolated,label){
+    if(!ids||!ids.length)return;
+    if(!confirm((label||ids.length+'명')+'을 '+(isolated?'고립대원으로 지정':'고립상태 해제')+'하시겠습니까?'))return;
+    const d=await r4Post('setIsolationBatch',ids,{isolated:isolated?'Y':'N'},null);
+    return d;
+  };
+})();
+</script>
+
+<!-- V2.51-R5 COMMANDER CLEANUP -->
+<script>
+(function(){
+  function esc(v){return typeof escapeHtml==='function'?escapeHtml(String(v??'')):String(v??'').replace(/[&<>"']/g,function(m){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m];});}
+
+  function ensureSafetyAlert(){
+    let el=document.getElementById('v251R5SafetyAlert');
+    if(el)return el;
+    const officer=document.querySelector('.v251OfficerBox');
+    if(!officer||!officer.parentNode)return null;
+    el=document.createElement('div');
+    el.id='v251R5SafetyAlert';
+    el.className='v251R5SafetyAlert';
+    officer.parentNode.insertBefore(el,officer);
+    return el;
+  }
+
+  function renderSafetyAlert(){
+    const el=ensureSafetyAlert(); if(!el)return;
+    const list=window.__dashboardInsideMembers||[];
+    const over=list.filter(function(m){return Number(m.currentMinutes)>=31;});
+    const due=over.filter(function(m){try{return !!v251MemberSafetyState(m).due;}catch(e){return true;}});
+    el.className='v251R5SafetyAlert';
+    if(due.length){
+      el.classList.add('due');
+      el.textContent='🚨 31분 이상 즉시 확인 대상 '+due.length+'명';
+    }else if(over.length){
+      el.classList.add('confirmed');
+      el.textContent='🔴 31분 이상 '+over.length+'명 · 안전확인 완료';
+    }else{
+      el.textContent='✅ 31분 이상 즉시 확인 대상 0명';
+    }
+  }
+
+  function renderIsolationPanel(members){
+    const emergency=document.getElementById('v250BoardEmergency'); if(!emergency)return;
+    const iso=(members||window.__dashboardInsideMembers||[]).filter(function(m){return !!m.isolated;});
+    if(!iso.length){
+      emergency.className='';
+      emergency.style.display='none';
+      emergency.innerHTML='';
+      return;
+    }
+    emergency.className='v251R5IsolationPanel';
+    emergency.style.display='block';
+    const items=iso.map(function(m){
+      const display=(typeof getMemberDisplay==='function'?getMemberDisplay(m.memberId,m.memberName):m.memberName)||m.memberId||'';
+      const parts=String(display).split(' / ');
+      const name=parts.shift()||display;
+      const org=parts.join(' / ');
+      const floor=m.floor||'미지정';
+      const dir=m.direction||'미지정';
+      const meta=[org,floor,dir].filter(Boolean).join(' · ');
+      return '<div class="v251R5IsolationItem"><div class="v251R5IsolationName">🚨 '+esc(name)+'</div><div class="v251R5IsolationMeta">'+esc(meta)+'</div></div>';
+    }).join('');
+    emergency.innerHTML='<div class="v251R5IsolationHead"><div class="v251R5IsolationTitle">고립대원 현황</div><div class="v251R5IsolationCount">🚨 '+iso.length+'명</div></div><div class="v251R5IsolationGrid">'+items+'</div>';
+  }
+
+  if(typeof window.v251UpdateCriticalSummary==='function'){
+    const baseCritical=window.v251UpdateCriticalSummary;
+    window.v251UpdateCriticalSummary=function(){
+      const r=baseCritical.apply(this,arguments);
+      renderSafetyAlert();
+      return r;
+    };
+  }
+
+  if(typeof window.v250RenderBoardSummary==='function'){
+    const baseBoard=window.v250RenderBoardSummary;
+    window.v250RenderBoardSummary=function(members){
+      const r=baseBoard.apply(this,arguments);
+      renderIsolationPanel(members);
+      return r;
+    };
+  }
+
+  document.addEventListener('DOMContentLoaded',function(){setTimeout(function(){renderSafetyAlert();renderIsolationPanel(window.__dashboardInsideMembers||[]);},300);});
+  setInterval(function(){renderSafetyAlert();},10000);
+})();
+</script>
+
+<!-- V2.51-R6 isolation summary -->
+
+<style id="v251r6-style">
+/* ===== V2.51-R6 고립대원 요약표시 정리 ===== */
+#v251R5SafetyAlert{display:none!important}
+.v251R6IsolationAlert{
+  margin:10px 0 0;padding:14px;border-radius:10px;text-align:center;
+  font-size:18px;font-weight:950;line-height:1.35;border:2px solid #188038;
+  background:#eef9f1;color:#137333;
+}
+.v251R6IsolationAlert.hasIsolation{
+  border-color:#8b0000;background:#d93025;color:#fff;animation:dangerBlink 1s infinite;
+}
+#teamBoardPageV29 .v250CommanderTeamCard.v251IsolationBlink,
+#teamBoardPageV29 .v33FaceChip.v251IsolationBlink{
+  animation:none!important;
+}
+#teamBoardPageV29 .v250CommanderTeamCard.v251IsolationBlink{
+  border-left-color:#8b0000!important;background:#fff4f4!important;
+}
+#teamBoardPageV29 .v33FaceChip.v251IsolationBlink{
+  outline:3px solid #b42318!important;background:#fff0f0!important;color:#b42318!important;
+}
+#v250BoardEmergency.v251R6IsolationPanel{
+  display:block!important;width:100%;box-sizing:border-box;margin-top:10px!important;
+  padding:0!important;border:0!important;background:transparent!important;color:inherit!important;
+}
+.v251R6IsolationHead{
+  padding:13px 14px;border-radius:11px;background:#d93025;color:#fff;
+  font-size:20px;font-weight:950;text-align:center;animation:dangerBlink 1s infinite;
+}
+.v251R6IsolationList{
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:8px;
+}
+.v251R6IsolationPerson{
+  padding:10px 12px;border:1px solid #e5b2b2;border-left:5px solid #b42318;border-radius:10px;
+  background:#fff7f7;color:#263445;line-height:1.45;
+}
+.v251R6IsolationName{font-size:15px;font-weight:950;color:#8b0000}
+.v251R6IsolationLoc{margin-top:3px;font-size:13px;font-weight:800;color:#5d4b4b}
+@media(max-width:760px){.v251R6IsolationList{grid-template-columns:1fr}}
+</style>
+<script>
+(function(){
+  function esc(v){return typeof escapeHtml==='function'?escapeHtml(String(v??'')):String(v??'').replace(/[&<>"']/g,function(m){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m];});}
+
+  function ensureIsolationAlert(){
+    let el=document.getElementById('v251R6IsolationAlert');
+    if(el)return el;
+    const base=document.getElementById('criticalSummary');
+    if(!base||!base.parentNode)return null;
+    el=document.createElement('div');
+    el.id='v251R6IsolationAlert';
+    el.className='v251R6IsolationAlert';
+    base.parentNode.insertBefore(el,base.nextSibling);
+    return el;
+  }
+
+  function renderIsolationAlert(){
+    const el=ensureIsolationAlert(); if(!el)return;
+    const iso=(window.__dashboardInsideMembers||[]).filter(function(m){return !!m.isolated;});
+    el.className='v251R6IsolationAlert'+(iso.length?' hasIsolation':'');
+    el.textContent=iso.length ? ('🚨 고립대원 '+iso.length+'명') : '✅ 고립대원 0명';
+  }
+
+  function renderCommanderIsolation(members){
+    const emergency=document.getElementById('v250BoardEmergency'); if(!emergency)return;
+    const iso=(members||window.__dashboardInsideMembers||[]).filter(function(m){return !!m.isolated;});
+    if(!iso.length){emergency.className='';emergency.style.display='none';emergency.innerHTML='';return;}
+    emergency.className='v251R6IsolationPanel';
+    emergency.style.display='block';
+    const cards=iso.map(function(m){
+      const name=typeof getMemberDisplay==='function'?getMemberDisplay(m.memberId,m.memberName||m.name||''):String(m.memberName||m.name||m.memberId||'');
+      const team=(typeof v251TeamName==='function'?v251TeamName(m):(m.team||'미지정'))||'미지정';
+      const floor=m.floor||m.activityFloor||'미지정';
+      const dir=m.direction||m.entryDirection||'미지정';
+      return '<div class="v251R6IsolationPerson"><div class="v251R6IsolationName">🚨 '+esc(name)+'</div><div class="v251R6IsolationLoc">'+esc(team)+' · '+esc(floor)+' · '+esc(dir)+'</div></div>';
+    }).join('');
+    emergency.innerHTML='<div class="v251R6IsolationHead">🚨 고립대원 '+iso.length+'명</div><div class="v251R6IsolationList">'+cards+'</div>';
+  }
+
+  const oldRefresh=window.v251RefreshEnhancements;
+  if(typeof oldRefresh==='function'){
+    window.v251RefreshEnhancements=function(){
+      const r=oldRefresh.apply(this,arguments);
+      setTimeout(renderIsolationAlert,0);
+      return r;
+    };
+  }
+  const oldBoard=window.v250RenderBoardSummary;
+  if(typeof oldBoard==='function'){
+    window.v250RenderBoardSummary=function(members){
+      const r=oldBoard.apply(this,arguments);
+      renderCommanderIsolation(members);
+      return r;
+    };
+  }
+  document.addEventListener('DOMContentLoaded',function(){setTimeout(function(){renderIsolationAlert();renderCommanderIsolation(window.__dashboardInsideMembers||[]);},300);});
+  setInterval(renderIsolationAlert,10000);
+})();
+</script>
+
+
+
+<!-- V2.51-R7 combined 31min/isolation confirmation summary -->
+<style id="v251r7-style">
+#v251R5SafetyAlert,#v251R6IsolationAlert{display:none!important}
+</style>
+<script>
+(function(){
+  function r7RemoveDuplicateAlerts(){
+    const a=document.getElementById('v251R5SafetyAlert'); if(a)a.remove();
+    const b=document.getElementById('v251R6IsolationAlert'); if(b)b.remove();
+  }
+  function r7UpdateCriticalSummary(){
+    const box=document.getElementById('criticalSummary'); if(!box)return;
+    const list=window.__dashboardInsideMembers||[];
+    const over=list.filter(m=>Number(m.currentMinutes)>=31);
+    const due=over.filter(m=>{try{return !!v251MemberSafetyState(m).due;}catch(e){return true;}});
+    const iso=list.filter(m=>!!m.isolated);
+    const targets=new Set();
+    due.forEach(m=>targets.add(String(m.memberId)));
+    iso.forEach(m=>targets.add(String(m.memberId)));
+
+    box.classList.remove('v251StableCritical','hasCritical');
+    if(iso.length>0){
+      box.classList.add('hasCritical');
+      const parts=[];
+      if(due.length)parts.push('31분 이상 '+due.length+'명');
+      parts.push('고립대원 '+iso.length+'명');
+      box.textContent='🚨 확인대상 '+targets.size+'명 · '+parts.join(' · ');
+    }else if(due.length>0){
+      box.classList.add('hasCritical');
+      box.textContent='⚠️ 안전확인 필요 '+due.length+'명 · 확인 후 10분 재확인';
+    }else if(over.length>0){
+      box.classList.add('v251StableCritical');
+      box.textContent='🔴 31분 이상 '+over.length+'명 · 안전확인 완료';
+    }else{
+      box.textContent='✅ 31분 이상 또는 고립대원 확인대상 0명';
+    }
+  }
+  window.v251UpdateCriticalSummary=r7UpdateCriticalSummary;
+  document.addEventListener('DOMContentLoaded',function(){
+    setTimeout(function(){r7RemoveDuplicateAlerts();r7UpdateCriticalSummary();},300);
+  });
+  setInterval(function(){r7RemoveDuplicateAlerts();r7UpdateCriticalSummary();},10000);
+})();
+</script>
+
+
+<!-- V2.51-R12 STATUS-COMMS-STABILITY
+  현황조회 중복호출 방지 / 자동갱신-수동조회 충돌 방지 / 쓰기 중 inside 조회 보류
+-->
 </body>
 </html>
