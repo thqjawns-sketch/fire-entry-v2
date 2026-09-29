@@ -1,0 +1,160 @@
+name: Apply V2.50-R3 commander board
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/apply-v250r3.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch commander board
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+
+          start=s.index('/* V2.49L4 조 활동현황판 헤더 중앙 완주소방서 로고 */')
+          end=s.index('/* V2.49L5 긴 화면 스크롤 이동 보조 */',start)
+          css='''/* V2.50-R3 조 활동현황판 : 지휘자용 헤더 + 가로형 인원현황 */
+          .v29BoardHeader{
+            display:grid;grid-template-columns:minmax(190px,1fr) auto minmax(220px,1fr);
+            align-items:center;gap:16px;min-height:74px;padding:12px 18px;
+          }
+          .v29BoardHeaderMain{min-width:0}
+          .v29BoardTitle{font-size:24px;font-weight:950;white-space:nowrap}
+          .v249BoardBrand{
+            position:static;transform:none;display:flex;align-items:center;justify-content:center;
+            width:280px;max-width:34vw;padding:5px 12px;border-radius:9px;background:#fff;
+            box-shadow:0 2px 7px rgba(0,0,0,.10);pointer-events:none;justify-self:center;
+          }
+          .v249BoardBrand img{display:block;width:100%;height:auto;max-height:50px;object-fit:contain}
+          .v29BoardHeaderBtns{justify-self:end}
+          .v250CommanderPanel{
+            margin:0 0 12px;padding:12px 14px 10px;border:1px solid #d9e3ee;border-radius:14px;
+            background:#fff;box-shadow:0 3px 12px rgba(20,50,80,.06);
+          }
+          .v250CommanderSite{
+            margin:0 0 9px;font-size:15px;font-weight:950;color:#173d67;
+            overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+          }
+          .v250CommanderMetrics{display:grid;grid-template-columns:repeat(7,minmax(105px,1fr));gap:8px}
+          .v250Metric{min-width:0;padding:10px 8px;border:1px solid #e1e8f0;border-radius:11px;background:#f8fafc;text-align:center}
+          .v250MetricLabel{font-size:12px;font-weight:900;color:#526476;white-space:nowrap}
+          .v250MetricValue{margin-top:3px;font-size:25px;line-height:1.15;font-weight:950;color:#173d67;white-space:nowrap}
+          .v250MetricInside .v250MetricValue{color:#d93025}
+          .v250MetricExited .v250MetricValue{color:#188038}
+          .v250MetricGreen{background:#f1fbf5;border-color:#cfead9}
+          .v250MetricGreen .v250MetricValue{color:#188038}
+          .v250MetricOrange{background:#fff8ef;border-color:#f7dfc1}
+          .v250MetricOrange .v250MetricValue{color:#e37400}
+          .v250MetricRed{background:#fff3f3;border-color:#f2cdcd}
+          .v250MetricRed .v250MetricValue{color:#d93025}
+          .v250MetricCritical{background:#fff0f0;border-color:#e9b6b6}
+          .v250MetricCritical .v250MetricValue{color:#b42318}
+          .v250FloorSummary{margin-top:9px;padding:7px 10px;border-radius:9px;background:#eef4fa;color:#29435f;text-align:center;font-size:13px;font-weight:900;line-height:1.5}
+          #v250BoardEmergency{margin-top:9px!important}
+          #v250BoardRefreshInfo{margin-top:7px!important;text-align:right!important;color:#66788a!important;opacity:1!important}
+          @media(max-width:980px){
+            .v29BoardHeader{grid-template-columns:1fr auto;gap:10px}
+            .v249BoardBrand{grid-column:1 / -1;grid-row:2;width:min(290px,72vw);max-width:none}
+            .v29BoardHeaderBtns{grid-column:2;grid-row:1}
+            .v250CommanderMetrics{grid-template-columns:repeat(4,minmax(105px,1fr))}
+          }
+          @media(max-width:620px){
+            .v29BoardHeader{grid-template-columns:1fr;padding:12px}
+            .v29BoardTitle{text-align:center;font-size:21px}
+            .v29BoardHeaderBtns{grid-column:1;grid-row:3;justify-self:center}
+            .v249BoardBrand{grid-column:1;grid-row:2;width:min(270px,82vw)}
+            .v250CommanderMetrics{grid-template-columns:repeat(2,minmax(110px,1fr))}
+            .v250MetricValue{font-size:23px}
+            #v250BoardRefreshInfo{text-align:center!important}
+          }
+          '''
+          s=s[:start]+css+'\n\n'+s[end:]
+
+          board=s.index('<!-- 조 활동현황판 : 안전관리용 현재 위치 시각화 -->')
+          start=s.index('  <div class="v29BoardHeader">',board)
+          end=s.index('    <div class="v33BoardCardScroll">',start)
+          html='''  <div class="v29BoardHeader">
+            <div class="v29BoardHeaderMain">
+              <div class="v29BoardTitle">🗺️ 조 활동현황판</div>
+            </div>
+            <div class="v249BoardBrand" aria-label="완주소방서">
+              <img src="./wanju-fire-logo.png" alt="완주소방서 WANJU FIRE STATION">
+            </div>
+            <div class="v29BoardHeaderBtns">
+              <button type="button" class="v29BoardRefresh" onclick="refreshTeamBoardV29()">🔄 새로고침</button>
+              <button type="button" class="v29BoardClose" onclick="closeTeamBoardV29()">✕ 현황판 닫기</button>
+            </div>
+          </div>
+
+          <div class="v250CommanderPanel">
+            <div id="v29BoardSite" class="v250CommanderSite">현장 : -</div>
+            <div id="v250BoardLiveSummary" class="v250CommanderMetrics"></div>
+            <div id="v250BoardEmergency" style="display:none;width:100%;padding:10px;border-radius:10px;background:#b42318;color:#fff;text-align:center;font-weight:950"></div>
+            <div id="v250BoardRefreshInfo" style="width:100%;font-size:12px;font-weight:800">60초 자동갱신 · 마지막 갱신 --:--:--</div>
+          </div>
+
+          <div class="v29BoardCard">
+          '''
+          s=s[:start]+html+s[end:]
+
+          start=s.index('function v250RenderBoardSummary(members){')
+          end=s.index('async function v250ToggleIsolation',start)
+          fn='''function v250RenderBoardSummary(members){
+            const sum=document.getElementById("v250BoardLiveSummary"), emergency=document.getElementById("v250BoardEmergency");
+            const list=members||[];
+            const meta=v23LoadMeta(), counts={};
+            let green=0,orange=0,red=0,critical=0;
+            list.forEach(m=>{
+              const vm=meta[String(m.memberId)]||{};
+              const f=m.floor||vm.activityFloor||"미지정";
+              counts[f]=(counts[f]||0)+1;
+              const minutes=Number(m.currentMinutes)||0;
+              if(minutes<=20)green++;
+              else if(minutes<=25)orange++;
+              else if(minutes<=30)red++;
+              else critical++;
+            });
+            const order=["화점층","직상층","직하층","상층","하층","상층부","하층부","지하층","옥상","미지정"];
+            const floorText=order.filter((f,i,a)=>counts[f]&&a.indexOf(f)===i).map(f=>escapeHtml(f)+" "+counts[f]+"명").join(" · ");
+            const uniqueEl=document.getElementById("dashUnique"), exitedEl=document.getElementById("dashExited");
+            const unique=uniqueEl?String(uniqueEl.textContent||"0").replace(/[^0-9]/g,"")||"0":"0";
+            const exited=exitedEl?String(exitedEl.textContent||"0").replace(/[^0-9]/g,"")||"0":"0";
+            if(sum)sum.innerHTML=
+              '<div class="v250Metric v250MetricInside"><div class="v250MetricLabel">현재 내부</div><div class="v250MetricValue">'+list.length+'명</div></div>'+ 
+              '<div class="v250Metric"><div class="v250MetricLabel">현장 참여대원</div><div class="v250MetricValue">'+escapeHtml(unique)+'명</div></div>'+ 
+              '<div class="v250Metric v250MetricExited"><div class="v250MetricLabel">철수 완료</div><div class="v250MetricValue">'+escapeHtml(exited)+'명</div></div>'+ 
+              '<div class="v250Metric v250MetricGreen"><div class="v250MetricLabel">🟢 0~20분</div><div class="v250MetricValue">'+green+'명</div></div>'+ 
+              '<div class="v250Metric v250MetricOrange"><div class="v250MetricLabel">🟠 21~25분</div><div class="v250MetricValue">'+orange+'명</div></div>'+ 
+              '<div class="v250Metric v250MetricRed"><div class="v250MetricLabel">🔴 26~30분</div><div class="v250MetricValue">'+red+'명</div></div>'+ 
+              '<div class="v250Metric v250MetricCritical"><div class="v250MetricLabel">🚨 31분 이상</div><div class="v250MetricValue">'+critical+'명</div></div>'+ 
+              '<div class="v250FloorSummary" style="grid-column:1/-1">층별 현재 인원 · '+(floorText||"활동대원 없음")+'</div>';
+            const iso=list.filter(m=>m.isolated);
+            if(emergency){
+              if(iso.length){emergency.style.display="block"; emergency.innerHTML="🚨 고립대원 "+iso.length+"명 · "+iso.map(m=>escapeHtml(getMemberDisplay(m.memberId,m.memberName))+" / "+escapeHtml(m.floor||"미지정")+" / "+escapeHtml(m.direction||"미지정")).join(" · ");}
+              else {emergency.style.display="none"; emergency.innerHTML="";}
+            }
+          }
+          '''
+          s=s[:start]+fn+'\n'+s[end:]
+          s=s.replace('if(site)site.textContent=dashSite?dashSite.textContent:"";','if(site)site.textContent="현장 : "+(dashSite?dashSite.textContent:"-");',1)
+          s=s.replace('QR기반-진·출입 안전관리앱 V2.50-R2</title>','QR기반-진·출입 안전관리앱 V2.50-R3</title>',1)
+
+          assert '현재 활동 중인 조의 <b>층 · 방면 · 진입차수 · 체류시간</b>을 한눈에 확인합니다.' not in s
+          assert 'V2.43</span>' not in s
+          assert 'v250CommanderPanel' in s and '현장 참여대원' in s and '🚨 31분 이상' in s
+          p.write_text(s,encoding='utf-8')
+          PY
+          git rm .github/workflows/apply-v250r3.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'Apply V2.50-R3 commander board layout'
+          git push
