@@ -2501,44 +2501,49 @@ async function v249L31CreateSite(){
  try{
   const d=await v2CallPost(p);
   if(!d.ok)throw new Error(d.error||d.message||"현장 생성 실패");
+  if(d.siteId)V2_SITE_ID_BY_NAME.set(String(siteName),String(d.siteId));
+  const siteEl=document.getElementById("site");
+  if(siteEl && ![...siteEl.options].some(o=>o.value===siteName)){
+    const op=document.createElement("option");op.value=siteName;op.textContent=siteName;siteEl.appendChild(op);
+  }
+  if(siteEl)siteEl.value=siteName;
   v249L31CloseSiteManager();
-  await loadSites();
-  document.getElementById("site").value=siteName;
-  if(typeof siteChanged==="function")await siteChanged();
   alert("🔥 "+siteName+"\\n현장을 생성했습니다.\\n첫 조는 1조 / 1차 활동부터 시작합니다.");
+  if(typeof siteChanged==="function")Promise.resolve(siteChanged()).catch(e=>console.warn("새 현장 초기화 지연",e));
+  Promise.resolve(loadSites()).catch(e=>console.warn("현장목록 백그라운드 동기화 실패",e));
  }catch(e){alert(e.message||"현장 생성 실패");}
 }
 async function v249L34LoadActiveSites(){
   const box=document.getElementById("v249l34ActiveSites");
   const target=document.getElementById("v249l31CloseTarget");
-  box.innerHTML="현장정보를 불러오는 중...";
+  box.innerHTML="⏳ 현장정보를 불러오는 중...";
   target.innerHTML="";
-  try{
-    const [ar,cr]=await Promise.all([
-      V2_NATIVE_FETCH(API+"?action=sites&t="+Date.now(),{cache:"no-store"}),
-      V2_NATIVE_FETCH(API+"?action=closedSites&t="+Date.now(),{cache:"no-store"})
-    ]);
-    const a=await ar.json(), c=await cr.json();
-    if(!a.ok)throw new Error(a.error||a.message||"진행중 현장 조회 실패");
-    if(!c.ok)throw new Error(c.error||c.message||"종료 현장 조회 실패");
-    const active=(a.sites||[]).map(x=>({...x,__closed:false}));
-    const closed=(c.sites||[]).map(x=>({...x,__closed:true}));
-    const rows=[...active,...closed];
-    rows.forEach(x=>{if(x.siteName&&x.siteId)V2_SITE_ID_BY_NAME.set(String(x.siteName),String(x.siteId));});
-    if(!rows.length){box.innerHTML='<div style="padding:12px;color:#667085">등록된 현장정보가 없습니다.</div>';return;}
-    box.innerHTML=rows.map(x=>{
-      const name=x.siteName||x.name||"";
-      const id=x.siteId||"";
-      const state=x.__closed?"⚫ 종료":"🟢 진행중";
-      const actions=x.__closed
-        ? '<button type="button" onclick="v249L37Report(event,\''+v249L31Esc(name)+'\',\''+v249L31Esc(id)+'\')">📄 종합보고서</button> <button type="button" onclick="v249L37Reset(event,\''+v249L31Esc(name)+'\',\''+v249L31Esc(id)+'\')">🗑️ 기록 초기화</button>'
-        : '<button type="button" onclick="v249L37Close(event,\''+v249L31Esc(name)+'\')">🔴 활동 종료</button> <button type="button" onclick="v249L37Report(event,\''+v249L31Esc(name)+'\',\''+v249L31Esc(id)+'\')">📄 종합보고서</button>';
-      return '<div class="v249l34SiteItem"><b>🔥 '+v249L31Esc(name)+'</b><span class="sub">'+state+'</span><div style="margin-top:9px">'+actions+'</div></div>';
-    }).join("");
-  }catch(e){
-    box.innerHTML='<div style="padding:12px;color:#b42318">현장정보를 불러오지 못했습니다.<br>'+v249L31Esc(e.message||"")+'</div>';
+  let lastErr=null;
+  for(let attempt=0;attempt<2;attempt++){
+    if(attempt>0){box.innerHTML="⏳ 현장정보 다시 확인 중...";await v249L38Sleep(500);}
+    try{
+      // 진행/종료를 두 번 조회하지 않고 서버에서 전체 현장을 한 번에 받는다.
+      const r=await V2_NATIVE_FETCH(API+"?action=allSites&t="+Date.now(),{cache:"no-store"});
+      if(!r||!r.ok)throw new Error("현장정보 서버 응답 오류");
+      const d=await r.json();
+      if(!d.ok)throw new Error(d.error||d.message||"현장정보 조회 실패");
+      const rows=(d.sites||[]).map(x=>({...x,__closed:String(x.status||"")==="종료"}));
+      rows.forEach(x=>{if(x.siteName&&x.siteId)V2_SITE_ID_BY_NAME.set(String(x.siteName),String(x.siteId));});
+      if(!rows.length){box.innerHTML='<div style="padding:12px;color:#667085">등록된 현장정보가 없습니다.</div>';return;}
+      box.innerHTML=rows.map(x=>{
+        const name=x.siteName||x.name||""; const id=x.siteId||"";
+        const state=x.__closed?"⚫ 종료":"🟢 진행중";
+        const actions=x.__closed
+          ? '<button type="button" onclick="v249L37Report(event,\''+v249L31Esc(name)+'\',\''+v249L31Esc(id)+'\')">📄 종합보고서</button> <button type="button" onclick="v249L37Reset(event,\''+v249L31Esc(name)+'\',\''+v249L31Esc(id)+'\')">🗑️ 기록 초기화</button>'
+          : '<button type="button" onclick="v249L37Close(event,\''+v249L31Esc(name)+'\')">🔴 활동 종료</button> <button type="button" onclick="v249L37Report(event,\''+v249L31Esc(name)+'\',\''+v249L31Esc(id)+'\')">📄 종합보고서</button>';
+        return '<div class="v249l34SiteItem"><b>🔥 '+v249L31Esc(name)+'</b><span class="sub">'+state+'</span><div style="margin-top:9px">'+actions+'</div></div>';
+      }).join("");
+      return;
+    }catch(e){lastErr=e;console.warn("현장관리 조회 "+(attempt+1)+"차 실패",e);}
   }
+  box.innerHTML='<div style="padding:12px;color:#b42318">현장정보를 불러오지 못했습니다.<br>'+v249L31Esc((lastErr&&lastErr.message)||"")+'<br><button type="button" onclick="v249L34LoadActiveSites()" style="margin-top:8px">다시 불러오기</button></div>';
 }
+
 async function v249L37Close(ev,name){
   if(ev)ev.stopPropagation();
   const btn=ev&&ev.currentTarget?ev.currentTarget:null;
@@ -2565,8 +2570,8 @@ async function v249L37Reset(ev,name,siteId){
     const d=await v2CallPost(p);
     if(!d.ok)throw new Error(d.error||d.message||"기록 초기화 실패");
     alert("✅ "+name+"\\n종료 현장 기록을 초기화했습니다.");
-    await loadSites();
     await v249L34LoadActiveSites();
+    Promise.resolve(loadSites()).catch(e=>console.warn("현장목록 백그라운드 동기화 실패",e));
   }catch(e){
     alert(e.message||"기록 초기화 실패");
     if(btn&&document.body.contains(btn)){btn.disabled=false;btn.innerText="🗑️ 기록 초기화";}
@@ -2583,9 +2588,9 @@ async function v249L31CloseSite(){
  try{
   const d=await v2CallPost(p);
   if(!d.ok)throw new Error(d.error||d.message||"현장 종료 실패");
-  await loadSites();
   await v249L34LoadActiveSites();
   alert("✅ "+siteName+"\\n현장활동을 종료했습니다.\\n활동 데이터와 종합보고서는 그대로 보존됩니다.");
+  Promise.resolve(loadSites()).catch(e=>console.warn("현장목록 백그라운드 동기화 실패",e));
  }catch(e){alert(e.message||"현장 종료 실패");}
 }
 function v249L31Esc(x){return String(x??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));}
