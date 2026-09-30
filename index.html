@@ -5404,9 +5404,7 @@ async function loadInsideMembers(isAutoRefresh = false){
     );
 
 
-  list.innerHTML =
-    "";
-
+  /* R15A: 조회 중에는 기존 현황을 유지한다. 새 응답이 정상 도착했을 때만 교체 */
 
   if(
     !site
@@ -5450,18 +5448,18 @@ async function loadInsideMembers(isAutoRefresh = false){
 
   try{
 
-    const response =
-      await fetch(
-
-        API +
-        "?action=inside&site=" +
-        encodeURIComponent(
-          site
-        ) +
-        "&t=" +
-        Date.now()
-
-      );
+    /* R15A: 한 번의 지연된 조회가 1페이지를 장시간 잠그지 않도록 제한 */
+    const insideFetchPromise = fetch(
+      API +
+      "?action=inside&site=" +
+      encodeURIComponent(site) +
+      "&t=" +
+      Date.now()
+    );
+    const insideTimeoutPromise = new Promise((_, reject)=>
+      setTimeout(()=>reject(new Error("INSIDE_REFRESH_TIMEOUT")), 12000)
+    );
+    const response = await Promise.race([insideFetchPromise, insideTimeoutPromise]);
 
 
     const data =
@@ -5475,6 +5473,9 @@ async function loadInsideMembers(isAutoRefresh = false){
       return;
 
     }
+
+    /* R15A: 최신 정상 응답을 받은 뒤에만 기존 목록을 교체 */
+    list.innerHTML = "";
 
 
     document
@@ -5604,14 +5605,17 @@ async function loadInsideMembers(isAutoRefresh = false){
 
   }catch(error){
 
-    console.error(
-      error
-    );
+    console.error(error);
 
-
-    alert(
-      "현황을 불러오는 중 오류가 발생했습니다."
-    );
+    /* R15A: 통신 지연 시 기존 현황은 유지하고 처리중 잠금만 해제 */
+    if(error && error.message === "INSIDE_REFRESH_TIMEOUT"){
+      const insideInfo=document.getElementById("insideRefreshInfo");
+      if(insideInfo){
+        insideInfo.textContent="현황 응답 지연 · 기존 화면 유지 · 다시 새로고침 가능";
+      }
+    }else{
+      alert("현황을 불러오는 중 오류가 발생했습니다.");
+    }
 
   }finally{
 
@@ -5968,6 +5972,8 @@ function updateSelectedCount(){
 
 async function batchExitMembers(){
 
+  let v249R15ARefreshAfterExit = false;
+
   if(
     exitSubmitting
   ){
@@ -6154,13 +6160,39 @@ async function batchExitMembers(){
     }
 
 
-    alert(
-      message
+    /* R15A: 서버가 철수를 확정한 대원은 1페이지에서 즉시 제거 */
+    const succeededIds = new Set(
+      (data.succeeded||[]).map(x=>String(x.id||x.memberId||"").trim()).filter(Boolean)
     );
+    if(!succeededIds.size && data.success===true && !(data.failed&&data.failed.length)){
+      checked.forEach(x=>succeededIds.add(String(x.dataset.id||"").trim()));
+    }
+    if(succeededIds.size){
+      document.querySelectorAll("#insideList .insideCheck").forEach(ch=>{
+        if(succeededIds.has(String(ch.dataset.id||"").trim())){
+          const row=ch.closest(".memberRow");
+          if(row) row.remove();
+        }
+      });
+      /* 빈 조 구분선 제거 */
+      document.querySelectorAll("#insideList .teamDividerV19").forEach(div=>{
+        let n=div.nextElementSibling, hasMember=false;
+        while(n && !(n.classList&&n.classList.contains("teamDividerV19"))){
+          if(n.classList&&n.classList.contains("memberRow")){ hasMember=true; break; }
+          n=n.nextElementSibling;
+        }
+        if(!hasMember) div.remove();
+      });
+      const remain=document.querySelectorAll("#insideList .insideCheck").length;
+      const cnt=document.getElementById("insideCount");
+      if(cnt) cnt.innerText="🔴 현재 현장 내부 "+remain+"명";
+      selectAllState=false;
+      updateSelectedCount();
+    }
 
+    v249R15ARefreshAfterExit = succeededIds.size > 0;
 
-    /* R12: exitSubmitting 해제 뒤 현재 현장 내부만 1회 자동 갱신 */
-    setTimeout(()=>{ void loadInsideMembers(true); },0);
+    alert(message);
 
   }catch(error){
 
@@ -6177,6 +6209,11 @@ async function batchExitMembers(){
 
     exitSubmitting =
       false;
+
+    /* R15A: 플래그 해제 후 서버 상태를 1회 검증. 지연돼도 즉시반영 화면은 유지 */
+    if(v249R15ARefreshAfterExit){
+      setTimeout(()=>{ void loadInsideMembers(true); },0);
+    }
 
   }
 
