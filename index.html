@@ -1329,52 +1329,59 @@ button:disabled{
 <link rel="apple-touch-icon" href="./icon-192.png">
 
 
-<style id="r16bDashboardPolish">
-/* R16B: 2페이지 구성 정돈 - 기존 기능/데이터 로직 유지 */
-#dashboardPage .dashboardHeader{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-right:8px}
-#dashboardPage .dashboardHeaderRight{margin-left:auto;display:flex;align-items:center;gap:8px;min-width:0}
-#dashboardPage .dashboardHeaderRight .siteName{max-width:240px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#dashboardPage .dashboardRefreshMini{width:auto!important;min-width:92px!important;margin:0!important;padding:6px 9px!important;border:1px solid rgba(255,255,255,.48)!important;border-radius:7px!important;background:rgba(255,255,255,.12)!important;color:#fff!important;box-shadow:none!important;display:flex!important;flex-direction:column;align-items:flex-end;gap:1px;line-height:1.1}
-#dashboardPage .dashboardRefreshMini .refreshMainV22{font-size:11px!important;font-weight:900!important;white-space:nowrap}
-#dashboardPage .dashboardRefreshTime{font-size:8.5px;font-weight:700;opacity:.82;white-space:nowrap}
-.commandOverviewLaunch{width:100%!important;margin:10px 0 0!important;padding:13px 15px!important;border:1px solid #aebdca!important;border-radius:10px!important;background:linear-gradient(180deg,#f8fafc,#eef3f7)!important;color:#172b3d!important;box-shadow:0 1px 3px rgba(15,40,65,.06)!important;display:flex!important;align-items:center;justify-content:space-between;text-align:left!important}
-.commandOverviewText{display:flex;flex-direction:column;gap:3px;min-width:0}
-.commandOverviewText strong{font-size:16px;line-height:1.2;font-weight:950;letter-spacing:-.25px;color:#173d67}
-.commandOverviewText small{font-size:10.5px;line-height:1.25;font-weight:800;color:#607387}
-.commandOverviewArrow{font-size:25px;line-height:1;color:#526b82;font-weight:400;padding-left:12px}
-/* 조별현황: 한 조 = 한 줄, 현장 활동대원과 같은 조 색상 */
+<style id="r16cDashboardPolish">
+/* R16C: 2페이지 상단/조별현황 정밀 보정 - 데이터/저장 로직 유지 */
+#dashboardPage .dashboardHeader{position:relative;display:flex;align-items:center;min-height:62px;padding:8px 84px 8px 10px;gap:6px}
+#dashboardPage .dashboardTitle{font-size:19px;line-height:1.15;font-weight:950;white-space:nowrap;flex:0 0 auto}
+#dashboardPage .dashboardHeaderRight{min-width:0;display:flex;align-items:center;flex:1}
+#dashboardPage .dashboardHeaderRight .siteName{min-width:0;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:13px;font-weight:850}
+#dashboardPage .dashboardRefreshMini{position:absolute;right:7px;top:7px;width:72px!important;min-width:72px!important;height:48px;margin:0!important;padding:4px 4px!important;border:1px solid rgba(255,255,255,.45)!important;border-radius:7px!important;background:rgba(255,255,255,.10)!important;color:#fff!important;box-shadow:none!important;display:flex!important;flex-direction:column;align-items:center;justify-content:center;gap:1px;line-height:1.05}
+#dashboardPage .dashboardRefreshMini .refreshMainV22{font-size:9.5px!important;font-weight:950!important;white-space:nowrap}
+#dashboardPage .dashboardRefreshTime{font-size:7.7px!important;font-weight:800!important;opacity:.88;white-space:normal!important;text-align:center;line-height:1.1;max-width:64px}
+.dashboardNavPair{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.dashboardNavPair button{width:100%!important;min-height:46px!important;margin:0!important;border-radius:9px!important;padding:9px 8px!important;font-size:13px!important;font-weight:950!important;line-height:1.15!important;box-shadow:none!important;white-space:nowrap}
+.dashboardNavBack{border:1px solid #173d67!important;background:#173d67!important;color:#fff!important}
+.commandOverviewLaunch{border:1px solid #8da5ba!important;background:#fff!important;color:#173d67!important;display:flex!important;align-items:center!important;justify-content:center!important;gap:5px!important;text-align:center!important}
+.commandOverviewLaunch .commandOverviewText{display:block!important}
+.commandOverviewLaunch .commandOverviewText strong{font-size:13px!important;font-weight:950!important;color:#173d67!important;white-space:nowrap}
+.commandOverviewLaunch .commandOverviewText small{display:none!important}
+.commandOverviewArrow{font-size:18px!important;line-height:1!important;color:#526b82!important;font-weight:800!important;padding:0!important}
+/* 조별현황: 한 조 = 한 줄 / 조-차수-층-세부장소-방면-인원-진입시간 */
 #teamStatusV28 .v16TeamSummary{margin:0;border:1px solid #dbe5ef;border-radius:10px;overflow:hidden;background:#fff}
 #teamStatusV28 .v16TeamTable{width:100%;overflow:hidden}
-#teamStatusV28 .v16TeamHead,#teamStatusV28 .v16TeamRow{display:grid;grid-template-columns:64px 54px 88px minmax(112px,1fr) 82px 52px 86px;align-items:center;column-gap:2px}
-#teamStatusV28 .v16TeamHead{min-height:34px;padding:0 5px;background:#f3f6f9;border-bottom:1px solid #dbe5ef;color:#526579;font-size:10px;font-weight:950;text-align:center}
-#teamStatusV28 .v16TeamRow{--team:#64748b;min-height:48px;padding:0 5px;border-bottom:1px solid #e5ebf1;border-left:5px solid var(--team);font-size:11px;font-weight:850;background:#fff}
+#teamStatusV28 .v16TeamHead,#teamStatusV28 .v16TeamRow{display:grid;grid-template-columns:56px 45px 76px minmax(82px,1fr) 67px 42px 72px;align-items:center;column-gap:1px}
+#teamStatusV28 .v16TeamHead{min-height:32px;padding:0 4px;background:#f3f6f9;border-bottom:1px solid #dbe5ef;color:#607184;font-size:9px;font-weight:900;text-align:center}
+#teamStatusV28 .v16TeamRow{--team:#64748b;min-height:46px;padding:0 4px;border-bottom:1px solid #e5ebf1;border-left:4px solid var(--team);font-size:10.5px;font-weight:850;background:#fff}
 #teamStatusV28 .v16TeamRow:last-child{border-bottom:0}
-#teamStatusV28 .v16TeamCell{min-width:0;padding:5px 2px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#teamStatusV28 .v16TeamBadge{display:inline-flex;align-items:center;justify-content:center;min-width:43px;padding:6px 7px;border-radius:7px;background:var(--team);color:#fff;font-size:12px;font-weight:950}
-#teamStatusV28 .v16RoundBadge{display:inline-flex;padding:4px 6px;border-radius:6px;background:#eef3f7;color:#40566b;font-size:10.5px;font-weight:950}
-#teamStatusV28 .v16MiniBadge{display:inline-block;max-width:100%;padding:3px 6px;border:1px solid #c7d1dc;border-radius:6px;background:#f7f9fb;color:#33485d;font-size:10.5px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;vertical-align:middle}
+#teamStatusV28 .v16TeamCell{min-width:0;padding:4px 1px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#teamStatusV28 .v16TeamBadge{display:inline-flex;align-items:center;justify-content:center;min-width:38px;padding:5px 5px;border-radius:7px;background:var(--team);color:#fff;font-size:11px;font-weight:950}
+#teamStatusV28 .v16RoundBadge{display:inline-flex;padding:3px 5px;border-radius:6px;background:#eef3f7;color:#40566b;font-size:9.5px;font-weight:900}
+#teamStatusV28 .v16MiniBadge{display:inline-block;max-width:100%;padding:3px 5px;border:1px solid #c7d1dc;border-radius:6px;background:#f7f9fb;color:#33485d;font-size:9.5px;font-weight:850;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;vertical-align:middle}
 #teamStatusV28 .v16MiniBadge.floorMini.floor-fire{color:#d82020;border-color:#ef6a6a;background:#fff2f2}
 #teamStatusV28 .v16MiniBadge.floorMini.floor-above{color:#d66b00;border-color:#f0a44b;background:#fff8ec}
 #teamStatusV28 .v16MiniBadge.floorMini.floor-yellow{color:#9b7200;border-color:#e2bd43;background:#fffbea}
 #teamStatusV28 .v16MiniBadge.floorMini.floor-green{color:#16834b;border-color:#63bd8a;background:#effbf4}
 #teamStatusV28 .v16MiniBadge.floorMini.floor-basement{color:#1665c1;border-color:#6ca6e8;background:#eff6ff}
 #teamStatusV28 .v16MiniBadge.floorMini.floor-roof{color:#6d3dc1;border-color:#a98ae0;background:#f7f1ff}
-#teamStatusV28 .v16DetailBadge{background:#f6f8fa;border-color:#cbd5df;color:#34495e}
+#teamStatusV28 .v16DetailBadge{background:#f6f8fa;border-color:#cbd5df;color:#45586a}
 #teamStatusV28 .v16DirectionBadge{background:#eef5fb;border-color:#b9cde1;color:#174d78}
-#teamStatusV28 .v16Count{font-size:12px;font-weight:950;color:#172b3d}
-#teamStatusV28 .v16Entry{font-size:10.5px;font-weight:900;color:#526579}
-@media(max-width:720px){
- #dashboardPage .dashboardTitle{font-size:19px}
- #dashboardPage .dashboardHeaderRight .siteName{display:none}
- #dashboardPage .dashboardRefreshMini{min-width:84px!important;padding:5px 7px!important}
- #teamStatusV28 .v16TeamHead,#teamStatusV28 .v16TeamRow{grid-template-columns:52px 43px 72px minmax(82px,1fr) 65px 40px 68px;column-gap:1px}
- #teamStatusV28 .v16TeamHead{font-size:8.5px}
- #teamStatusV28 .v16TeamRow{min-height:44px;padding:0 3px;border-left-width:4px}
- #teamStatusV28 .v16TeamCell{padding:4px 1px}
- #teamStatusV28 .v16TeamBadge{min-width:35px;padding:5px 4px;font-size:10.5px}
- #teamStatusV28 .v16RoundBadge,#teamStatusV28 .v16MiniBadge{font-size:9px;padding:3px 4px}
- #teamStatusV28 .v16Count{font-size:10.5px}
- #teamStatusV28 .v16Entry{font-size:9px}
+#teamStatusV28 .v16Count{font-size:11.5px;font-weight:950;color:#172b3d}
+#teamStatusV28 .v16Entry{font-size:9px;font-weight:800;color:#738294}
+@media(max-width:430px){
+ #dashboardPage .dashboardHeader{padding-left:7px;padding-right:80px;min-height:60px}
+ #dashboardPage .dashboardTitle{font-size:17px}
+ #dashboardPage .dashboardHeaderRight .siteName{font-size:11px}
+ #dashboardPage .dashboardRefreshMini{right:5px;top:6px;width:69px!important;min-width:69px!important;height:47px}
+ .dashboardNavPair{gap:6px}
+ .dashboardNavPair button{font-size:11.5px!important;padding:8px 4px!important}
+ .commandOverviewLaunch .commandOverviewText strong{font-size:11.5px!important}
+ #teamStatusV28 .v16TeamHead,#teamStatusV28 .v16TeamRow{grid-template-columns:48px 38px 62px minmax(66px,1fr) 55px 34px 59px}
+ #teamStatusV28 .v16TeamHead{font-size:7.7px}
+ #teamStatusV28 .v16TeamRow{min-height:43px;padding:0 2px;border-left-width:3px}
+ #teamStatusV28 .v16TeamBadge{min-width:32px;padding:4px 3px;font-size:9.5px}
+ #teamStatusV28 .v16RoundBadge,#teamStatusV28 .v16MiniBadge{font-size:8px;padding:3px 3px}
+ #teamStatusV28 .v16Count{font-size:9.5px}
+ #teamStatusV28 .v16Entry{font-size:7.8px}
 }
 </style>
 </head>
@@ -1725,7 +1732,8 @@ PPE 점검 대기
   <div id="dashboardSiteName" class="siteName">-</div>
   <button type="button" id="dashboardRefreshBtn" class="dashboardRefreshMini" onclick="loadDashboard(false)" aria-label="현황 새로고침">
     <span class="refreshMainV22">↻ 새로고침</span>
-    <span id="dashboardAutoRefreshInfo" class="dashboardRefreshTime">10초 자동 · --:--:--</span>
+    <span class="dashboardRefreshTime">10초 자동</span>
+    <span id="dashboardAutoRefreshInfo" class="dashboardRefreshTime">--:--:--</span>
   </button>
 </div>
 
@@ -1797,20 +1805,13 @@ PPE 점검 대기
 >
 ✅ 31분 이상 즉시 확인 대상 0명
 </div>
-<button
-  class="back"
-  onclick="closeDashboard()"
->
-⬅ 안전관리 화면으로 돌아가기
-</button>
-
-<button type="button" class="commandOverviewLaunch" onclick="openTeamBoardV29()">
-  <span class="commandOverviewText">
-    <strong>현장활동 종합현황</strong>
-    <small>인원현황 · 조별현황 · 층별 활동현황판</small>
-  </span>
-  <span class="commandOverviewArrow">›</span>
-</button>
+<div class="dashboardNavPair">
+  <button type="button" class="dashboardNavBack" onclick="closeDashboard()">← 진·출입 관리</button>
+  <button type="button" class="commandOverviewLaunch" onclick="openTeamBoardV29()">
+    <span class="commandOverviewText"><strong>현장활동 종합현황</strong></span>
+    <span class="commandOverviewArrow">›</span>
+  </button>
+</div>
 
 </div>
 
@@ -6878,7 +6879,7 @@ async function loadDashboard(
     ){
 
       autoInfo.innerText =
-        "10초 자동갱신 · 마지막 갱신 " + v249R8NowText();
+        v249R8NowText();
 
     }
 
@@ -7012,7 +7013,7 @@ function v28DrawTeamStatus(list){
   teams.forEach(t=>{
     const teamCls=v19TeamColorClass(t.team);
     const floor=t.floor||"미지정";
-    const detail=t.detail||"세부장소 미지정";
+    const detail=t.detail||"미지정";
     const direction=t.direction||"미지정";
     out+=
       '<div class="v16TeamRow '+teamCls+'">'+
