@@ -8693,5 +8693,162 @@ setInterval(function(){const p=document.getElementById('teamBoardPageV29');if(p&
 })();
 </script>
 
+
+
+<!-- R16H : 안전판정 통합 + 조별정보 강화 + 층별현황 2영역 재설계 -->
+<style id="r16h-command-board-style">
+/* 1. 인원현황: 26~30분/31분 이상은 같은 체류경고 계열, 즉시확인만 행동경고 */
+#teamBoardPageV29 .cmdStat.red,#teamBoardPageV29 .cmdStat.over31{background:#fff6f5;border-color:#efb0aa}
+#teamBoardPageV29 .cmdStat.red .cmdStatValue,#teamBoardPageV29 .cmdStat.over31 .cmdStatValue{color:#c83a32}
+#teamBoardPageV29 .cmdStat.immediate{background:#fff0ef;border:2px solid #dc4037}
+#teamBoardPageV29 .cmdStat.immediate .cmdStatLabel,#teamBoardPageV29 .cmdStat.immediate .cmdStatValue{color:#b42318}
+#teamBoardPageV29 .cmdStat.immediate.active{animation:r16hAlertPulse 1.35s ease-in-out infinite}
+#teamBoardPageV29 .cmdStat.zero:not(.inside):not(.exited){background:#f8fafc;border-color:#dce4ec}
+#teamBoardPageV29 .cmdStat.zero .cmdStatValue{color:#718294}
+#teamBoardPageV29 .cmdAlertBar.ok{display:none!important}
+#teamBoardPageV29 .cmdAlertBar.danger{display:block!important;animation:r16hAlertPulse 1.35s ease-in-out infinite}
+@keyframes r16hAlertPulse{0%,100%{box-shadow:0 0 0 0 rgba(211,40,32,.04)}50%{box-shadow:0 0 0 4px rgba(211,40,32,.15);background:#ffe5e2}}
+
+/* 2. 조별현황: 넓은 화면을 대원 신원정보에 사용 */
+#teamBoardPageV29 .cmdTeamHead,#teamBoardPageV29 .cmdTeamRow{grid-template-columns:78px 58px 96px 118px 88px minmax(520px,1fr) 96px}
+#teamBoardPageV29 .cmdTeamRow{min-height:58px;padding-top:5px;padding-bottom:5px}
+#teamBoardPageV29 .cmdTeamPeople{display:flex;align-items:center;gap:10px;white-space:normal!important;overflow:visible!important}
+#teamBoardPageV29 .cmdTeamPeopleCount{flex:0 0 auto;font-size:14px;font-weight:950;color:#172b3d}
+#teamBoardPageV29 .cmdTeamMemberList{display:flex;align-items:center;flex-wrap:wrap;column-gap:0;row-gap:4px;min-width:0}
+#teamBoardPageV29 .cmdTeamMemberItem{display:inline-flex;align-items:baseline;gap:5px;padding:0 11px;border-left:1px solid #cfd9e2;line-height:1.35}
+#teamBoardPageV29 .cmdTeamMemberItem:first-child{border-left:0;padding-left:0}
+#teamBoardPageV29 .cmdTeamMemberName{font-size:13px;font-weight:950;color:#18344d}
+#teamBoardPageV29 .cmdTeamMemberMeta{font-size:11px;font-weight:800;color:#6a7d8f}
+
+/* 3. 층별현황: [층선택+선택층 상세] + [대형 전술배치] 두 영역 */
+#teamBoardPageV29 .cmdLocationGrid{grid-template-columns:minmax(500px,34%) minmax(760px,66%)!important;gap:14px!important;align-items:stretch}
+#teamBoardPageV29 #v33SummaryPanel{display:none!important}
+#teamBoardPageV29 .cmdFloorPanel{min-height:360px!important;padding:13px!important;background:#f8fafc}
+#teamBoardPageV29 .r16hFloorButtons{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-bottom:12px}
+#teamBoardPageV29 .cmdFloorPanel .r16hFloorButtons .v33FloorBtn{margin:0!important;min-height:42px!important;font-size:12px!important}
+#teamBoardPageV29 .r16hSelectedFloor{border-top:1px solid #dbe4ec;padding-top:11px}
+#teamBoardPageV29 .r16hSelectedTitle{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;font-size:17px;font-weight:950;color:#173d67}
+#teamBoardPageV29 .r16hSelectedTitle .warn{color:#b42318;animation:r16hTextPulse 1.35s ease-in-out infinite}
+@keyframes r16hTextPulse{50%{opacity:.45}}
+#teamBoardPageV29 .r16hFloorTeam{--team:#64748b;border-left:6px solid var(--team);background:#fff;border-radius:9px;padding:9px 11px;margin-top:7px;box-shadow:0 1px 4px rgba(20,45,70,.05)}
+#teamBoardPageV29 .r16hFloorTeamTop{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13px;font-weight:950;color:#213b53}
+#teamBoardPageV29 .r16hFloorTeamTop .teamBadge{background:var(--team);color:#fff;border-radius:7px;padding:4px 8px}
+#teamBoardPageV29 .r16hFloorTeamNames{margin-top:7px;display:flex;flex-wrap:wrap;align-items:center;row-gap:4px}
+#teamBoardPageV29 .r16hFloorPerson{display:inline-flex;align-items:baseline;gap:4px;padding:0 9px;border-left:1px solid #d5dee7}
+#teamBoardPageV29 .r16hFloorPerson:first-child{border-left:0;padding-left:0}
+#teamBoardPageV29 .r16hFloorPerson b{font-size:13px;color:#17344e}
+#teamBoardPageV29 .r16hFloorPerson small{font-size:10px;font-weight:800;color:#728395}
+#teamBoardPageV29 .r16hFloorSafety{margin-top:7px;font-size:11px;font-weight:900;color:#617487}
+#teamBoardPageV29 .r16hFloorSafety.due{color:#b42318}
+#teamBoardPageV29 .cmdPlanPanel{min-height:360px!important;display:flex!important;align-items:center!important;justify-content:center!important;background:#fff}
+#teamBoardPageV29 .cmdPlanPanel .v33Plan{width:min(720px,88%)!important;height:320px!important;aspect-ratio:auto!important}
+#teamBoardPageV29 .cmdPlanPanel .v33PlanInner{inset:34px!important}
+#teamBoardPageV29 .cmdPlanPanel .v33DirLabel{font-size:15px!important}
+#teamBoardPageV29 .cmdPlanPanel .v33FaceChip{font-size:13px!important;padding:6px 9px!important}
+
+/* 4. 선택층 대원카드: 즉시확인/고립만 깜빡임, 안전확인 완료는 정지 */
+#teamBoardPageV29 .cmdMonitorMemberCard.due{border:2px solid #dc4037!important;border-top:5px solid #dc4037!important;background:#fff3f2!important;animation:r16hMemberPulse 1.45s ease-in-out infinite}
+#teamBoardPageV29 .cmdMonitorMemberCard.isolated{border:2px solid #b91c1c!important;border-top:6px solid #b91c1c!important;background:#ffe9e7!important;animation:r16hIsolationPulse 1s ease-in-out infinite}
+#teamBoardPageV29 .cmdMonitorMemberCard.confirmed{animation:none!important;background:#f5fbf7!important}
+@keyframes r16hMemberPulse{0%,100%{box-shadow:0 2px 6px rgba(20,45,70,.05)}50%{box-shadow:0 0 0 4px rgba(220,64,55,.15);background:#ffe6e3}}
+@keyframes r16hIsolationPulse{0%,100%{box-shadow:0 0 0 1px rgba(185,28,28,.12)}50%{box-shadow:0 0 0 6px rgba(185,28,28,.22);background:#ffd8d4}}
+
+/* 조 색상 */
+.r16hFloorTeam.teamC1{--team:#2563eb}.r16hFloorTeam.teamC2{--team:#f28705}.r16hFloorTeam.teamC3{--team:#8b46d8}.r16hFloorTeam.teamC4{--team:#0f9588}.r16hFloorTeam.teamC5{--team:#d64c72}.r16hFloorTeam.teamC6{--team:#607c18}.r16hFloorTeam.teamC7{--team:#6d42d8}.r16hFloorTeam.teamC8{--team:#08758d}
+@media(max-width:1500px){#teamBoardPageV29 .cmdLocationGrid{grid-template-columns:minmax(420px,36%) minmax(650px,64%)!important}#teamBoardPageV29 .cmdTeamHead,#teamBoardPageV29 .cmdTeamRow{grid-template-columns:68px 52px 84px 104px 78px minmax(430px,1fr) 84px}}
+</style>
+<script id="r16h-command-board-logic">
+(function(){
+  const RECHECK_MIN=10;
+  function parseT(v){if(!v)return NaN;return Date.parse(String(v).includes('T')?String(v):String(v).replace(' ','T'));}
+  function liveMin(m){const server=Number(m&&m.currentMinutes)||0,t=parseT(m&&m.entryTime);return Number.isFinite(t)?Math.max(server,Math.floor(Math.max(0,Date.now()-t)/60000)):server;}
+  function norm(v){let s=String(v??'').trim();if(!s)return '미지정';s=s.replace(/세부\s*장소\s*미지정/gi,'미지정').replace(/세부장소미지정/gi,'미지정');return s||'미지정';}
+  function status(m){
+    const mins=liveMin(m);
+    if(m&&m.isolated)return {mins,due:true,isolated:true,confirmed:false,reason:'고립',text:'🚨 고립대원'};
+    if(mins<=30)return {mins,due:false,isolated:false,confirmed:false,reason:'',text:mins<=20?'🟢 정상':mins<=25?'🟠 주의':'🔴 경고'};
+    const t=parseT(m&&m.safetyCheckedAt);
+    if(Number.isFinite(t)){
+      const elapsed=Math.max(0,(Date.now()-t)/60000);
+      if(elapsed<RECHECK_MIN){const remain=Math.max(1,Math.ceil(RECHECK_MIN-elapsed));return {mins,due:false,isolated:false,confirmed:true,remain,reason:'',text:'✓ 안전확인 · 재확인 '+remain+'분 후'};}
+      return {mins,due:true,isolated:false,confirmed:false,recheck:true,reason:'재확인',text:'🚨 재확인 필요'};
+    }
+    return {mins,due:true,isolated:false,confirmed:false,reason:'31분',text:'🚨 즉시확인'};
+  }
+  window.v251R16HImmediateState=status;
+  function esc(v){return escapeHtml(String(v??''));}
+  function teamCss(t){return v29TeamCss(t)||'';}
+  function profile(m){
+    let info={};try{info=getMemberInfoById(m.memberId)||{};}catch(e){}
+    const raw=String(m.memberName||info.name||'').trim();
+    const name=(typeof v29CleanName==='function'?v29CleanName(m):raw)||'-';
+    return {name,rank:String(info.rank||m.rank||'').trim(),dept:String(info.dept||m.dept||'').trim()};
+  }
+  function personHtml(m,cls){const p=profile(m);const meta=[p.rank,p.dept].filter(Boolean).join(' · ');return '<span class="'+cls+'"><b>'+esc(p.name)+'</b>'+(meta?'<small>'+esc(meta)+'</small>':'')+'</span>';}
+  function metaFor(m){const vm=(typeof v23LoadMeta==='function'?v23LoadMeta():{})[String(m.memberId)]||{},ti=(typeof v19TeamInfo==='function'?v19TeamInfo(m):{});return {team:norm(vm.teamName||ti.team||'조 미지정'),act:Number(vm.teamActivityNo||ti.activityNo||m.entryCount||1)||1,floor:norm(vm.activityFloor||ti.floor),dir:norm(vm.entryDirection||ti.direction),detail:norm(vm.detailLocation||ti.detail)};}
+
+  /* 즉시확인은 31분 초과 자체가 아니라 공통 안전판정의 due만 사용 */
+  window.v29UpdateLiveBoardMetrics=function(){
+    const list=window.__dashboardInsideMembers||[],dash=window.__v29Dashboard||{},teams=v29GroupTeams(list);
+    let g=0,o=0,r=0,c=0;const urgent=[];
+    list.forEach(m=>{const st=status(m),min=st.mins;if(min<=20)g++;else if(min<=25)o++;else if(min<=30)r++;else c++;if(st.due)urgent.push({m,st});});
+    const stats=document.getElementById('cmdPeopleStats');
+    if(stats){
+      const rows=[['현장 참여',Number(dash.uniqueMemberCount||list.length),''],['현재 내부',list.length,'inside'],['0~20분',g,'green'],['21~25분',o,'orange'],['26~30분',r,'red'],['31분 이상',c,'over31'],['즉시확인',urgent.length,'immediate'+(urgent.length?' active':'')],['철수완료',Number(dash.exitedCount||0),'exited']];
+      stats.innerHTML=rows.map(x=>'<div class="cmdStat '+x[2]+(Number(x[1])===0?' zero':'')+'"><div class="cmdStatLabel">'+x[0]+'</div><div class="cmdStatValue">'+x[1]+'명</div></div>').join('');
+    }
+    const alert=document.getElementById('cmdAlertBar');
+    if(alert){
+      if(!urgent.length){alert.className='cmdAlertBar ok';alert.textContent='';}
+      else{
+        const iso=urgent.filter(x=>x.st.isolated).length,recheck=urgent.filter(x=>x.st.recheck).length;
+        const reason=(iso?'고립 '+iso+'명':'')+(iso&&recheck?' · ':'')+(recheck?'재확인 '+recheck+'명':'');
+        const txt=urgent.slice(0,5).map(x=>{const mt=metaFor(x.m);return mt.team+' '+profile(x.m).name+(x.st.isolated?' 고립':x.st.recheck?' 재확인':(' '+x.st.mins+'분'));}).join('　│　');
+        alert.className='cmdAlertBar danger';alert.textContent='⚠ 즉시확인 '+urgent.length+'명'+(reason?' ('+reason+')':'')+'　│　'+txt+(urgent.length>5?' 외 '+(urgent.length-5)+'명':'');
+      }
+    }
+    const ov=document.getElementById('cmdTeamOverview');
+    if(ov){const total=teams.reduce((a,t)=>a+t.count,0);ov.innerHTML='<div class="cmdOverviewBox"><span>활동조</span><b>'+teams.length+'개 조</b></div><div class="cmdOverviewBox"><span>총 조원</span><b>'+total+'명</b></div><div class="cmdOverviewBox"><span>현재 활동요약</span><span class="cmdOverviewText">'+esc(v29BuildActivitySummary(teams))+'</span></div>';}
+    const sel=document.getElementById('cmdSelectedFloorSummary');
+    if(sel){const here=list.filter(m=>v29FloorKey(metaFor(m).floor)===v33SelectedFloor),warn=here.filter(m=>status(m).due).length;sel.textContent=(v33SelectedFloor==='화점층'?'🔥 ':'')+v33SelectedFloor+' · '+here.length+'명'+(warn?' · ⚠ '+warn+'명':'');}
+  };
+
+  /* 조별현황: 이름 + 계급 + 소속, 대원별 구분 */
+  window.v29DrawCommandTeamTable=function(teams){
+    const area=document.getElementById('cmdTeamTable');if(!area)return;
+    if(!teams.length){area.innerHTML='<div class="cmdFloorEmpty">현재 활동 중인 조가 없습니다.</div>';return;}
+    let h='<div class="cmdTeamHead"><div>조</div><div>차수</div><div>층</div><div>세부장소</div><div>방면</div><div>인원 · 대원정보</div><div>진입시간</div></div>';
+    teams.forEach(t=>{
+      const members=(t.members||[]).map(m=>personHtml(m,'cmdTeamMemberItem')).join('');
+      h+='<div class="cmdTeamRow '+teamCss(t.team)+'"><div class="cmdTeamCell"><span class="cmdTeamBadge">'+esc(t.team)+'</span></div><div class="cmdTeamCell">'+Number(t.activityNo||1)+'차</div><div class="cmdTeamCell"><span class="cmdMini">'+esc(norm(t.floor))+'</span></div><div class="cmdTeamCell"><span class="cmdMini">'+esc(norm(t.detail))+'</span></div><div class="cmdTeamCell"><span class="cmdMini">'+esc(norm(t.direction))+'</span></div><div class="cmdTeamCell cmdTeamPeople"><span class="cmdTeamPeopleCount">'+t.count+'명</span><span class="cmdTeamMemberList">'+members+'</span></div><div class="cmdTeamCell cmdEntry">'+esc(t.entryTime||'-')+'</div></div>';
+    });
+    area.innerHTML=h;
+  };
+
+  function renderSelectedFloor(){
+    const list=window.__dashboardInsideMembers||[],floorPanel=document.getElementById('v33FloorPanel'),area=document.getElementById('v34FloorMembers');if(!floorPanel||!area)return;
+    const floors=['옥상','상층','직상층','화점층','직하층','하층','지하층'];
+    const fm=list.filter(m=>v29FloorKey(metaFor(m).floor)===v33SelectedFloor),groups={};
+    fm.forEach(m=>{const mt=metaFor(m);(groups[mt.team]||(groups[mt.team]=[])).push(m);});
+    const teams=Object.keys(groups).sort((a,b)=>v19TeamNumber(a)-v19TeamNumber(b));
+    const buttons=floors.map(f=>{const ms=list.filter(m=>v29FloorKey(metaFor(m).floor)===f),warn=ms.filter(m=>status(m).due).length;return '<button type="button" class="v33FloorBtn '+(f===v33SelectedFloor?'active ':'')+(f==='화점층'?'fire':'')+'" onclick="selectTeamBoardFloorV33(\''+f+'\')"><span>'+(f==='화점층'?'🔥 ':'')+f+'</span><span>'+ms.length+'명'+(warn?' · ⚠'+warn:'')+'</span></button>';}).join('');
+    let details='<div class="r16hSelectedFloor"><div class="r16hSelectedTitle"><span>'+(v33SelectedFloor==='화점층'?'🔥 ':'')+esc(v33SelectedFloor)+' · 활동대원 '+fm.length+'명</span>';
+    const allWarn=fm.filter(m=>status(m).due).length;details+=(allWarn?'<span class="warn">⚠ 즉시확인 '+allWarn+'명</span>':'<span>정상</span>')+'</div>';
+    if(!teams.length)details+='<div class="cmdNoMembers">현재 이 층에서 활동 중인 대원이 없습니다.</div>';
+    teams.forEach(t=>{const ms=groups[t],first=ms[0],mt=metaFor(first),warn=ms.filter(m=>status(m).due).length,confirmed=ms.length&&ms.every(m=>status(m).confirmed);details+='<div class="r16hFloorTeam '+teamCss(t)+'"><div class="r16hFloorTeamTop"><span class="teamBadge">'+esc(t)+'</span><span>'+mt.act+'차 · '+esc(mt.dir)+' · '+esc(mt.detail)+' · '+ms.length+'명</span></div><div class="r16hFloorTeamNames">'+ms.map(m=>personHtml(m,'r16hFloorPerson')).join('')+'</div><div class="r16hFloorSafety '+(warn?'due':'')+'">'+(warn?'⚠ 즉시확인 '+warn+'명':confirmed?'✓ 안전확인 완료':'현재 즉시확인 대상 없음')+'</div></div>';});
+    floorPanel.innerHTML='<div class="v33PanelTitle">층 선택</div><div class="r16hFloorButtons">'+buttons+'</div>'+details+'</div>';
+
+    let html='<div class="cmdFloorMemberHead"><span>'+(v33SelectedFloor==='화점층'?'🔥 ':'')+esc(v33SelectedFloor)+' 현장 활동대원 '+fm.length+'명</span><span style="font-size:12px;opacity:.85">2페이지 동일 안전판정</span></div>';
+    if(!fm.length){area.innerHTML=html+'<div class="cmdNoMembers">현재 이 층에서 활동 중인 대원이 없습니다.</div>';return;}
+    teams.forEach(t=>{const ms=groups[t],mt=metaFor(ms[0]);html+='<div class="cmdMonitorTeamGroup"><div class="cmdMonitorTeamTitle '+teamCss(t)+'"><span>'+esc(t)+' · '+mt.act+'차 · '+ms.length+'명</span><span class="loc">'+esc(mt.dir)+' · '+esc(mt.detail)+'</span></div><div class="cmdMonitorMemberGrid">';ms.forEach(m=>{const st=status(m),p=profile(m),mm=metaFor(m),cls=st.isolated?'isolated':st.due?'due':st.confirmed?'confirmed':'';html+='<div class="cmdMonitorMemberCard '+teamCss(t)+' '+cls+'"><div><span class="cmdMonitorMemberName">'+esc(p.name)+'</span>'+(p.rank||p.dept?'<span class="cmdMonitorMemberDept">'+esc([p.rank,p.dept].filter(Boolean).join(' · '))+'</span>':'')+'</div><div class="cmdMonitorMemberLoc">'+esc(mm.team)+' · '+mm.act+'차 · '+esc(mm.floor)+' · '+esc(mm.dir)+' · '+esc(mm.detail)+'</div><div class="cmdMonitorMemberBottom"><span class="cmdMonitorPill">진입 '+esc(m.entryTime||'-')+'</span><span class="cmdMonitorPill elapsed '+(st.mins>=31?'warn':'')+'">'+(st.mins>=31?'🔴 ':'')+st.mins+'분 경과</span><span class="cmdMonitorPill safety '+(st.due?'due':'')+'">'+esc(st.text)+'</span></div></div>';});html+='</div></div>';});area.innerHTML=html;
+  }
+  window.v29RenderSelectedFloorPremium=renderSelectedFloor;
+
+  /* 기존 draw를 이용해 전술배치도를 그린 뒤 R16H 패널/표현으로 덮어씀 */
+  const prevDraw=window.drawTeamBoardV29;
+  window.drawTeamBoardV29=function(){if(typeof prevDraw==='function')prevDraw();window.v29UpdateLiveBoardMetrics();window.v29DrawCommandTeamTable(v29GroupTeams(window.__dashboardInsideMembers||[]));renderSelectedFloor();};
+})();
+</script>
+
 </body>
 </html>
