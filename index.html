@@ -1859,7 +1859,7 @@ PPE 점검 대기
 <div class="card">
 
 <div class="v29TeamHeader">
-  <div class="v29TeamHeaderTitle">👥 2. 조별현황</div>
+  <div class="v29TeamHeaderTitle" id="v29TeamStatusTitle">👥 2. 조별현황 · 활동 0개조 / 0명</div>
 </div>
 
 <div id="teamStatusV28"></div>
@@ -2041,7 +2041,7 @@ function v2SyncServerMeta(m){
       teamActivityNo:Number(m.activityNo)||1,
       entryDirection:m.direction||"미지정",
       activityFloor:m.floor||"미지정",
-      detailLocation:m.detail||"미지정"
+      detailLocation:m.detail||""
     });
     v23SaveMeta(meta);
   }catch(e){
@@ -2061,7 +2061,7 @@ function v2OldInsideMember(m){
     activityNo:Number(m.activityNo)||1,
     direction:m.direction||"미지정",
     floor:m.floor||"미지정",
-    detail:m.detail||"미지정",
+    detail:m.detail||"",
     /* R10: 서버 현재상태의 안전관리 값을 현황 화면까지 그대로 전달 */
     isolated:!!m.isolated,
     isolatedAt:m.isolatedAt||"",
@@ -5406,7 +5406,7 @@ function v20TeamLocation(members,team){
     return {
       dir:vm.entryDirection||"미지정",
       floor:vm.activityFloor||"미지정",
-      detail:vm.detailLocation||"미지정"
+      detail:(!vm.detailLocation||vm.detailLocation==="미지정"||/세부\s*장소\s*미지정/i.test(vm.detailLocation))?"-":vm.detailLocation
     };
   });
   if(!vals.length)return "위치 미지정";
@@ -5672,7 +5672,7 @@ async function loadInsideMembers(isAutoRefresh = false){
             const floor=vm.activityFloor||'미지정';
             const team=vm.teamName||'미지정';
             const dir=vm.entryDirection||'미지정';
-            const detail=vm.detailLocation||'미지정';
+            const detail=(!vm.detailLocation||vm.detailLocation==='미지정'||/세부\s*장소\s*미지정/i.test(vm.detailLocation))?'-':vm.detailLocation;
             return '<div class="insideCompactLocation">'+
               '<span class="insideLocText">'+escapeHtml(team)+(vm.teamActivityNo?' · '+Number(vm.teamActivityNo)+'차':'')+' · '+escapeHtml(dir)+' / </span>'+
               '<span class="floorMini '+v23FloorClass(floor)+'">'+escapeHtml(floor)+'</span>'+
@@ -7049,6 +7049,11 @@ function v28DrawTeamStatus(list){
   if(!area)return;
 
   const teams=v29GroupTeams(list||[]);
+  const teamTitle=document.getElementById("v29TeamStatusTitle");
+  if(teamTitle){
+    const activeTeamCount=teams.filter(t=>String(t.team||"").trim() && !/미지정/.test(String(t.team||""))).length;
+    teamTitle.textContent="👥 2. 조별현황 · 활동 "+activeTeamCount+"개조 / "+(list||[]).length+"명";
+  }
   if(!teams.length){
     area.innerHTML='<div class="v31TeamSummary"><div style="padding:16px;text-align:center;font-weight:850;color:#6b7c8e">현재 활동 중인 조가 없습니다.</div></div>';
     return;
@@ -7078,7 +7083,7 @@ function v28DrawTeamStatus(list){
   teams.forEach(t=>{
     const teamCls=v19TeamColorClass(t.team);
     const floor=t.floor||"미지정";
-    const detail=t.detail||"미지정";
+    const detail=(!t.detail||t.detail==="미지정"||/세부\s*장소\s*미지정/i.test(t.detail))?"-":t.detail;
     const direction=t.direction||"미지정";
     out+=
       '<div class="v16TeamRow '+teamCls+'">'+
@@ -7115,7 +7120,7 @@ function v29GroupTeams(list){
     const unique=(key,fallback)=>[...new Set(g.map(x=>String(x.vm[key]||fallback)))];
     const dirs=unique("entryDirection","미지정");
     const floors=unique("activityFloor","미지정");
-    const details=unique("detailLocation","미지정");
+    const details=[...new Set(g.map(x=>{const v=String(x.vm.detailLocation||"").trim();return (!v||v==="미지정"||/세부\s*장소\s*미지정/i.test(v))?"-":v;}))];
     const maxMin=Math.max(...g.map(x=>Number(x.m.currentMinutes)||0));
     const actNo=Math.max(...g.map(x=>Number(x.vm.teamActivityNo)||1));
     return {
@@ -7303,7 +7308,7 @@ function drawTeamBoardV29(){
               const floor=vm.activityFloor||"미지정";
               const team=vm.teamName||"미지정";
               const dir=vm.entryDirection||"미지정";
-              const detailLoc=vm.detailLocation||"미지정";
+              const detailLoc=(!vm.detailLocation||vm.detailLocation==="미지정"||/세부\s*장소\s*미지정/i.test(vm.detailLocation))?"-":vm.detailLocation;
               return '<div class="insideCompactLocation">'+
                 '<span class="insideLocText">'+escapeHtml(team)+(vm.teamActivityNo?' · '+Number(vm.teamActivityNo)+'차':'')+' · '+escapeHtml(dir)+' / </span>'+
                 '<span class="floorMini '+v23FloorClass(floor)+'">'+escapeHtml(floor)+'</span>'+
@@ -7334,7 +7339,7 @@ function showTeamBoardDetailV29(teamName){
       '<div class="v29DetailStatus">'+st.icon+' '+st.text+' · '+Number(t.minutes)+'분</div>'+
     '</div>'+
     '<div class="v29DetailLocation">📍 '+escapeHtml(t.floor)+' · '+escapeHtml(t.direction)+
-      (t.detail&&t.detail!=="미지정"?' · '+escapeHtml(t.detail):'')+
+      ' · '+escapeHtml((t.detail&&t.detail!=="미지정"&&!/세부\s*장소\s*미지정/i.test(t.detail))?t.detail:'-')+
     '</div>'+
     '<div class="v29DetailMeta"><span>현재 활동 '+Number(t.count)+'명</span><span>체류시간은 조 내 최장 체류 기준</span></div>';
 }
@@ -7471,7 +7476,7 @@ function drawDashboardInside(list){
           const floor=vm.activityFloor||'미지정';
           const team=vm.teamName||'미지정';
           const dir=vm.entryDirection||'미지정';
-          const detail=vm.detailLocation||'미지정';
+          const detail=(!vm.detailLocation||vm.detailLocation==='미지정'||/세부\s*장소\s*미지정/i.test(vm.detailLocation))?'-':vm.detailLocation;
           return '<div class="insideCompactLocation">'+
             '<span class="insideLocText">'+escapeHtml(team)+(vm.teamActivityNo?' · '+Number(vm.teamActivityNo)+'차':'')+' · '+escapeHtml(dir)+' / </span>'+
             '<span class="floorMini '+v23FloorClass(floor)+'">'+escapeHtml(floor)+'</span>'+
@@ -7525,7 +7530,7 @@ function openDashboardMemberDetail(memberId,memberName){
       '<div class="sheetLocation">'+
         escapeHtml(vm.teamName||"미지정")+(vm.teamActivityNo?' · '+Number(vm.teamActivityNo)+'차':'')+' · '+
         escapeHtml(vm.entryDirection||"미지정")+' · <span class="floorMini '+v23FloorClass(floor)+'">'+escapeHtml(floor)+'</span>'+
-        ' / '+escapeHtml(vm.detailLocation||"미지정")+
+        ' / '+escapeHtml((!vm.detailLocation||vm.detailLocation==='미지정'||/세부\s*장소\s*미지정/i.test(vm.detailLocation))?'-':vm.detailLocation)+
       '</div>'+
       '<div class="v237InfoList">'+
         '<div class="v237InfoRow"><span class="v237InfoLabel">진입시각</span><span class="v237InfoValue">'+escapeHtml(member.entryTime||"-")+'</span></div>'+
@@ -7536,17 +7541,14 @@ function openDashboardMemberDetail(memberId,memberName){
       '</div>'+
       '<div class="sheetActions">'+
         '<button type="button" id="v238MemberEditBtn" class="sheetEdit">🛡️ 대원정보변경</button>'+
-        '<button type="button" id="v238MemberCloseBtn" class="v237CloseBtn">닫기</button>'+
       '</div>'+
     '</div>';
   overlay.classList.add("show");
 
   const editBtn=document.getElementById("v238MemberEditBtn");
-  const closeBtn=document.getElementById("v238MemberCloseBtn");
   if(editBtn)editBtn.addEventListener("click",function(){
     editDashboardMemberLocation(memberId,memberName);
   });
-  if(closeBtn)closeBtn.addEventListener("click",closeDashboardMemberDetail);
 }
 
 function closeDashboardMemberDetail(){
@@ -8455,9 +8457,80 @@ window.v251R9OpenTeam=function(team){
     if(d)setTimeout(()=>o.classList.remove('show'),300);
   };
 };
-window.v251R9OpenMember=function(id,name){const m=find(id);if(!m)return;const i=info(m),meta=(typeof v23LoadMeta==='function'?v23LoadMeta():{}),old=meta[String(id)]||{},team=old.teamName||i.team||'',dir=old.entryDirection||i.direction||'',floor=old.activityFloor||i.floor||'',detail=old.detailLocation||i.detail||'',act=Number(old.teamActivityNo||i.activityNo||m.entryCount||1)||1,o=overlay();o.innerHTML='<div class="dashboardDetailSheet"><div class="sheetHeader"><b>🛡️ 대원정보변경</b><button type="button" id="r9MClose" class="sheetClose">×</button></div><div class="sheetMemberTitle">'+esc(getMemberDisplay(id,name||m.memberName||''))+'</div><div class="v251R9State">현재 상태: '+(m.isolated?'🚨 고립대원':'정상')+'</div><div class="locationEditForm"><label>조<input id="r9MTeam" value="'+attr(team)+'"></label><label>진입방면<select id="r9MDir">'+directionOptions(dir||'미지정')+'</select></label><label>활동층<select id="r9MFloor">'+floorOptions(floor||'미지정')+'</select></label><label>세부장소<input id="r9MDetail" value="'+attr(detail)+'" placeholder="예: 기계실 / 1203호 / 계단실"></label><div class="v251R9IsoBox"><label>고립대원 설정/해제</label><select id="r9MIso"><option value="KEEP">변경없음</option><option value="Y">🚨 고립대원 설정</option><option value="N">✅ 고립대원 해제</option></select></div></div><button type="button" id="r9MemberSafety" class="v251SafetyBtn">✅ 대원 안전확인</button><button type="button" id="r9MSave" class="sheetSave">대원정보변경 반영</button></div>';o.classList.add('show');document.getElementById('r9MClose').onclick=()=>o.classList.remove('show');document.getElementById('r9MemberSafety').onclick=()=>safety([id]);document.getElementById('r9MSave').onclick=async function(){const d=await post('updateSafetyManagement',[id],{team:document.getElementById('r9MTeam').value,activityNo:String(act),direction:document.getElementById('r9MDir').value,floor:document.getElementById('r9MFloor').value,detail:document.getElementById('r9MDetail').value,isolationMode:document.getElementById('r9MIso').value},this);if(d)setTimeout(()=>o.classList.remove('show'),300);};};
+window.v251R9OpenMember=function(id,name){const m=find(id);if(!m)return;const i=info(m),meta=(typeof v23LoadMeta==='function'?v23LoadMeta():{}),old=meta[String(id)]||{},team=old.teamName||i.team||'',dir=old.entryDirection||i.direction||'',floor=old.activityFloor||i.floor||'',detail=old.detailLocation||i.detail||'',act=Number(old.teamActivityNo||i.activityNo||m.entryCount||1)||1,o=overlay();o.innerHTML='<div class="dashboardDetailSheet"><div class="sheetHeader"><b>🛡️ 대원정보변경</b><button type="button" id="r9MClose" class="sheetClose">×</button></div><div class="sheetMemberTitle">'+esc(getMemberDisplay(id,name||m.memberName||''))+'</div><div class="v251R9State">현재 상태: '+(m.isolated?'🚨 고립대원':'정상')+'</div><div class="locationEditForm"><label>조<input id="r9MTeam" value="'+attr(team)+'"></label><label>진입방면<select id="r9MDir">'+directionOptions(dir||'미지정')+'</select></label><label>활동층<select id="r9MFloor">'+floorOptions(floor||'미지정')+'</select></label><label>세부장소<input id="r9MDetail" value="'+attr(detail)+'" placeholder="예: 기계실 / 1203호 / 계단실"></label><div class="v251R9IsoBox"><label>고립대원 설정/해제</label><select id="r9MIso"><option value="KEEP">변경없음</option><option value="Y">🚨 고립대원 설정</option><option value="N">✅ 고립대원 해제</option></select></div></div><button type="button" id="r9MSave" class="sheetSave">대원정보변경 반영</button></div>';o.classList.add('show');document.getElementById('r9MClose').onclick=()=>o.classList.remove('show');document.getElementById('r9MSave').onclick=async function(){const d=await post('updateSafetyManagement',[id],{team:document.getElementById('r9MTeam').value,activityNo:String(act),direction:document.getElementById('r9MDir').value,floor:document.getElementById('r9MFloor').value,detail:document.getElementById('r9MDetail').value,isolationMode:document.getElementById('r9MIso').value},this);if(d)setTimeout(()=>o.classList.remove('show'),300);};};
 const oldTeam=window.openDashboardTeamLocationEdit;window.openDashboardTeamLocationEdit=function(team){v251R9OpenTeam(team);};
-const oldDetail=window.openDashboardMemberDetail;if(typeof oldDetail==='function'){window.openDashboardMemberDetail=function(id,name){oldDetail(id,name);const actions=document.querySelector('#dashboardDetailOverlay .sheetActions');if(!actions)return;const edit=actions.querySelector('#v238MemberEditBtn');if(edit){edit.textContent='🛡️ 대원정보변경';edit.onclick=function(e){e.preventDefault();v251R9OpenMember(id,name);};}if(!document.getElementById('r9SafetyBtn')){const b=document.createElement('button');b.type='button';b.id='r9SafetyBtn';b.className='sheetEdit';b.textContent='✅ 대원 안전확인';b.onclick=()=>safety([id]);actions.insertBefore(b,actions.lastElementChild);}};}
+const oldDetail=window.openDashboardMemberDetail;
+function r16mDetailText(v){
+  let s=String(v??'').trim();
+  if(!s || s==='미지정' || /세부\s*장소\s*미지정/i.test(s) || /세부장소미지정/i.test(s))return '-';
+  return s;
+}
+function r16mApplyMemberSafetyButton(btn,m){
+  if(!btn||!m)return;
+  const st=state(m);
+  btn.classList.toggle('isConfirmed',!!st.confirmed);
+  btn.classList.toggle('isDue',!!st.due);
+  if(btn.disabled)return;
+  if(st.confirmed){btn.textContent='✓ 안전확인 · 재확인 '+(st.remain||10)+'분';}
+  else if(st.due){btn.textContent='🛡 안전확인';}
+  else{btn.textContent='🛡 안전확인';}
+}
+async function r16mMemberSafety(id,btn){
+  const m=find(id);if(!m||!btn)return;
+  const old=btn.textContent;
+  btn.disabled=true;btn.textContent='⏳ 처리중...';
+  try{
+    const d=await post('setSafetyCheck',[id],{},null);
+    if(!d){btn.textContent=old;return;}
+    const hit=(d.succeeded||[]).find(x=>String(x.id||x.memberId)===String(id));
+    m.safetyCheckedAt=(hit&&hit.checkedAt)||new Date().toISOString();
+    r16mApplyMemberSafetyButton(btn,m);
+    if(typeof applyTeamSafetyButtons==='function')applyTeamSafetyButtons();
+    if(typeof summary==='function')summary();
+    if(typeof refresh==='function')setTimeout(refresh,0);
+  }catch(e){console.error('대원 안전확인 오류',e);btn.textContent=old;}
+  finally{btn.disabled=false;r16mApplyMemberSafetyButton(btn,m);}
+}
+if(typeof oldDetail==='function'){
+  window.openDashboardMemberDetail=function(id,name){
+    oldDetail(id,name);
+    const m=find(id);if(!m)return;
+    const i=info(m),meta=(typeof v23LoadMeta==='function'?v23LoadMeta():{}),vm=meta[String(id)]||{};
+    const team=vm.teamName||i.team||'미지정';
+    const act=Number(vm.teamActivityNo||i.activityNo||m.entryCount||1)||1;
+    const floor=vm.activityFloor||i.floor||'미지정';
+    const dir=vm.entryDirection||i.direction||'미지정';
+    const detail=r16mDetailText(vm.detailLocation||i.detail||'');
+
+    const title=document.querySelector('#dashboardDetailOverlay .sheetMemberTitle');
+    if(title){
+      title.classList.add('r16mMemberTitleRow');
+      if(!document.getElementById('r16mMemberSafetyBtn')){
+        const b=document.createElement('button');
+        b.type='button';b.id='r16mMemberSafetyBtn';b.className='r16mMemberSafetyBtn';
+        b.onclick=()=>r16mMemberSafety(id,b);
+        title.appendChild(b);
+      }
+      r16mApplyMemberSafetyButton(document.getElementById('r16mMemberSafetyBtn'),m);
+    }
+
+    const loc=document.querySelector('#dashboardDetailOverlay .sheetLocation');
+    if(loc){
+      loc.innerHTML=esc(team)+' · '+act+'차 · <span class="floorMini '+v23FloorClass(floor)+'">'+esc(floor)+'</span> · '+esc(dir)+' · '+esc(detail);
+    }
+
+    const actions=document.querySelector('#dashboardDetailOverlay .sheetActions');
+    if(actions){
+      actions.querySelectorAll('#r9SafetyBtn,#v238MemberCloseBtn').forEach(x=>x.remove());
+      const edit=actions.querySelector('#v238MemberEditBtn');
+      if(edit){
+        edit.textContent='🛡️ 대원정보변경';
+        edit.classList.add('r16mFullEdit');
+        edit.onclick=function(e){e.preventDefault();v251R9OpenMember(id,name);};
+      }
+    }
+  };
+}
 const oldLoad=window.loadDashboard;if(typeof oldLoad==='function'){window.loadDashboard=async function(){const r=await oldLoad.apply(this,arguments);setTimeout(refresh,0);return r;};}
 document.addEventListener('DOMContentLoaded',()=>setTimeout(refresh,0));setInterval(()=>{const p=document.getElementById('dashboardPage');if(p&&p.style.display!=='none'&&!document.hidden)refresh();},1000);
 })();
@@ -8486,7 +8559,7 @@ function v29GroupTeams(list){
   return Object.keys(groups).sort((a,b)=>v28TeamNo(a)-v28TeamNo(b)).map(team=>{
     const g=groups[team];
     const unique=(key,fallback)=>[...new Set(g.map(x=>String(x.vm[key]||fallback)))];
-    const dirs=unique("entryDirection","미지정"), floors=unique("activityFloor","미지정"), details=unique("detailLocation","미지정");
+    const dirs=unique("entryDirection","미지정"), floors=unique("activityFloor","미지정"), details=[...new Set(g.map(x=>{const v=String(x.vm.detailLocation||"").trim();return (!v||v==="미지정"||/세부\s*장소\s*미지정/i.test(v))?"-":v;}))];
     const maxMin=Math.max(0,...g.map(x=>v29MemberMinutes(x.m)));
     const actNo=Math.max(1,...g.map(x=>Number(x.vm.teamActivityNo)||1));
     const times=g.map(x=>String(x.m.entryTime||"")).filter(Boolean).sort();
@@ -8539,7 +8612,7 @@ function v29DrawCommandTeamTable(teams){
   const area=document.getElementById('cmdTeamTable'); if(!area)return;
   if(!teams.length){area.innerHTML='<div class="cmdFloorEmpty">현재 활동 중인 조가 없습니다.</div>';return;}
   let h='<div class="cmdTeamHead"><div>조</div><div>차수</div><div>층</div><div>세부장소</div><div>방면</div><div>인원 · 대원이름</div><div>진입시간</div></div>';
-  teams.forEach(t=>{const floor=t.floor||'미지정',detail=t.detail||'미지정',dir=t.direction||'미지정';h+='<div class="cmdTeamRow '+v29TeamCss(t.team)+'"><div class="cmdTeamCell"><span class="cmdTeamBadge">'+escapeHtml(t.team)+'</span></div><div class="cmdTeamCell">'+Number(t.activityNo||1)+'차</div><div class="cmdTeamCell"><span class="cmdMini">'+escapeHtml(floor)+'</span></div><div class="cmdTeamCell"><span class="cmdMini">'+escapeHtml(detail)+'</span></div><div class="cmdTeamCell"><span class="cmdMini">'+escapeHtml(dir)+'</span></div><div class="cmdTeamCell cmdTeamPeople"><b>'+t.count+'명</b><span class="cmdTeamNames">'+escapeHtml(t.names.join(' · '))+'</span></div><div class="cmdTeamCell cmdEntry">'+escapeHtml(t.entryTime||'-')+'</div></div>';});
+  teams.forEach(t=>{const floor=t.floor||'미지정',detail=(!t.detail||t.detail==='미지정'||/세부\s*장소\s*미지정/i.test(t.detail))?'-':t.detail,dir=t.direction||'미지정';h+='<div class="cmdTeamRow '+v29TeamCss(t.team)+'"><div class="cmdTeamCell"><span class="cmdTeamBadge">'+escapeHtml(t.team)+'</span></div><div class="cmdTeamCell">'+Number(t.activityNo||1)+'차</div><div class="cmdTeamCell"><span class="cmdMini">'+escapeHtml(floor)+'</span></div><div class="cmdTeamCell"><span class="cmdMini">'+escapeHtml(detail)+'</span></div><div class="cmdTeamCell"><span class="cmdMini">'+escapeHtml(dir)+'</span></div><div class="cmdTeamCell cmdTeamPeople"><b>'+t.count+'명</b><span class="cmdTeamNames">'+escapeHtml(t.names.join(' · '))+'</span></div><div class="cmdTeamCell cmdEntry">'+escapeHtml(t.entryTime||'-')+'</div></div>';});
   area.innerHTML=h;
 }
 function drawTeamBoardV29(){
@@ -8637,7 +8710,7 @@ setInterval(function(){const p=document.getElementById('teamBoardPageV29');if(p&
   function css(team){return v29TeamCss(team)||'';}
   function memberFloor(m){const vm=(typeof v23LoadMeta==='function'?v23LoadMeta():{})[String(m.memberId)]||{};const ti=teamInfo(m);return vm.activityFloor||ti.floor||'미지정';}
   function memberDirection(m){const vm=(typeof v23LoadMeta==='function'?v23LoadMeta():{})[String(m.memberId)]||{};const ti=teamInfo(m);return vm.entryDirection||ti.direction||'미지정';}
-  function memberDetail(m){const vm=(typeof v23LoadMeta==='function'?v23LoadMeta():{})[String(m.memberId)]||{};const ti=teamInfo(m);return vm.detailLocation||ti.detail||'미지정';}
+  function memberDetail(m){const vm=(typeof v23LoadMeta==='function'?v23LoadMeta():{})[String(m.memberId)]||{};const ti=teamInfo(m);return vm.detailLocation||ti.detail||'-';}
   function memberTeam(m){const vm=(typeof v23LoadMeta==='function'?v23LoadMeta():{})[String(m.memberId)]||{};return vm.teamName||teamInfo(m).team||'미지정';}
   function memberAct(m){const vm=(typeof v23LoadMeta==='function'?v23LoadMeta():{})[String(m.memberId)]||{};return Number(vm.teamActivityNo||teamInfo(m).activityNo||m.entryCount||1)||1;}
   window.v29RenderSelectedFloorPremium=function(){
@@ -8745,7 +8818,8 @@ setInterval(function(){const p=document.getElementById('teamBoardPageV29');if(p&
   const RECHECK_MIN=10;
   function parseT(v){if(!v)return NaN;return Date.parse(String(v).includes('T')?String(v):String(v).replace(' ','T'));}
   function liveMin(m){const server=Number(m&&m.currentMinutes)||0,t=parseT(m&&m.entryTime);return Number.isFinite(t)?Math.max(server,Math.floor(Math.max(0,Date.now()-t)/60000)):server;}
-  function norm(v){let s=String(v??'').trim();if(!s)return '미지정';s=s.replace(/세부\s*장소\s*미지정/gi,'미지정').replace(/세부장소미지정/gi,'미지정');return s||'미지정';}
+  function norm(v){let s=String(v??'').trim();if(!s)return '미지정';return s;}
+  function detailText(v){let s=String(v??'').trim();if(!s)return '-';s=s.replace(/세부\s*장소\s*미지정/gi,'-').replace(/세부장소미지정/gi,'-');return s==='미지정'?'-':s;}
   function status(m){
     const mins=liveMin(m);
     if(m&&m.isolated)return {mins,due:true,isolated:true,confirmed:false,reason:'고립',text:'🚨 고립대원'};
@@ -8768,7 +8842,7 @@ setInterval(function(){const p=document.getElementById('teamBoardPageV29');if(p&
     return {name,rank:String(info.rank||m.rank||'').trim(),dept:String(info.dept||m.dept||'').trim()};
   }
   function personHtml(m,cls){const p=profile(m);const meta=[p.rank,p.dept].filter(Boolean).join(' · ');return '<span class="'+cls+'"><b>'+esc(p.name)+'</b>'+(meta?'<small>'+esc(meta)+'</small>':'')+'</span>';}
-  function metaFor(m){const vm=(typeof v23LoadMeta==='function'?v23LoadMeta():{})[String(m.memberId)]||{},ti=(typeof v19TeamInfo==='function'?v19TeamInfo(m):{});return {team:norm(vm.teamName||ti.team||'조 미지정'),act:Number(vm.teamActivityNo||ti.activityNo||m.entryCount||1)||1,floor:norm(vm.activityFloor||ti.floor),dir:norm(vm.entryDirection||ti.direction),detail:norm(vm.detailLocation||ti.detail)};}
+  function metaFor(m){const vm=(typeof v23LoadMeta==='function'?v23LoadMeta():{})[String(m.memberId)]||{},ti=(typeof v19TeamInfo==='function'?v19TeamInfo(m):{});return {team:norm(vm.teamName||ti.team||'조 미지정'),act:Number(vm.teamActivityNo||ti.activityNo||m.entryCount||1)||1,floor:norm(vm.activityFloor||ti.floor),dir:norm(vm.entryDirection||ti.direction),detail:detailText(vm.detailLocation||ti.detail)};}
 
   /* 즉시확인은 31분 초과 자체가 아니라 공통 안전판정의 due만 사용 */
   window.v29UpdateLiveBoardMetrics=function(){
@@ -8875,9 +8949,10 @@ setInterval(function(){const p=document.getElementById('teamBoardPageV29');if(p&
 <script id="r16i-floor-axis-logic">
 (function(){
   function esc(v){return escapeHtml(String(v??''));}
-  function norm(v){let s=String(v??'').trim();if(!s)return '미지정';return s.replace(/세부\s*장소\s*미지정/gi,'미지정').replace(/세부장소미지정/gi,'미지정')||'미지정';}
+  function norm(v){let s=String(v??'').trim();if(!s)return '미지정';return s;}
+  function detailText(v){let s=String(v??'').trim();if(!s)return '-';s=s.replace(/세부\s*장소\s*미지정/gi,'-').replace(/세부장소미지정/gi,'-');return s==='미지정'?'-':s;}
   function state(m){return (window.v251R16HImmediateState?window.v251R16HImmediateState(m):{due:false,confirmed:false,isolated:false});}
-  function meta(m){const vm=(typeof v23LoadMeta==='function'?v23LoadMeta():{})[String(m.memberId)]||{},ti=(typeof v19TeamInfo==='function'?v19TeamInfo(m):{});return {team:norm(vm.teamName||ti.team||'조 미지정'),act:Number(vm.teamActivityNo||ti.activityNo||m.entryCount||1)||1,floor:norm(vm.activityFloor||ti.floor),dir:norm(vm.entryDirection||ti.direction),detail:norm(vm.detailLocation||ti.detail)};}
+  function meta(m){const vm=(typeof v23LoadMeta==='function'?v23LoadMeta():{})[String(m.memberId)]||{},ti=(typeof v19TeamInfo==='function'?v19TeamInfo(m):{});return {team:norm(vm.teamName||ti.team||'조 미지정'),act:Number(vm.teamActivityNo||ti.activityNo||m.entryCount||1)||1,floor:norm(vm.activityFloor||ti.floor),dir:norm(vm.entryDirection||ti.direction),detail:detailText(vm.detailLocation||ti.detail)};}
   function profile(m){let i={};try{i=getMemberInfoById(m.memberId)||{};}catch(e){}const raw=String(m.memberName||i.name||'').trim(),name=(typeof v29CleanName==='function'?v29CleanName(m):raw)||'-';return {name,rank:String(i.rank||m.rank||'').trim(),dept:String(i.dept||m.dept||'').trim()};}
   function teamCss(t){return (typeof v29TeamCss==='function'?v29TeamCss(t):'')||'';}
   function person(m){const p=profile(m),sub=[p.rank,p.dept].filter(Boolean).join(' · ');return '<span class="r16iTeamInfoPerson"><b>'+esc(p.name)+'</b>'+(sub?'<small>'+esc(sub)+'</small>':'')+'</span>';}
@@ -8907,5 +8982,16 @@ setInterval(function(){const p=document.getElementById('teamBoardPageV29');if(p&
 })();
 </script>
 
+
+<style id="r16mMemberDetailStyle">
+#dashboardDetailOverlay .r16mMemberTitleRow{display:flex;align-items:center;gap:12px;justify-content:space-between;}
+#dashboardDetailOverlay .r16mMemberTitleRow #r16mMemberSafetyBtn{margin-left:auto;flex:0 0 auto;}
+#dashboardDetailOverlay .r16mMemberSafetyBtn{border:1px solid #cbd5e1;background:#f8fafc;color:#334155;border-radius:10px;padding:8px 12px;font-size:13px;font-weight:900;white-space:nowrap;cursor:pointer;}
+#dashboardDetailOverlay .r16mMemberSafetyBtn.isDue{border-color:#ef4444;background:#fff1f2;color:#b91c1c;}
+#dashboardDetailOverlay .r16mMemberSafetyBtn.isConfirmed{border-color:#16a34a;background:#f0fdf4;color:#15803d;}
+#dashboardDetailOverlay .r16mMemberSafetyBtn:disabled{opacity:.7;cursor:wait;}
+#dashboardDetailOverlay .sheetActions{display:block;}
+#dashboardDetailOverlay .sheetActions .r16mFullEdit{display:block;width:100%;margin:0;}
+</style>
 </body>
 </html>
