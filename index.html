@@ -2616,12 +2616,27 @@ async function v249L34LoadActiveSites(){
   for(let attempt=0;attempt<2;attempt++){
     if(attempt>0){box.innerHTML="⏳ 현장정보 다시 확인 중...";await v249L38Sleep(500);}
     try{
-      // 진행/종료를 두 번 조회하지 않고 서버에서 전체 현장을 한 번에 받는다.
-      const r=await V2_NATIVE_FETCH(API+"?action=allSites&t="+Date.now(),{cache:"no-store"});
-      if(!r||!r.ok)throw new Error("현장정보 서버 응답 오류");
-      const d=await r.json();
-      if(!d.ok)throw new Error(d.error||d.message||"현장정보 조회 실패");
-      const rows=(d.sites||[]).map(x=>({...x,__closed:String(x.status||"")==="종료"}));
+      // R16K: 서버가 공식 지원하는 sites / closedSites를 각각 조회한다.
+      // allSites는 현재 Code.gs에 없는 action이므로 사용하지 않는다.
+      const stamp=Date.now();
+      const [activeRes,closedRes]=await Promise.all([
+        V2_NATIVE_FETCH(API+"?action=sites&t="+stamp,{cache:"no-store"}),
+        V2_NATIVE_FETCH(API+"?action=closedSites&t="+stamp,{cache:"no-store"})
+      ]);
+      if(!activeRes||!activeRes.ok||!closedRes||!closedRes.ok)
+        throw new Error("현장정보 서버 응답 오류");
+      const [activeData,closedData]=await Promise.all([activeRes.json(),closedRes.json()]);
+      if(!activeData||activeData.ok!==true)
+        throw new Error((activeData&&(activeData.error||activeData.message))||"진행중 현장정보 조회 실패");
+      if(!closedData||closedData.ok!==true)
+        throw new Error((closedData&&(closedData.error||closedData.message))||"종료 현장정보 조회 실패");
+      // 응답 필드 자체가 없으면 '현장 0개'로 오판하지 않고 API 불일치로 처리한다.
+      if(!Array.isArray(activeData.sites)||!Array.isArray(closedData.sites))
+        throw new Error("현장정보 응답 형식 오류 · 서버/앱 버전을 확인하세요.");
+      const rows=[
+        ...activeData.sites.map(x=>({...x,__closed:false})),
+        ...closedData.sites.map(x=>({...x,__closed:true}))
+      ];
       rows.forEach(x=>{if(x.siteName&&x.siteId)V2_SITE_ID_BY_NAME.set(String(x.siteName),String(x.siteId));});
       if(!rows.length){box.innerHTML='<div style="padding:12px;color:#667085">등록된 현장정보가 없습니다.</div>';return;}
       box.innerHTML=rows.map(x=>{
