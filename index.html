@@ -6065,7 +6065,17 @@ async function batchExitMembers(){
   exitSubmitting =
     true;
 
-  showTemporaryMessage("⏳ 철수 처리중...");
+  /* R15B: 서버 응답을 기다리는 동안 중복 클릭/혼동 방지 */
+  const exitButton=document.querySelector("button.batchExit");
+  const exitButtonOriginalText=exitButton?exitButton.textContent:"🟢 선택 대원 일괄 철수처리";
+  if(exitButton){
+    exitButton.disabled=true;
+    exitButton.textContent="⏳ 선택한 "+checked.length+"명 철수 처리중...";
+  }
+  const selectedCountEl=document.getElementById("selectedCount");
+  if(selectedCountEl) selectedCountEl.textContent="⏳ 선택한 "+checked.length+"명 철수 처리중...";
+
+  showTemporaryMessage("⏳ 선택한 "+checked.length+"명 철수 처리중...");
 
   const form =
     new URLSearchParams();
@@ -6210,6 +6220,13 @@ async function batchExitMembers(){
     exitSubmitting =
       false;
 
+    /* R15B: 철수 저장 응답이 끝나면 버튼은 즉시 정상 복귀. 후속 검증조회와 분리 */
+    if(exitButton){
+      exitButton.disabled=false;
+      exitButton.textContent=exitButtonOriginalText;
+    }
+    updateSelectedCount();
+
     /* R15A: 플래그 해제 후 서버 상태를 1회 검증. 지연돼도 즉시반영 화면은 유지 */
     if(v249R15ARefreshAfterExit){
       setTimeout(()=>{ void loadInsideMembers(true); },0);
@@ -6322,6 +6339,11 @@ function closeDashboard(){
     0
   );
 
+  /* R15B: 2페이지에서 1페이지로 돌아오면 현재 내부를 자동 최신화 */
+  if(!document.hidden && !v249R8WriteBusy()){
+    setTimeout(()=>{ void v249R15BRefreshMain("dashboard-return"); },0);
+  }
+
 }
 
 
@@ -6392,6 +6414,44 @@ function stopDashboardAutoRefresh(){
 
 
 /* =====================================================
+R15B 1페이지 가벼운 자동 최신화
+- 다른 페이지에서 1페이지 복귀
+- 앱/화면 재활성화
+- 충분히 아래로 본 뒤 맨 위로 복귀
+- 기록 처리 중/조회 중에는 겹치지 않음
+===================================================== */
+let v249R15BMainRefreshAt=0;
+let v249R15BScrollArmed=false;
+const V249_R15B_MAIN_REFRESH_GAP=5000;
+
+function v249R15BMainVisible(){
+  const p=document.getElementById("mainPage");
+  return !!(p && p.style.display!=="none");
+}
+
+function v249R15BRefreshMain(reason){
+  if(!v249R15BMainVisible() || document.hidden || v249R8WriteBusy() || insideLoading) return false;
+  const now=Date.now();
+  if((now-v249R15BMainRefreshAt)<V249_R15B_MAIN_REFRESH_GAP) return false;
+  v249R15BMainRefreshAt=now;
+  void loadInsideMembers(true);
+  return true;
+}
+
+window.addEventListener("scroll",function(){
+  if(!v249R15BMainVisible()) return;
+  const y=window.scrollY||document.documentElement.scrollTop||0;
+  if(y>=500){
+    v249R15BScrollArmed=true;
+    return;
+  }
+  if(v249R15BScrollArmed && y<=60){
+    v249R15BScrollArmed=false;
+    v249R15BRefreshMain("scroll-top");
+  }
+},{passive:true});
+
+/* =====================================================
 화면을 다시 켰을 때 즉시 최신화
 ===================================================== */
 
@@ -6426,6 +6486,11 @@ document.addEventListener(
         const exitedPage=document.getElementById("exitedPageV23");
         if(exitedPage && exitedPage.style.display!=="none" && !v249R8WriteBusy()){
           void loadExitedStatus(true);
+        }else{
+          const mainPage=document.getElementById("mainPage");
+          if(mainPage && mainPage.style.display!=="none" && !v249R8WriteBusy()){
+            void v249R15BRefreshMain("visibility");
+          }
         }
       }
 
