@@ -2334,6 +2334,7 @@ window.fetch = async function(input, init){
       p.set("action","batchExit");
       p.set("siteId",v2SiteId(old.get("site")));
       p.set("members",old.get("members")||"[]");
+      p.set("officer",old.get("officer")||"");
 
       const d=await v2CallPost(p);
       return v2JsonResponse({
@@ -2341,7 +2342,8 @@ window.fetch = async function(input, init){
         successCount:Number(d.successCount)||0,
         succeeded:d.succeeded||[],
         failed:d.failed||[],
-        message:d.message||""
+        message:d.message||"",
+        recovered:!!d.recovered
       });
     }
 
@@ -3003,7 +3005,6 @@ async function loadSites(){
 
   try{
 
-    const v249ExitFetchStarted=performance.now();
     const response =
       await fetch(
         API +
@@ -6062,8 +6063,8 @@ function updateSelectedCount(){
 
 async function batchExitMembers(){
 
-  const v249ExitClientStarted=performance.now();
   let v249R15ARefreshAfterExit = false;
+  let v249ExitServerConfirmed = false;
 
   if(
     exitSubmitting
@@ -6231,48 +6232,14 @@ async function batchExitMembers(){
     const data =
       await response.json();
 
-    const v249ExitFetchMs=Math.round(performance.now()-v249ExitFetchStarted);
-    const v249ExitTotalMs=Math.round(performance.now()-v249ExitClientStarted);
-
-    /* R15B-DIAG: 철수 동작은 바꾸지 않고 서버/통신 구간 시간만 표시 */
-    try{
-      let diag=document.getElementById("v249ExitTimingDiag");
-      if(!diag){
-        diag=document.createElement("div");
-        diag.id="v249ExitTimingDiag";
-        diag.style.cssText="margin:8px 0;padding:8px 10px;border:1px solid #d1d5db;border-radius:8px;background:#f8fafc;color:#111827;font-size:13px;line-height:1.45;font-weight:700;";
-        if(exitButton && exitButton.parentNode){
-          exitButton.parentNode.insertBefore(diag,exitButton.nextSibling);
-        }
-      }
-      const serverMs=(data&&data.timing)?Number(data.timing.totalMs||0):0;
-      const gapMs=Math.max(0,v249ExitFetchMs-serverMs);
-      diag.textContent=
-        "철수 진단 · 서버 "+(serverMs/1000).toFixed(1)+"초 / POST 응답 "+
-        (v249ExitFetchMs/1000).toFixed(1)+"초 / 응답차이 "+
-        (gapMs/1000).toFixed(1)+"초 / 전체 "+
-        (v249ExitTotalMs/1000).toFixed(1)+"초";
-    }catch(diagErr){
-      console.warn("철수 진단표시 실패",diagErr);
-    }
-
-    if(data && data.timing){
-      console.table({
-        "철수 전체 체감(ms)":v249ExitTotalMs,
-        "POST 왕복(ms)":v249ExitFetchMs,
-        "서버 전체(ms)":data.timing.totalMs,
-        "Lock 대기(ms)":data.timing.lockWaitMs,
-        "열 점검(ms)":data.timing.ensureColumnsMs,
-        "활동이력 읽기(ms)":data.timing.historyReadMs,
-        "현재상태 읽기(ms)":data.timing.currentReadMs,
-        "대상 검색(ms)":data.timing.indexBuildMs,
-        "철수값 적용(ms)":data.timing.applyMs,
-        "활동이력 쓰기(ms)":data.timing.historyWriteMs,
-        "현재상태 쓰기(ms)":data.timing.currentWriteMs,
-        "고립해제 기록(ms)":data.timing.isolationLogMs
-      });
-    }
-
+    /* 서버 응답 자체와 화면 후처리를 분리해 판단 */
+    v249ExitServerConfirmed = !!(
+      data && (
+        data.success === true ||
+        Number(data.successCount) > 0 ||
+        (Array.isArray(data.succeeded) && data.succeeded.length > 0)
+      )
+    );
 
     let message =
       data.message ||
@@ -6339,14 +6306,15 @@ async function batchExitMembers(){
 
   }catch(error){
 
-    console.error(
-      error
-    );
+    console.error(error);
 
-
-    alert(
-      "일괄 철수 처리 오류"
-    );
+    if(v249ExitServerConfirmed){
+      /* 서버 철수는 끝났는데 화면 후처리만 실패한 경우, 철수 실패로 오인시키지 않는다. */
+      v249R15ARefreshAfterExit = true;
+      alert("철수 처리는 서버에 반영되었습니다. 화면 현황을 다시 확인합니다.");
+    }else{
+      alert("일괄 철수 처리 오류");
+    }
 
   }finally{
 
