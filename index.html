@@ -1328,6 +1328,55 @@ button:disabled{
 <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
 <link rel="apple-touch-icon" href="./icon-192.png">
 
+
+<style id="r16bDashboardPolish">
+/* R16B: 2페이지 구성 정돈 - 기존 기능/데이터 로직 유지 */
+#dashboardPage .dashboardHeader{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-right:8px}
+#dashboardPage .dashboardHeaderRight{margin-left:auto;display:flex;align-items:center;gap:8px;min-width:0}
+#dashboardPage .dashboardHeaderRight .siteName{max-width:240px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#dashboardPage .dashboardRefreshMini{width:auto!important;min-width:92px!important;margin:0!important;padding:6px 9px!important;border:1px solid rgba(255,255,255,.48)!important;border-radius:7px!important;background:rgba(255,255,255,.12)!important;color:#fff!important;box-shadow:none!important;display:flex!important;flex-direction:column;align-items:flex-end;gap:1px;line-height:1.1}
+#dashboardPage .dashboardRefreshMini .refreshMainV22{font-size:11px!important;font-weight:900!important;white-space:nowrap}
+#dashboardPage .dashboardRefreshTime{font-size:8.5px;font-weight:700;opacity:.82;white-space:nowrap}
+.commandOverviewLaunch{width:100%!important;margin:10px 0 0!important;padding:13px 15px!important;border:1px solid #aebdca!important;border-radius:10px!important;background:linear-gradient(180deg,#f8fafc,#eef3f7)!important;color:#172b3d!important;box-shadow:0 1px 3px rgba(15,40,65,.06)!important;display:flex!important;align-items:center;justify-content:space-between;text-align:left!important}
+.commandOverviewText{display:flex;flex-direction:column;gap:3px;min-width:0}
+.commandOverviewText strong{font-size:16px;line-height:1.2;font-weight:950;letter-spacing:-.25px;color:#173d67}
+.commandOverviewText small{font-size:10.5px;line-height:1.25;font-weight:800;color:#607387}
+.commandOverviewArrow{font-size:25px;line-height:1;color:#526b82;font-weight:400;padding-left:12px}
+/* 조별현황: 한 조 = 한 줄, 현장 활동대원과 같은 조 색상 */
+#teamStatusV28 .v16TeamSummary{margin:0;border:1px solid #dbe5ef;border-radius:10px;overflow:hidden;background:#fff}
+#teamStatusV28 .v16TeamTable{width:100%;overflow:hidden}
+#teamStatusV28 .v16TeamHead,#teamStatusV28 .v16TeamRow{display:grid;grid-template-columns:64px 54px 88px minmax(112px,1fr) 82px 52px 86px;align-items:center;column-gap:2px}
+#teamStatusV28 .v16TeamHead{min-height:34px;padding:0 5px;background:#f3f6f9;border-bottom:1px solid #dbe5ef;color:#526579;font-size:10px;font-weight:950;text-align:center}
+#teamStatusV28 .v16TeamRow{--team:#64748b;min-height:48px;padding:0 5px;border-bottom:1px solid #e5ebf1;border-left:5px solid var(--team);font-size:11px;font-weight:850;background:#fff}
+#teamStatusV28 .v16TeamRow:last-child{border-bottom:0}
+#teamStatusV28 .v16TeamCell{min-width:0;padding:5px 2px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#teamStatusV28 .v16TeamBadge{display:inline-flex;align-items:center;justify-content:center;min-width:43px;padding:6px 7px;border-radius:7px;background:var(--team);color:#fff;font-size:12px;font-weight:950}
+#teamStatusV28 .v16RoundBadge{display:inline-flex;padding:4px 6px;border-radius:6px;background:#eef3f7;color:#40566b;font-size:10.5px;font-weight:950}
+#teamStatusV28 .v16MiniBadge{display:inline-block;max-width:100%;padding:3px 6px;border:1px solid #c7d1dc;border-radius:6px;background:#f7f9fb;color:#33485d;font-size:10.5px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;vertical-align:middle}
+#teamStatusV28 .v16MiniBadge.floorMini.floor-fire{color:#d82020;border-color:#ef6a6a;background:#fff2f2}
+#teamStatusV28 .v16MiniBadge.floorMini.floor-above{color:#d66b00;border-color:#f0a44b;background:#fff8ec}
+#teamStatusV28 .v16MiniBadge.floorMini.floor-yellow{color:#9b7200;border-color:#e2bd43;background:#fffbea}
+#teamStatusV28 .v16MiniBadge.floorMini.floor-green{color:#16834b;border-color:#63bd8a;background:#effbf4}
+#teamStatusV28 .v16MiniBadge.floorMini.floor-basement{color:#1665c1;border-color:#6ca6e8;background:#eff6ff}
+#teamStatusV28 .v16MiniBadge.floorMini.floor-roof{color:#6d3dc1;border-color:#a98ae0;background:#f7f1ff}
+#teamStatusV28 .v16DetailBadge{background:#f6f8fa;border-color:#cbd5df;color:#34495e}
+#teamStatusV28 .v16DirectionBadge{background:#eef5fb;border-color:#b9cde1;color:#174d78}
+#teamStatusV28 .v16Count{font-size:12px;font-weight:950;color:#172b3d}
+#teamStatusV28 .v16Entry{font-size:10.5px;font-weight:900;color:#526579}
+@media(max-width:720px){
+ #dashboardPage .dashboardTitle{font-size:19px}
+ #dashboardPage .dashboardHeaderRight .siteName{display:none}
+ #dashboardPage .dashboardRefreshMini{min-width:84px!important;padding:5px 7px!important}
+ #teamStatusV28 .v16TeamHead,#teamStatusV28 .v16TeamRow{grid-template-columns:52px 43px 72px minmax(82px,1fr) 65px 40px 68px;column-gap:1px}
+ #teamStatusV28 .v16TeamHead{font-size:8.5px}
+ #teamStatusV28 .v16TeamRow{min-height:44px;padding:0 3px;border-left-width:4px}
+ #teamStatusV28 .v16TeamCell{padding:4px 1px}
+ #teamStatusV28 .v16TeamBadge{min-width:35px;padding:5px 4px;font-size:10.5px}
+ #teamStatusV28 .v16RoundBadge,#teamStatusV28 .v16MiniBadge{font-size:9px;padding:3px 4px}
+ #teamStatusV28 .v16Count{font-size:10.5px}
+ #teamStatusV28 .v16Entry{font-size:9px}
+}
+</style>
 </head>
 
 <body>
@@ -1672,10 +1721,13 @@ PPE 점검 대기
 🔥 현장 활동 현황
 </div>
 
-<div id="dashboardSiteName" class="siteName">
--
+<div class="dashboardHeaderRight">
+  <div id="dashboardSiteName" class="siteName">-</div>
+  <button type="button" id="dashboardRefreshBtn" class="dashboardRefreshMini" onclick="loadDashboard(false)" aria-label="현황 새로고침">
+    <span class="refreshMainV22">↻ 새로고침</span>
+    <span id="dashboardAutoRefreshInfo" class="dashboardRefreshTime">10초 자동 · --:--:--</span>
+  </button>
 </div>
-<button id="dashboardRefreshBtn" class="v16TopRefresh" onclick="loadDashboard(false)" title="현황 새로고침"><span class="refreshMainV22">🔄 새로고침</span><span id="dashboardAutoRefreshInfo" class="v16TopRefreshInfo">10초 자동 · --:--:--</span></button>
 
 </div>
 
@@ -1751,9 +1803,14 @@ PPE 점검 대기
 >
 ⬅ 안전관리 화면으로 돌아가기
 </button>
-<div class="v16SummaryLaunch" onclick="openTeamBoardV29()" role="button" tabindex="0"><div>📊 <b>현장활동 종합현황</b></div><span>인원 · 조별 · 층별 현황 한눈에 보기 〉</span></div>
 
-
+<button type="button" class="commandOverviewLaunch" onclick="openTeamBoardV29()">
+  <span class="commandOverviewText">
+    <strong>현장활동 종합현황</strong>
+    <small>인원현황 · 조별현황 · 층별 활동현황판</small>
+  </span>
+  <span class="commandOverviewArrow">›</span>
+</button>
 
 </div>
 
@@ -1765,6 +1822,7 @@ PPE 점검 대기
 </div>
 
 <div id="teamStatusV28"></div>
+
 
 </div>
 
@@ -1791,7 +1849,7 @@ PPE 점검 대기
 
   <div class="v29BoardHeader">
     <div class="v29BoardHeaderMain">
-      <div class="v29BoardTitle">📊 현장활동 종합현황</div>
+      <div class="v29BoardTitle">현장활동 종합현황</div>
       <div id="v29BoardSite" class="v29BoardSite">-</div>
     </div>
     <div class="v249BoardBrand" aria-label="완주소방서">
@@ -6931,7 +6989,6 @@ function v28DrawTeamStatus(list){
   }
 
   const meta=v23LoadMeta();
-
   function teamEntryTime(teamName){
     const rows=(list||[]).filter(m=>{
       const vm=meta[String(m.memberId)]||{};
@@ -6939,50 +6996,38 @@ function v28DrawTeamStatus(list){
     });
     const times=rows.map(x=>String(x.entryTime||"")).filter(Boolean).sort();
     if(!times.length)return "-";
-    const raw=times[0];
-    const m=raw.match(/(\d{2}:\d{2}:\d{2})/);
-    return m?m[1]:raw;
+    const raw=times[0], mt=raw.match(/(\d{2}:\d{2}:\d{2})/);
+    return mt?mt[1]:raw;
+  }
+  function smallBadge(text,cls){
+    return '<span class="v16MiniBadge '+(cls||'')+'">'+escapeHtml(text||"미지정")+'</span>';
   }
 
-  function floorIcon(floor){
-    const f=String(floor||"");
-    if(f==="화점층")return "🔥";
-    if(f==="지하층")return "■";
-    if(f==="직상층"||f==="상층부"||f==="상층")return "↑";
-    if(f==="직하층"||f==="하층부"||f==="하층")return "↓";
-    if(f==="옥상")return "▰";
-    return "📍";
-  }
-
-  let out=
-    '<div class="v31TeamSummary">'+
-      '<div class="v32TeamTotals">'+
-        '<div class="v32TotalBox"><div class="v32TotalLabel">👥 현재 활동</div><div class="v32TotalValue">'+teams.length+'개조</div></div>'+
-        '<div class="v32TotalBox"><div class="v32TotalLabel">👤 총 조원</div><div class="v32TotalValue">'+(list||[]).length+'명</div></div>'+
-      '</div>'+
-      '<div class="v32TeamTable">'+
-        '<div class="v32TeamHead">'+
-          '<div class="v32TeamCell">조</div><div class="v32TeamCell">차수</div><div class="v32TeamCell">층</div><div class="v32TeamCell">세부장소</div><div class="v32TeamCell">방면</div><div class="v32TeamCell">인원</div><div class="v32TeamCell">진입시간</div>'+
-        '</div>';
+  let out='<div class="v31TeamSummary v16TeamSummary">'+
+    '<div class="v16TeamTable">'+
+      '<div class="v16TeamHead">'+
+        '<div>조</div><div>차수</div><div>층</div><div>세부장소</div><div>방면</div><div>인원</div><div>진입시간</div>'+
+      '</div>';
 
   teams.forEach(t=>{
-    const fire=String(t.floor)==="화점층";
+    const teamCls=v19TeamColorClass(t.team);
+    const floor=t.floor||"미지정";
+    const detail=t.detail||"세부장소 미지정";
+    const direction=t.direction||"미지정";
     out+=
-      '<div class="v32TeamRow">'+
-        '<div class="v32TeamCell"><span class="v32TeamBadge '+v19TeamColorClass(t.team)+'">'+escapeHtml(t.team)+'</span></div>'+
-        '<div class="v32TeamCell"><span class="v32TeamRound">'+Number(t.activityNo)+'차</span></div>'+
-        '<div class="v32TeamCell"><span class="v32MiniBadge floor '+(fire?'fire':'')+'">'+floorIcon(t.floor)+' '+escapeHtml(t.floor||"미지정")+'</span></div>'+
-        '<div class="v32TeamCell"><span class="v32MiniBadge detail">'+escapeHtml(t.detail||"세부장소 미지정")+'</span></div>'+
-        '<div class="v32TeamCell"><span class="v32MiniBadge direction">'+escapeHtml(t.direction||"미지정")+'</span></div>'+
-        '<div class="v32TeamCell v32TeamMembers">'+Number(t.count)+'명</div>'+
-        '<div class="v32TeamCell v32TeamEntry">'+escapeHtml(teamEntryTime(t.team))+'</div>'+
+      '<div class="v16TeamRow '+teamCls+'">'+
+        '<div class="v16TeamCell"><span class="v16TeamBadge">'+escapeHtml(t.team)+'</span></div>'+
+        '<div class="v16TeamCell"><span class="v16RoundBadge">'+Number(t.activityNo||1)+'차</span></div>'+
+        '<div class="v16TeamCell">'+smallBadge(floor,'floorMini '+v23FloorClass(floor))+'</div>'+
+        '<div class="v16TeamCell v16DetailCell" title="'+escapeHtml(detail)+'">'+smallBadge(detail,'v16DetailBadge')+'</div>'+
+        '<div class="v16TeamCell">'+smallBadge(direction,'v16DirectionBadge')+'</div>'+
+        '<div class="v16TeamCell v16Count">'+Number(t.count||0)+'명</div>'+
+        '<div class="v16TeamCell v16Entry">'+escapeHtml(teamEntryTime(t.team))+'</div>'+
       '</div>';
   });
-
   out+='</div></div>';
   area.innerHTML=out;
 }
-
 function v29StayState(minutes){
   const n=Number(minutes)||0;
   if(n<=20)return {cls:"normal",icon:"🟢",text:"정상"};
@@ -8276,19 +8321,20 @@ const RECHECK=10;
 function esc(v){return typeof escapeHtml==='function'?escapeHtml(String(v??'')):String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
 function attr(v){return esc(v).replace(/`/g,'&#96;');}
 function siteId(){const raw=((document.getElementById('site')||{}).value||'');return typeof v2SiteId==='function'?v2SiteId(raw):raw;}
-function officer(){const main=document.getElementById('officer');return ((main&&main.value)||'').trim();}
+function officer(required){const main=document.getElementById('officer');const v=((main&&main.value)||'').trim();if(required&&!v)alert('안전관리 화면에서 담당자 성명을 먼저 입력하세요.');return v;}
 function parseTime(v){if(!v)return NaN;const t=Date.parse(String(v).includes('T')?String(v):String(v).replace(' ','T'));return t;}
 function hm(v){const t=parseTime(v);return Number.isFinite(t)?new Date(t).toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit',hour12:false}):'';}
 function teamName(m){try{return v19TeamInfo(m).team||m.team||'미지정';}catch(e){return (m&&m.team)||'미지정';}}
 function info(m){try{return v19TeamInfo(m);}catch(e){return {team:m.team||'',activityNo:m.activityNo||m.entryCount||1,direction:m.direction||'',floor:m.floor||'',detail:m.detail||''};}}
 function find(id){return (window.__dashboardInsideMembers||[]).find(m=>String(m.memberId)===String(id));}
 function state(m){const mins=Number(m&&m.currentMinutes)||0;if(m&&m.isolated)return {icon:'🚨',text:'고립대원',due:true,isolated:true,confirmed:false};if(mins<=30)return {icon:mins<=20?'🟢':mins<=25?'🟠':'🔴',text:mins<=20?'정상':mins<=25?'주의':'경고',due:false,confirmed:false};const t=parseTime(m&&m.safetyCheckedAt);if(Number.isFinite(t)){const elapsed=Math.max(0,(Date.now()-t)/60000);if(elapsed<RECHECK){const remain=Math.max(1,Math.ceil(RECHECK-elapsed));return {icon:'🔴',text:'안전확인 완료 '+hm(m.safetyCheckedAt)+' · 재확인 '+remain+'분 후',due:false,confirmed:true};}return {icon:'🚨',text:'재확인 필요',due:true,recheck:true,confirmed:false};}return {icon:'🚨',text:'즉시확인',due:true,confirmed:false};}
+function ensureUI(){ return; }
 async function post(action,ids,extra,btn){const o=officer(true);if(!o)return null;const sid=siteId();if(!sid){alert('화재현장을 선택하세요.');return null;}const f=new URLSearchParams();f.set('action',action);f.set('siteId',sid);f.set('officer',o);f.set('members',JSON.stringify((ids||[]).map(id=>({id:String(id)}))));Object.keys(extra||{}).forEach(k=>f.set(k,extra[k]));const old=btn?btn.textContent:'';if(btn){btn.disabled=true;btn.textContent='⏳ 반영중...';}let timedOut=false;try{const TIMEOUT=10000;const d=await Promise.race([v2CallPost(f),new Promise(resolve=>setTimeout(()=>{timedOut=true;resolve({__uiTimeout:true});},TIMEOUT))]);if(d&&d.__uiTimeout){if(btn){btn.disabled=false;btn.textContent='↻ 저장 확인중';setTimeout(()=>{if(btn)btn.textContent=old;},1800);}void loadDashboard(false).then(()=>refresh()).catch(()=>{});return null;}if(!d||(!d.ok&&!d.success))throw new Error((d&&d.error)||(d&&d.message)||'처리 실패');if(btn)btn.textContent='✅ 반영완료';refresh();void loadDashboard(false).then(()=>refresh()).catch(()=>{});return d;}catch(e){alert((e&&e.message)||'반영 실패');return null;}finally{if(btn&&!timedOut)setTimeout(()=>{btn.disabled=false;btn.textContent=old;},500);}}
 async function safety(ids){if(!ids||!ids.length)return;if(!confirm(ids.length+'명을 안전확인 완료 처리하시겠습니까?\n확인 후 10분 동안 빨간 깜빡임이 중지되고, 10분 후 재확인 대상이 됩니다.'))return;await post('setSafetyCheck',ids,{},null);}
 function renderTargets(){const box=document.getElementById('v251SafetyTargets');if(box)box.remove();}
 function applyRows(){const root=document.getElementById('dashboardInside');if(!root)return;root.querySelectorAll('.memberRow').forEach(row=>{const idEl=row.querySelector('.compactId');if(!idEl)return;const m=find(idEl.textContent.trim());if(!m)return;const s=state(m);row.classList.remove('v251NeedsCheck','v251SafetyConfirmed','v251IsolationBlink');if(s.isolated)row.classList.add('v251IsolationBlink');else if(s.due)row.classList.add('v251NeedsCheck');else if(s.confirmed)row.classList.add('v251SafetyConfirmed');const st=row.querySelector('.insideStatus');if(st){if(s.confirmed)st.classList.add('v251SafetyConfirmed');else st.classList.remove('v251SafetyConfirmed');st.textContent=s.icon+' '+s.text;}});}
 function summary(){const box=document.getElementById('criticalSummary');if(!box)return;const targets=(window.__dashboardInsideMembers||[]).filter(m=>m.isolated||Number(m.currentMinutes)>=31),due=targets.filter(m=>state(m).due).length,confirmed=targets.filter(m=>state(m).confirmed).length;box.classList.remove('v251StableCritical');if(due){box.classList.add('hasCritical');box.textContent='⚠️ 31분 이상 또는 고립대원 확인대상 '+due+'명';}else if(confirmed){box.classList.remove('hasCritical');box.classList.add('v251StableCritical');box.textContent='🔴 31분 이상 '+confirmed+'명 · 안전확인 완료 · 10분 후 재확인';}else{box.classList.remove('hasCritical');box.textContent='✅ 31분 이상 또는 고립대원 확인대상 0명';}}
-function refresh(){renderTargets();applyRows();summary();}
+function refresh(){ensureUI();renderTargets();applyRows();summary();}
 function overlay(){let o=document.getElementById('dashboardDetailOverlay');if(!o){o=document.createElement('div');o.id='dashboardDetailOverlay';o.className='dashboardDetailOverlay';document.body.appendChild(o);}return o;}
 function directionOptions(cur){const base=['A방면','B방면','C방면','D방면'];const vals=(cur&&!base.includes(cur)?[cur]:[]).concat(base);return vals.map(v=>'<option value="'+attr(v)+'" '+(v===cur?'selected':'')+'>'+esc(v)+'</option>').join('');}
 function floorOptions(cur){const base=['옥상','상층부','직상층','화점층','직하층','하층부','지하층'];const vals=(cur&&!base.includes(cur)?[cur]:[]).concat(base);return vals.map(v=>'<option value="'+attr(v)+'" '+(v===cur?'selected':'')+'>'+esc(v)+'</option>').join('');}
