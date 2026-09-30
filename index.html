@@ -2233,7 +2233,10 @@ window.fetch = async function(input, init){
         failed:d.failed||[],
         teamName:d.teamName||d.team||"",
         activityNo:Number(d.activityNo)||0,
-        message:d.message||d.error||""
+        message:d.message||d.error||"",
+        /* 진단 전용: 서버 원응답의 처리시간/복구여부를 상위 조투입 로직까지 보존 */
+        timing:d.timing||null,
+        recovered:!!d.recovered
       });
     }
 
