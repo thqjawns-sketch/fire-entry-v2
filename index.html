@@ -1151,7 +1151,7 @@ button:disabled{
 
 
 
-/* ===== R16P 1·2페이지 공통 대원카드 시각 규격 ===== */
+/* ===== R16Q 1·2페이지 공통 대원카드 시각 규격 ===== */
 #insideList .v16PCommonMemberCard,
 #dashboardInside .v16PCommonMemberCard{width:100%;min-width:0}
 #insideList .v16PIdentityLine,
@@ -5613,6 +5613,10 @@ async function loadInsideMembers(isAutoRefresh = false){
 
     }
 
+    /* R16Q: 1페이지도 자기 최신 활동대원 원본을 보관한다.
+       안전상태 재적용 시 2페이지 캐시를 대신 참조하지 않도록 분리한다. */
+    window.__insideMembers = Array.isArray(data.members) ? data.members : [];
+
     /* R15A: 최신 정상 응답을 받은 뒤에만 기존 목록을 교체 */
     list.innerHTML = "";
 
@@ -5660,9 +5664,7 @@ async function loadInsideMembers(isAutoRefresh = false){
           );
 
 
-        row.className =
-          "memberRow " +
-          stay.className;
+        row.className = v16QMemberRowClass(member);
 
 
         row.innerHTML =
@@ -7289,7 +7291,7 @@ function drawTeamBoardV29(){
 
         const row=document.createElement("div");
         const stay=getStayStatus(member.currentMinutes);
-        row.className="memberRow "+stay.className;
+        row.className=v16QMemberRowClass(member);
 
         row.innerHTML=
           '<div class="memberDetail">'+
@@ -7419,9 +7421,23 @@ function v237FormatMinutes(value){
   return h+"시간"+(r?" "+r+"분":"");
 }
 
-/* ===== R16P 공통 대원카드 =====
+/* ===== R16Q 공통 대원카드 =====
    원칙: 대원카드 본문은 1·2페이지에서 단 하나의 렌더러만 사용한다.
    1페이지는 철수 체크박스만 바깥에 추가하고, 2페이지는 상세정보 클릭만 추가한다. */
+function v16QMemberRowClass(member){
+  const base=getStayStatus(member&&member.currentMinutes);
+  const live=(typeof window.v251GetMemberState==='function')
+    ? window.v251GetMemberState(member)
+    : null;
+  let extra='';
+  if(live){
+    if(live.isolated) extra='v251IsolationBlink';
+    else if(live.due) extra='v251NeedsCheck';
+    else if(live.confirmed) extra='v251SafetyConfirmed';
+  }
+  return ('memberRow '+base.className+(extra?' '+extra:'')).trim();
+}
+
 function v16NMemberCardHtml(member){
   const live=(typeof window.v251GetMemberState==='function')
     ? window.v251GetMemberState(member)
@@ -8431,7 +8447,7 @@ function recentSafety(m){const t=parseTime(m&&m.safetyCheckedAt);return Number.i
 function applyTeamSafetyButtons(){document.querySelectorAll('#dashboardInside .teamDividerV19').forEach(div=>{const team=div.dataset.team||'';const btn=div.querySelector('.dashboardTeamSafetyBtn');if(!btn)return;const ms=(window.__dashboardInsideMembers||[]).filter(m=>teamName(m)===team);const done=ms.length>0&&ms.every(recentSafety);btn.classList.toggle('isConfirmed',done);if(!btn.disabled){if(done){const remains=ms.map(m=>state(m).remain).filter(Number.isFinite);const r=remains.length?Math.min(...remains):10;btn.textContent='✓ 안전확인 · 재확인 '+r+'분';}else btn.textContent='🛡 조 안전확인';}});}
 window.v251TeamSafety=async function(team,btn){const ms=(window.__dashboardInsideMembers||[]).filter(m=>teamName(m)===team);if(!ms.length)return;const old=btn?btn.textContent:'🛡 조 안전확인';if(btn){btn.disabled=true;btn.textContent='⏳ 처리중...';}const d=await post('setSafetyCheck',ms.map(m=>m.memberId),{},null);if(d){const now=new Date().toISOString();ms.forEach(m=>{m.safetyCheckedAt=(d.succeeded||[]).find(x=>String(x.id)===String(m.memberId))?.checkedAt||now;});if(btn){btn.classList.add('isConfirmed');btn.textContent='✓ 안전확인';}}else if(btn){btn.textContent=old;}if(btn)btn.disabled=false;applyTeamSafetyButtons();};
 function renderTargets(){const box=document.getElementById('v251SafetyTargets');if(box)box.remove();}
-function applyRows(){['dashboardInside','insideList'].forEach(rootId=>{const root=document.getElementById(rootId);if(!root)return;root.querySelectorAll('.memberRow').forEach(row=>{const idEl=row.querySelector('.compactId');if(!idEl)return;const m=find(idEl.textContent.trim());if(!m)return;const s=state(m);row.classList.remove('v251NeedsCheck','v251SafetyConfirmed','v251IsolationBlink');if(s.isolated)row.classList.add('v251IsolationBlink');else if(s.due)row.classList.add('v251NeedsCheck');else if(s.confirmed)row.classList.add('v251SafetyConfirmed');const elapsed=row.querySelector('.insideElapsed');if(elapsed)elapsed.textContent=(s.mins>=31?'🔴 ':'')+s.mins+'분 경과';const st=row.querySelector('.insideStatus');if(st){if(s.confirmed)st.classList.add('v251SafetyConfirmed');else st.classList.remove('v251SafetyConfirmed');st.textContent=s.icon+' '+s.text;}});});}
+function applyRows(){['dashboardInside','insideList'].forEach(rootId=>{const root=document.getElementById(rootId);if(!root)return;const source=(rootId==='insideList'?(window.__insideMembers||window.__dashboardInsideMembers||[]):(window.__dashboardInsideMembers||[]));root.querySelectorAll('.memberRow').forEach(row=>{const idEl=row.querySelector('.compactId');if(!idEl)return;const id=idEl.textContent.trim();const m=source.find(x=>String(x.memberId)===String(id));if(!m)return;const s=state(m);row.classList.remove('v251NeedsCheck','v251SafetyConfirmed','v251IsolationBlink');if(s.isolated)row.classList.add('v251IsolationBlink');else if(s.due)row.classList.add('v251NeedsCheck');else if(s.confirmed)row.classList.add('v251SafetyConfirmed');const elapsed=row.querySelector('.insideElapsed');if(elapsed)elapsed.textContent=(s.mins>=31?'🔴 ':'')+s.mins+'분 경과';const st=row.querySelector('.insideStatus');if(st){st.classList.remove('v251NeedsCheck','v251SafetyConfirmed','v251IsolationBlink');if(s.isolated)st.classList.add('v251IsolationBlink');else if(s.due)st.classList.add('v251NeedsCheck');else if(s.confirmed)st.classList.add('v251SafetyConfirmed');st.textContent=s.icon+' '+s.text;}});});}
 function summary(){const box=document.getElementById('criticalSummary');if(!box)return;const targets=(window.__dashboardInsideMembers||[]).filter(m=>m.isolated||liveMinutes(m)>=31),due=targets.filter(m=>state(m).due).length,confirmed=targets.filter(m=>state(m).confirmed).length;box.classList.remove('v251StableCritical');if(due){box.classList.add('hasCritical');box.textContent='⚠️ 31분 이상 또는 고립대원 확인대상 '+due+'명';}else if(confirmed){box.classList.remove('hasCritical');box.classList.add('v251StableCritical');box.textContent='🔴 31분 이상 '+confirmed+'명 · ✓ 안전확인 완료';}else{box.classList.remove('hasCritical');box.textContent='✅ 31분 이상 또는 고립대원 확인대상 0명';}}
 function refresh(){ensureUI();renderTargets();applyRows();applyTeamSafetyButtons();summary();}
 function overlay(){let o=document.getElementById('dashboardDetailOverlay');if(!o){o=document.createElement('div');o.id='dashboardDetailOverlay';o.className='dashboardDetailOverlay';document.body.appendChild(o);}return o;}
