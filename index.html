@@ -1,3 +1,4 @@
+<!-- R16N: 1·2페이지 공통 대원카드(2페이지 기준) + 공통 안전상태 반영 -->
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -5633,59 +5634,11 @@ async function loadInsideMembers(isAutoRefresh = false){
 
 
         row.innerHTML =
-
-          '<input type="checkbox" class="insideCheck" ' +
-
-          'data-id="' +
-          escapeAttr(
-            member.memberId
-          ) +
-          '" ' +
-
-          'data-name="' +
-          escapeAttr(
-            member.memberName
-          ) +
-          '" ' +
-
-          'onchange="updateSelectedCount()">' +
-
-          '<div class="memberDetail">' +
-
-          '<div class="memberLine">' +
-
-          escapeHtml(
-            getMemberDisplay(
-              member.memberId,
-              member.memberName
-            )
-          ) +
-
-          '</div>' +
-
-          '<span class="memberId compactId">' +
-          escapeHtml(member.memberId) +
-          '</span>' +
-
-          (function(){
-            const vm=v23LoadMeta()[String(member.memberId)]||{};
-            const floor=vm.activityFloor||'미지정';
-            const team=vm.teamName||'미지정';
-            const dir=vm.entryDirection||'미지정';
-            const detail=(!vm.detailLocation||vm.detailLocation==='미지정'||/세부\s*장소\s*미지정/i.test(vm.detailLocation))?'-':vm.detailLocation;
-            return '<div class="insideCompactLocation">'+
-              '<span class="insideLocText">'+escapeHtml(team)+(vm.teamActivityNo?' · '+Number(vm.teamActivityNo)+'차':'')+' · '+escapeHtml(dir)+' / </span>'+
-              '<span class="floorMini '+v23FloorClass(floor)+'">'+escapeHtml(floor)+'</span>'+
-              '<span class="insideLocText"> / '+escapeHtml(detail)+'</span>'+
-              '</div>';
-          })() +
-
-          '<div class="insideCompactBottom">' +
-            '<span>진입 '+escapeHtml(member.entryTime)+' · 현재 '+Number(member.currentMinutes)+'분 · '+Number(member.entryCount)+'회차</span>'+
-            '<span class="insideStatus '+stay.className+'">'+stay.icon+' '+stay.text+'</span>'+
-          '</div>' +
-
-          '</div>';
+          '<input type="checkbox" class="insideCheck" '+
+          'data-id="'+escapeAttr(member.memberId)+'" '+
+          'data-name="'+escapeAttr(member.memberName)+'" '+
+          'onchange="updateSelectedCount()">'+
+          v16NMemberCardHtml(member);
 
 
         list.appendChild(
@@ -7425,6 +7378,30 @@ function v237FormatMinutes(value){
   return h+"시간"+(r?" "+r+"분":"");
 }
 
+/* ===== R16N 공통 대원카드: 2페이지 현장 활동대원 카드를 표준으로 사용 ===== */
+function v16NMemberCardHtml(member){
+  const stay=getStayStatus(member.currentMinutes);
+  const vm=v23LoadMeta()[String(member.memberId)]||{};
+  const floor=vm.activityFloor||'미지정';
+  const team=vm.teamName||'미지정';
+  const dir=vm.entryDirection||'미지정';
+  const detail=(!vm.detailLocation||vm.detailLocation==='미지정'||/세부\s*장소\s*미지정/i.test(vm.detailLocation))?'-':vm.detailLocation;
+  return '<div class="memberDetail">'+
+    '<div class="memberLine">'+escapeHtml(getMemberDisplay(member.memberId,member.memberName))+'</div>'+
+    '<span class="memberId compactId">'+escapeHtml(member.memberId)+'</span>'+
+    '<div class="insideCompactLocation">'+
+      '<span class="insideLocText">'+escapeHtml(team)+(vm.teamActivityNo?' · '+Number(vm.teamActivityNo)+'차':'')+' · '+escapeHtml(dir)+' / </span>'+
+      '<span class="floorMini '+v23FloorClass(floor)+'">'+escapeHtml(floor)+'</span>'+
+      '<span class="insideLocText"> / '+escapeHtml(detail)+'</span>'+
+    '</div>'+
+    '<div class="insideCompactBottom v251R16EStatusRow">'+
+      '<span class="v251EntryInfo">진입 '+escapeHtml(member.entryTime)+' · '+Number(member.entryCount)+'회차</span>'+
+      '<span class="insideElapsed" data-member-id="'+escapeAttr(member.memberId)+'">현재 '+Number(member.currentMinutes)+'분</span>'+
+      '<span class="insideStatus '+stay.className+'">'+stay.icon+' '+stay.text+'</span>'+
+    '</div>'+
+  '</div>';
+}
+
 function drawDashboardInside(list){
   const area=document.getElementById("dashboardInside");
   if(!area)return;
@@ -7464,31 +7441,7 @@ function drawDashboardInside(list){
     const stay=getStayStatus(member.currentMinutes);
     row.className="memberRow "+stay.className;
 
-    row.innerHTML =
-      
-      '<div class="memberDetail">'+
-        '<div class="memberLine">'+
-          escapeHtml(getMemberDisplay(member.memberId,member.memberName))+
-        '</div>'+
-        '<span class="memberId compactId">'+escapeHtml(member.memberId)+'</span>'+
-        (function(){
-          const vm=v23LoadMeta()[String(member.memberId)]||{};
-          const floor=vm.activityFloor||'미지정';
-          const team=vm.teamName||'미지정';
-          const dir=vm.entryDirection||'미지정';
-          const detail=(!vm.detailLocation||vm.detailLocation==='미지정'||/세부\s*장소\s*미지정/i.test(vm.detailLocation))?'-':vm.detailLocation;
-          return '<div class="insideCompactLocation">'+
-            '<span class="insideLocText">'+escapeHtml(team)+(vm.teamActivityNo?' · '+Number(vm.teamActivityNo)+'차':'')+' · '+escapeHtml(dir)+' / </span>'+
-            '<span class="floorMini '+v23FloorClass(floor)+'">'+escapeHtml(floor)+'</span>'+
-            '<span class="insideLocText"> / '+escapeHtml(detail)+'</span>'+
-          '</div>';
-        })()+
-        '<div class="insideCompactBottom v251R16EStatusRow">'+
-          '<span class="v251EntryInfo">진입 '+escapeHtml(member.entryTime)+' · '+Number(member.entryCount)+'회차</span>'+
-          '<span class="insideElapsed" data-member-id="'+escapeAttr(member.memberId)+'">현재 '+Number(member.currentMinutes)+'분</span>'+
-          '<span class="insideStatus '+stay.className+'">'+stay.icon+' '+stay.text+'</span>'+
-        '</div>'+
-      '</div>';
+    row.innerHTML = v16NMemberCardHtml(member);
 
     row.addEventListener("click",()=>{
       openDashboardMemberDetail(member.memberId,member.memberName);
@@ -8419,7 +8372,7 @@ function recentSafety(m){const t=parseTime(m&&m.safetyCheckedAt);return Number.i
 function applyTeamSafetyButtons(){document.querySelectorAll('#dashboardInside .teamDividerV19').forEach(div=>{const team=div.dataset.team||'';const btn=div.querySelector('.dashboardTeamSafetyBtn');if(!btn)return;const ms=(window.__dashboardInsideMembers||[]).filter(m=>teamName(m)===team);const done=ms.length>0&&ms.every(recentSafety);btn.classList.toggle('isConfirmed',done);if(!btn.disabled){if(done){const remains=ms.map(m=>state(m).remain).filter(Number.isFinite);const r=remains.length?Math.min(...remains):10;btn.textContent='✓ 안전확인 · 재확인 '+r+'분';}else btn.textContent='🛡 조 안전확인';}});}
 window.v251TeamSafety=async function(team,btn){const ms=(window.__dashboardInsideMembers||[]).filter(m=>teamName(m)===team);if(!ms.length)return;const old=btn?btn.textContent:'🛡 조 안전확인';if(btn){btn.disabled=true;btn.textContent='⏳ 처리중...';}const d=await post('setSafetyCheck',ms.map(m=>m.memberId),{},null);if(d){const now=new Date().toISOString();ms.forEach(m=>{m.safetyCheckedAt=(d.succeeded||[]).find(x=>String(x.id)===String(m.memberId))?.checkedAt||now;});if(btn){btn.classList.add('isConfirmed');btn.textContent='✓ 안전확인';}}else if(btn){btn.textContent=old;}if(btn)btn.disabled=false;applyTeamSafetyButtons();};
 function renderTargets(){const box=document.getElementById('v251SafetyTargets');if(box)box.remove();}
-function applyRows(){const root=document.getElementById('dashboardInside');if(!root)return;root.querySelectorAll('.memberRow').forEach(row=>{const idEl=row.querySelector('.compactId');if(!idEl)return;const m=find(idEl.textContent.trim());if(!m)return;const s=state(m);row.classList.remove('v251NeedsCheck','v251SafetyConfirmed','v251IsolationBlink');if(s.isolated)row.classList.add('v251IsolationBlink');else if(s.due)row.classList.add('v251NeedsCheck');else if(s.confirmed)row.classList.add('v251SafetyConfirmed');const elapsed=row.querySelector('.insideElapsed');if(elapsed)elapsed.textContent=(s.mins>=31?'🔴 ':'')+s.mins+'분 경과';const st=row.querySelector('.insideStatus');if(st){if(s.confirmed)st.classList.add('v251SafetyConfirmed');else st.classList.remove('v251SafetyConfirmed');st.textContent=s.icon+' '+s.text;}});}
+function applyRows(){['dashboardInside','insideList'].forEach(rootId=>{const root=document.getElementById(rootId);if(!root)return;root.querySelectorAll('.memberRow').forEach(row=>{const idEl=row.querySelector('.compactId');if(!idEl)return;const m=find(idEl.textContent.trim());if(!m)return;const s=state(m);row.classList.remove('v251NeedsCheck','v251SafetyConfirmed','v251IsolationBlink');if(s.isolated)row.classList.add('v251IsolationBlink');else if(s.due)row.classList.add('v251NeedsCheck');else if(s.confirmed)row.classList.add('v251SafetyConfirmed');const elapsed=row.querySelector('.insideElapsed');if(elapsed)elapsed.textContent=(s.mins>=31?'🔴 ':'')+s.mins+'분 경과';const st=row.querySelector('.insideStatus');if(st){if(s.confirmed)st.classList.add('v251SafetyConfirmed');else st.classList.remove('v251SafetyConfirmed');st.textContent=s.icon+' '+s.text;}});});}
 function summary(){const box=document.getElementById('criticalSummary');if(!box)return;const targets=(window.__dashboardInsideMembers||[]).filter(m=>m.isolated||liveMinutes(m)>=31),due=targets.filter(m=>state(m).due).length,confirmed=targets.filter(m=>state(m).confirmed).length;box.classList.remove('v251StableCritical');if(due){box.classList.add('hasCritical');box.textContent='⚠️ 31분 이상 또는 고립대원 확인대상 '+due+'명';}else if(confirmed){box.classList.remove('hasCritical');box.classList.add('v251StableCritical');box.textContent='🔴 31분 이상 '+confirmed+'명 · ✓ 안전확인 완료';}else{box.classList.remove('hasCritical');box.textContent='✅ 31분 이상 또는 고립대원 확인대상 0명';}}
 function refresh(){ensureUI();renderTargets();applyRows();applyTeamSafetyButtons();summary();}
 function overlay(){let o=document.getElementById('dashboardDetailOverlay');if(!o){o=document.createElement('div');o.id='dashboardDetailOverlay';o.className='dashboardDetailOverlay';document.body.appendChild(o);}return o;}
