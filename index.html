@@ -1947,21 +1947,6 @@ QR을 스캔하면 해당 대원이 선택됩니다.
         <div id="cmdTeamTable" class="cmdTeamTable"></div>
       </section>
 
-      <section class="cmdSection cmdLocationSection">
-        <div class="cmdSectionTitleRow">
-          <div class="cmdSectionTitle"><span class="cmdSectionNo">3</span> 층별 활동현황판</div>
-          <div id="cmdSelectedFloorSummary" class="cmdSelectedFloorSummary"></div>
-        </div>
-        <div class="cmdLocationGrid">
-          <div id="v33FloorPanel" class="cmdFloorPanel"></div>
-          <div id="v29LocationBoard" class="cmdPlanPanel"></div>
-          <div id="v33SummaryPanel" class="cmdFloorSummary"></div>
-        </div>
-      </section>
-
-      <section id="cmdMemberDetailSection" class="cmdSection cmdMemberDetailSection">
-        <div id="v34FloorMembers" class="cmdFloorMembers"></div>
-      </section>
     </main>
   </div>
   <div id="v29BoardDetail" style="display:none"></div>
@@ -2017,7 +2002,7 @@ function v17ApplyStationName(){
   const status=document.getElementById("v17StationNameStatus");
   if(status)status.textContent=name?("현재 설정: "+name):"소방서명을 입력해 주세요.";
 }
-const V17_APP_VERSION = "R17I";
+const V17_APP_VERSION = "R17K";
 function v17RenderAppInfo(){
   const el=document.getElementById("v17AppVersionText");
   if(el) el.textContent=V17_APP_VERSION;
@@ -9399,6 +9384,228 @@ window.v251R9OpenMember=function(id,name){
     };
   }
   document.addEventListener('DOMContentLoaded',syncStation);
+})();
+</script>
+
+
+<style id="r17k-personnel-control-style">
+/* R17K — 3페이지의 목적: 인원 관제
+   원본 카드 구조/내용은 2페이지의 v16NMemberCardHtml()을 그대로 사용하고,
+   3페이지에서는 배치와 진입시각 줄 숨김만 담당한다. */
+
+/* 기존 3페이지의 층별/화점층 활동대원 관련 영역은 사용하지 않음 */
+#teamBoardPageV29 .cmdLocationSection,
+#teamBoardPageV29 #cmdMemberDetailSection,
+#teamBoardPageV29 #v33FloorPanel,
+#teamBoardPageV29 #v29LocationBoard,
+#teamBoardPageV29 #v33SummaryPanel,
+#teamBoardPageV29 #v34FloorMembers{display:none!important}
+
+/* 즉시확인 대상은 평상시 공간을 차지하지 않고 화면 정중앙에만 출현 */
+#teamBoardPageV29 #cmdAlertBar.r17iOverlay{
+  position:fixed!important;
+  z-index:9999!important;
+  left:50%!important;
+  top:50%!important;
+  width:min(1050px,72vw)!important;
+  min-height:96px!important;
+  margin:0!important;
+  padding:16px 24px!important;
+  transform:translate(-50%,-50%) scale(.96)!important;
+  background:rgba(132,18,14,.62)!important;
+  border:1px solid rgba(255,211,207,.76)!important;
+  border-radius:18px!important;
+  color:#fff!important;
+  box-shadow:0 20px 54px rgba(72,12,10,.22)!important;
+  backdrop-filter:blur(1.5px)!important;
+  -webkit-backdrop-filter:blur(1.5px)!important;
+  pointer-events:none!important;
+  opacity:0;
+}
+#teamBoardPageV29 #cmdAlertBar.r17iOverlay.r17iShow{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:16px!important;
+  opacity:1!important;
+  transform:translate(-50%,-50%) scale(1)!important;
+  animation:r17kAlertIn .38s cubic-bezier(.2,.9,.25,1),r17kAlertGlow 1.9s ease-in-out .4s infinite!important;
+}
+#teamBoardPageV29 .r17iAlertIcon{font-size:38px!important}
+#teamBoardPageV29 .r17iAlertBody b{font-size:27px!important}
+#teamBoardPageV29 .r17iAlertBody small{font-size:13px!important}
+@keyframes r17kAlertIn{
+  from{opacity:0;transform:translate(-50%,-50%) scale(.90)}
+  to{opacity:1;transform:translate(-50%,-50%) scale(1)}
+}
+@keyframes r17kAlertGlow{
+  50%{box-shadow:0 22px 60px rgba(115,17,13,.34),0 0 0 4px rgba(226,78,67,.11)!important}
+}
+
+/* 조별현황: 세로 = 조 순서 / 가로 = 실제 2페이지 카드, 최대 6명 후 자동 줄바꿈 */
+#teamBoardPageV29 #cmdTeamTable{
+  display:flex!important;
+  flex-direction:column!important;
+  gap:9px!important;
+  padding:8px 12px 14px!important;
+}
+#teamBoardPageV29 .r17kTeamRow{
+  --team:#64748b;
+  display:grid!important;
+  grid-template-columns:78px minmax(0,1fr)!important;
+  align-items:stretch!important;
+  gap:9px!important;
+  border:1px solid #dfe6ec!important;
+  border-left:6px solid var(--team)!important;
+  border-radius:11px!important;
+  background:#fff!important;
+  padding:8px!important;
+  box-sizing:border-box!important;
+}
+#teamBoardPageV29 .r17kTeamName{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  background:#f5f7f9!important;
+  border-radius:8px!important;
+  font-size:16px!important;
+  font-weight:950!important;
+  color:#173d67!important;
+  white-space:nowrap!important;
+}
+#teamBoardPageV29 .r17kMembers{
+  display:grid!important;
+  grid-template-columns:repeat(6,minmax(0,1fr))!important;
+  gap:7px!important;
+  min-width:0!important;
+  align-items:stretch!important;
+}
+
+/* 카드 자체는 2페이지 원본 HTML 그대로.
+   별도의 3페이지 카드 HTML/정보 재구성은 하지 않는다. */
+#teamBoardPageV29 .r17kMemberSlot{
+  --team:#64748b;
+  min-width:0!important;
+  overflow:hidden!important;
+  border-top:4px solid var(--team)!important;
+  border-radius:8px!important;
+}
+#teamBoardPageV29 .r17kMemberSlot .v16PCommonMemberCard{
+  width:100%!important;
+  min-width:0!important;
+  height:100%!important;
+  box-sizing:border-box!important;
+  padding:9px 9px!important;
+  background:#fff!important;
+}
+
+/* 3페이지 인원관제에서는 진입시각·회차 줄만 숨겨 2줄 카드로 사용 */
+#teamBoardPageV29 .r17kMemberSlot .v251EntryInfo{display:none!important}
+#teamBoardPageV29 .r17kMemberSlot .insideCompactBottom{
+  margin-top:5px!important;
+  min-height:18px!important;
+}
+
+/* 6개가 한 줄에 보이도록 카드 원본의 글자만 가용폭에 맞춤.
+   데이터/항목/상태 표현은 2페이지와 동일하게 유지 */
+#teamBoardPageV29 .r17kMemberSlot .v16PIdentityLine .memberLine{
+  font-size:clamp(10px,.82vw,14px)!important;
+}
+#teamBoardPageV29 .r17kMemberSlot .compactId{
+  font-size:clamp(8px,.62vw,10px)!important;
+}
+#teamBoardPageV29 .r17kMemberSlot .insideCompactLocation{
+  font-size:clamp(9px,.7vw,11px)!important;
+  margin-top:4px!important;
+  white-space:nowrap!important;
+  overflow:hidden!important;
+}
+#teamBoardPageV29 .r17kMemberSlot .insideLocText{
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  white-space:nowrap!important;
+}
+#teamBoardPageV29 .r17kMemberSlot .insideCompactBottom{
+  font-size:clamp(9px,.68vw,11px)!important;
+  gap:4px!important;
+}
+#teamBoardPageV29 .r17kMemberSlot .floorMini{
+  font-size:clamp(8px,.58vw,10px)!important;
+  padding:2px 4px!important;
+}
+
+/* 기존 조 색상 그대로 */
+#teamBoardPageV29 .r17kTeamRow.teamC1,#teamBoardPageV29 .r17kMemberSlot.teamC1{--team:#2563eb}
+#teamBoardPageV29 .r17kTeamRow.teamC2,#teamBoardPageV29 .r17kMemberSlot.teamC2{--team:#f28705}
+#teamBoardPageV29 .r17kTeamRow.teamC3,#teamBoardPageV29 .r17kMemberSlot.teamC3{--team:#8b46d8}
+#teamBoardPageV29 .r17kTeamRow.teamC4,#teamBoardPageV29 .r17kMemberSlot.teamC4{--team:#0f9588}
+#teamBoardPageV29 .r17kTeamRow.teamC5,#teamBoardPageV29 .r17kMemberSlot.teamC5{--team:#d64c72}
+#teamBoardPageV29 .r17kTeamRow.teamC6,#teamBoardPageV29 .r17kMemberSlot.teamC6{--team:#607c18}
+#teamBoardPageV29 .r17kTeamRow.teamC7,#teamBoardPageV29 .r17kMemberSlot.teamC7{--team:#6d42d8}
+#teamBoardPageV29 .r17kTeamRow.teamC8,#teamBoardPageV29 .r17kMemberSlot.teamC8{--team:#08758d}
+</style>
+
+<script id="r17k-personnel-control-logic">
+(function(){
+  function esc(v){return escapeHtml(String(v??''));}
+
+  /* 조별현황 전용 레이아웃.
+     카드 내용은 반드시 2페이지에서 쓰는 v16NMemberCardHtml() 한 함수만 호출한다. */
+  window.v29DrawCommandTeamTable=function(teams){
+    const area=document.getElementById('cmdTeamTable');
+    if(!area)return;
+    if(!teams.length){
+      area.innerHTML='<div class="cmdFloorEmpty">현재 활동 중인 조가 없습니다.</div>';
+      return;
+    }
+
+    area.innerHTML=teams.map(t=>{
+      const css=(typeof v29TeamCss==='function'?v29TeamCss(t.team):'')||'';
+      const floor=String(t.floor||'미지정').trim()||'미지정';
+      const direction=String(t.direction||'미지정').trim()||'미지정';
+      const detail=(!t.detail||t.detail==='미지정'||/세부\s*장소\s*미지정/i.test(t.detail))?'-':t.detail;
+
+      const cards=(t.members||[]).map(m=>{
+        /* 2페이지 카드 렌더러에 동일한 대원 원본 + 현재 조 메타만 전달 */
+        const cardMember=Object.assign({},m,{
+          team:t.team,
+          activityNo:Number(t.activityNo||1),
+          direction:direction,
+          floor:floor,
+          detail:detail
+        });
+        return '<div class="r17kMemberSlot '+css+'">'+v16NMemberCardHtml(cardMember)+'</div>';
+      }).join('');
+
+      /* 왼쪽에는 조 이름만. 1차/층/방면/인원수는 별도 표시하지 않음 */
+      return '<div class="r17kTeamRow '+css+'">'+
+        '<div class="r17kTeamName">'+esc(t.team)+'</div>'+
+        '<div class="r17kMembers">'+cards+'</div>'+
+      '</div>';
+    }).join('');
+  };
+
+  /* 3페이지는 인원현황 + 조별현황만 갱신 */
+  window.drawTeamBoardV29=function(){
+    const site=document.getElementById('v29BoardSite');
+    if(site){
+      const ds=document.getElementById('dashboardSiteName');
+      if(ds)site.textContent=ds.textContent||'-';
+    }
+    if(typeof v29UpdateLiveBoardMetrics==='function')v29UpdateLiveBoardMetrics();
+
+    const teams=(typeof v29GroupTeams==='function')
+      ? v29GroupTeams(window.__dashboardInsideMembers||[])
+      : [];
+    if(typeof v29DrawCommandTeamTable==='function')v29DrawCommandTeamTable(teams);
+
+    const rt=document.getElementById('v29BoardRefreshTime');
+    if(rt)rt.textContent=new Date().toLocaleTimeString('ko-KR',{hour12:false});
+  };
+
+  /* 삭제된 3페이지 층별 전용 렌더는 실행하지 않음 */
+  window.v33RenderFloorPanel=function(){};
+  window.v34RenderFloorMembers=function(){};
 })();
 </script>
 
