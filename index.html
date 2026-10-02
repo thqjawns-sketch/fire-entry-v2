@@ -6454,9 +6454,14 @@ function closeDashboard(){
     0
   );
 
-  /* R15B: 2페이지에서 1페이지로 돌아오면 현재 내부를 자동 최신화 */
-  if(!document.hidden && !v249R8WriteBusy()){
-    setTimeout(()=>{ void v249R15BRefreshMain("dashboard-return"); },0);
+  /* R16W: 2페이지가 현재 활동대원 원본이다.
+     1페이지 복귀 시 서버/inside 재조회로 방금 확정된 2페이지 값을 덮어쓰지 않는다.
+     같은 공통 배열을 즉시 렌더링만 한다. */
+  if(typeof v16TRenderInsideFromCache === "function"){
+    try{ v16TRenderInsideFromCache(); }catch(e){ console.warn("R16W dashboard-return render",e); }
+  }
+  if(typeof applyRows === "function"){
+    try{ applyRows(); }catch(e){ console.warn("R16W dashboard-return state",e); }
   }
 
 }
