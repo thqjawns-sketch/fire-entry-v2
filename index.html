@@ -1149,6 +1149,38 @@ button:disabled{
 }
 .dashboardTeamMoveBtn:active{background:#edf5ff}
 
+
+
+/* ===== R16P 1·2페이지 공통 대원카드 시각 규격 ===== */
+#insideList .v16PCommonMemberCard,
+#dashboardInside .v16PCommonMemberCard{width:100%;min-width:0}
+#insideList .v16PIdentityLine,
+#dashboardInside .v16PIdentityLine{display:flex;align-items:baseline;gap:7px;min-width:0}
+#insideList .v16PIdentityLine .memberLine,
+#dashboardInside .v16PIdentityLine .memberLine{display:inline!important;font-size:15px!important;font-weight:900!important;color:#087d3c!important;min-width:0}
+#insideList .v16PIdentityLine .compactId,
+#dashboardInside .v16PIdentityLine .compactId{display:inline!important;margin:0!important;font-size:11px!important;color:#778390!important;font-weight:700!important;white-space:nowrap}
+#insideList .insideCompactLocation,
+#dashboardInside .insideCompactLocation{display:flex!important;align-items:center!important;gap:3px!important;min-width:0!important;margin-top:6px!important;font-size:13px!important;font-weight:850!important;color:#27384a!important;white-space:nowrap!important}
+#insideList .insideLocText,
+#dashboardInside .insideLocText{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#insideList .insideCompactBottom,
+#dashboardInside .insideCompactBottom{display:flex!important;align-items:center!important;gap:8px!important;margin-top:6px!important;font-size:12px!important;color:#526071!important;flex-wrap:nowrap!important}
+#insideList .v251EntryInfo,
+#dashboardInside .v251EntryInfo{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#insideList .insideElapsed,
+#dashboardInside .insideElapsed{flex:0 0 auto}
+#insideList .insideStatus,
+#dashboardInside .insideStatus{margin-left:auto!important;flex:0 0 auto!important;font-size:12px!important;font-weight:900!important;white-space:nowrap!important}
+#insideList .memberRow,
+#dashboardInside .memberRow{box-sizing:border-box}
+#dashboardInside .memberRow{display:block!important;padding:11px 12px!important}
+@media(max-width:430px){
+  #insideList .v16PIdentityLine .memberLine,#dashboardInside .v16PIdentityLine .memberLine{font-size:14px!important}
+  #insideList .insideCompactLocation,#dashboardInside .insideCompactLocation{font-size:12.5px!important}
+  #insideList .insideCompactBottom,#dashboardInside .insideCompactBottom{font-size:11.5px!important;gap:6px!important}
+}
+
 /* 대원 상세 팝업 */
 .dashboardDetailSheet{
   width:min(560px,100%)!important;max-height:88vh;border-radius:18px!important;
@@ -6266,6 +6298,15 @@ async function batchExitMembers(){
       if(cnt) cnt.innerText="🔴 현재 현장 내부 "+remain+"명";
       selectAllState=false;
       updateSelectedCount();
+
+      /* R16P: 철수 확정 즉시 2페이지도 같은 활동대원 집합에서 제거 */
+      if(Array.isArray(window.__dashboardInsideMembers)){
+        window.__dashboardInsideMembers=window.__dashboardInsideMembers.filter(m=>
+          !succeededIds.has(String(m.memberId||"").trim())
+        );
+        if(typeof drawDashboardInside==="function") drawDashboardInside(window.__dashboardInsideMembers);
+        if(typeof drawDashboardTeamSummary==="function") drawDashboardTeamSummary(window.__dashboardInsideMembers);
+      }
     }
 
     v249R15ARefreshAfterExit = succeededIds.size > 0;
@@ -7378,17 +7419,26 @@ function v237FormatMinutes(value){
   return h+"시간"+(r?" "+r+"분":"");
 }
 
-/* ===== R16N 공통 대원카드: 2페이지 현장 활동대원 카드를 표준으로 사용 ===== */
+/* ===== R16P 공통 대원카드 =====
+   원칙: 대원카드 본문은 1·2페이지에서 단 하나의 렌더러만 사용한다.
+   1페이지는 철수 체크박스만 바깥에 추가하고, 2페이지는 상세정보 클릭만 추가한다. */
 function v16NMemberCardHtml(member){
-  const stay=getStayStatus(member.currentMinutes);
+  const live=(typeof window.v251GetMemberState==='function')
+    ? window.v251GetMemberState(member)
+    : null;
+  const stay=live||getStayStatus(member.currentMinutes);
+  const mins=Number.isFinite(Number(stay.mins))?Number(stay.mins):Number(member.currentMinutes||0);
   const vm=v23LoadMeta()[String(member.memberId)]||{};
   const floor=vm.activityFloor||'미지정';
   const team=vm.teamName||'미지정';
   const dir=vm.entryDirection||'미지정';
   const detail=(!vm.detailLocation||vm.detailLocation==='미지정'||/세부\s*장소\s*미지정/i.test(vm.detailLocation))?'-':vm.detailLocation;
-  return '<div class="memberDetail">'+
-    '<div class="memberLine">'+escapeHtml(getMemberDisplay(member.memberId,member.memberName))+'</div>'+
-    '<span class="memberId compactId">'+escapeHtml(member.memberId)+'</span>'+
+  const stateClass=live?(live.isolated?'v251IsolationBlink':live.due?'v251NeedsCheck':live.confirmed?'v251SafetyConfirmed':''):stay.className;
+  return '<div class="memberDetail v16PCommonMemberCard" data-member-id="'+escapeAttr(member.memberId)+'">'+
+    '<div class="v16PIdentityLine">'+
+      '<span class="memberLine">'+escapeHtml(getMemberDisplay(member.memberId,member.memberName))+'</span>'+
+      '<span class="memberId compactId">'+escapeHtml(member.memberId)+'</span>'+
+    '</div>'+
     '<div class="insideCompactLocation">'+
       '<span class="insideLocText">'+escapeHtml(team)+(vm.teamActivityNo?' · '+Number(vm.teamActivityNo)+'차':'')+' · '+escapeHtml(dir)+' / </span>'+
       '<span class="floorMini '+v23FloorClass(floor)+'">'+escapeHtml(floor)+'</span>'+
@@ -7396,8 +7446,8 @@ function v16NMemberCardHtml(member){
     '</div>'+
     '<div class="insideCompactBottom v251R16EStatusRow">'+
       '<span class="v251EntryInfo">진입 '+escapeHtml(member.entryTime)+' · '+Number(member.entryCount)+'회차</span>'+
-      '<span class="insideElapsed" data-member-id="'+escapeAttr(member.memberId)+'">현재 '+Number(member.currentMinutes)+'분</span>'+
-      '<span class="insideStatus '+stay.className+'">'+stay.icon+' '+stay.text+'</span>'+
+      '<span class="insideElapsed" data-member-id="'+escapeAttr(member.memberId)+'">'+(mins>=31?'🔴 ':'')+mins+'분 경과</span>'+
+      '<span class="insideStatus '+stateClass+'">'+stay.icon+' '+stay.text+'</span>'+
     '</div>'+
   '</div>';
 }
@@ -7630,6 +7680,10 @@ async function saveDashboardTeamLocation(team){
     if(typeof drawDashboardTeamSummary==="function"){
       drawDashboardTeamSummary(window.__dashboardInsideMembers||[]);
     }
+    /* R16P: 2페이지 정보변경은 1페이지 동일 카드에도 즉시 반영 */
+    if(typeof loadInsideMembers==="function"){
+      void loadInsideMembers(false);
+    }
 
     const board=document.getElementById("teamBoardPageV29");
     if(board && board.style.display==="block"){
@@ -7729,6 +7783,10 @@ async function saveDashboardMemberLocation(memberId){
     }
     if(typeof drawDashboardTeamSummary==="function"){
       drawDashboardTeamSummary(window.__dashboardInsideMembers||[]);
+    }
+    /* R16P: 2페이지 정보변경은 1페이지 동일 카드에도 즉시 반영 */
+    if(typeof loadInsideMembers==="function"){
+      void loadInsideMembers(false);
     }
 
     const board=document.getElementById("teamBoardPageV29");
@@ -8365,6 +8423,7 @@ function info(m){try{return v19TeamInfo(m);}catch(e){return {team:m.team||'',act
 function find(id){return (window.__dashboardInsideMembers||[]).find(m=>String(m.memberId)===String(id));}
 function liveMinutes(m){const server=Number(m&&m.currentMinutes)||0,t=parseTime(m&&m.entryTime);if(!Number.isFinite(t))return server;return Math.max(server,Math.floor(Math.max(0,Date.now()-t)/60000));}
 function state(m){const mins=liveMinutes(m);if(m&&m.isolated)return {icon:'🚨',text:'고립대원',due:true,isolated:true,confirmed:false,mins:mins};if(mins<=30)return {icon:mins<=20?'🟢':mins<=25?'🟠':'🔴',text:mins<=20?'정상':mins<=25?'주의':'경고',due:false,confirmed:false,mins:mins};const t=parseTime(m&&m.safetyCheckedAt);if(Number.isFinite(t)){const elapsed=Math.max(0,(Date.now()-t)/60000);if(elapsed<RECHECK){const remain=Math.max(1,Math.ceil(RECHECK-elapsed));return {icon:'✓',text:'안전확인 '+hm(m.safetyCheckedAt)+' · 재확인 '+remain+'분 후',due:false,confirmed:true,remain:remain,mins:mins};}return {icon:'🚨',text:'재확인 필요',due:true,recheck:true,confirmed:false,mins:mins};}return {icon:'🚨',text:'즉시확인',due:true,confirmed:false,mins:mins};}
+window.v251GetMemberState=state;
 function ensureUI(){ return; }
 async function post(action,ids,extra,btn){const o=officer();const sid=siteId();if(!sid){alert('화재현장을 선택하세요.');return null;}const f=new URLSearchParams();f.set('action',action);f.set('siteId',sid);f.set('officer',o);f.set('members',JSON.stringify((ids||[]).map(id=>({id:String(id)}))));Object.keys(extra||{}).forEach(k=>f.set(k,extra[k]));const old=btn?btn.textContent:'';if(btn){btn.disabled=true;btn.textContent='⏳ 반영중...';}let timedOut=false;try{const TIMEOUT=10000;const d=await Promise.race([v2CallPost(f),new Promise(resolve=>setTimeout(()=>{timedOut=true;resolve({__uiTimeout:true});},TIMEOUT))]);if(d&&d.__uiTimeout){if(btn){btn.disabled=false;btn.textContent='↻ 저장 확인중';setTimeout(()=>{if(btn)btn.textContent=old;},1800);}void loadDashboard(false).then(()=>refresh()).catch(()=>{});return null;}if(!d||(!d.ok&&!d.success))throw new Error((d&&d.error)||(d&&d.message)||'처리 실패');if(btn)btn.textContent='✅ 반영완료';refresh();void loadDashboard(false).then(()=>refresh()).catch(()=>{});return d;}catch(e){alert((e&&e.message)||'반영 실패');return null;}finally{if(btn&&!timedOut)setTimeout(()=>{btn.disabled=false;btn.textContent=old;},500);}}
 async function safety(ids){if(!ids||!ids.length)return;if(!confirm(ids.length+'명을 안전확인 완료 처리하시겠습니까?\n확인 후 10분 동안 빨간 깜빡임이 중지되고, 10분 후 재확인 대상이 됩니다.'))return;await post('setSafetyCheck',ids,{},null);}
