@@ -2002,7 +2002,7 @@ function v17ApplyStationName(){
   const status=document.getElementById("v17StationNameStatus");
   if(status)status.textContent=name?("현재 설정: "+name):"소방서명을 입력해 주세요.";
 }
-const V17_APP_VERSION = "R17L";
+const V17_APP_VERSION = "R17M";
 function v17RenderAppInfo(){
   const el=document.getElementById("v17AppVersionText");
   if(el) el.textContent=V17_APP_VERSION;
@@ -9866,6 +9866,167 @@ window.v251R9OpenMember=function(id,name){
   };
 
   window.addEventListener('resize',r17lFitTeamArea);
+})();
+</script>
+
+
+<style id="r17m-personnel-layout">
+/* R17M: 현재 카드 크기를 기본값으로 유지. 화면이 부족할 때만 조별영역 축소 */
+
+/* 인원현황은 3페이지 상단에서 항상 표시 */
+#teamBoardPageV29 .cmdOverviewSection{
+  display:block!important;
+  flex:0 0 auto!important;
+}
+
+/* 조 대표영역: 가로형 2줄 */
+#teamBoardPageV29 .r17lTeamRow{
+  grid-template-columns:190px minmax(0,1fr)!important;
+}
+#teamBoardPageV29 .r17lTeamHead{
+  display:grid!important;
+  grid-template-columns:auto 1fr!important;
+  grid-template-rows:auto auto!important;
+  column-gap:8px!important;
+  row-gap:5px!important;
+  align-content:center!important;
+  justify-items:start!important;
+  padding:6px 9px!important;
+  text-align:left!important;
+}
+#teamBoardPageV29 .r17lTeamName{
+  grid-column:1!important;
+  grid-row:1!important;
+  align-self:center!important;
+}
+#teamBoardPageV29 .r17lLocBadges{
+  grid-column:2!important;
+  grid-row:1!important;
+  justify-content:flex-start!important;
+  flex-wrap:nowrap!important;
+}
+#teamBoardPageV29 .r17lDetail{
+  grid-column:1 / -1!important;
+  grid-row:2!important;
+  width:100%!important;
+  padding-left:1px!important;
+  text-align:left!important;
+}
+#teamBoardPageV29 .r17lDetail::before{
+  content:"세부장소  ";
+  color:#8190a0;
+  font-weight:800;
+}
+
+/* 대원카드: R17L에서 확인한 현재 크기를 기본값으로 그대로 유지 */
+#teamBoardPageV29 .r17lMemberSlot{
+  transform-origin:left center;
+}
+
+/* 화면 부족 시에만 적용되는 단계적 축소 */
+#teamBoardPageV29.r17mCompact1 #cmdTeamTable{gap:5px!important}
+#teamBoardPageV29.r17mCompact1 .r17lTeamRow{padding:5px!important}
+#teamBoardPageV29.r17mCompact1 .r17lMemberSlot{font-size:96%!important}
+#teamBoardPageV29.r17mCompact1 .r17lMemberSlot .v16PCommonMemberCard{padding:6px 7px!important}
+
+#teamBoardPageV29.r17mCompact2 #cmdTeamTable{gap:4px!important;padding-top:5px!important;padding-bottom:6px!important}
+#teamBoardPageV29.r17mCompact2 .r17lTeamRow{padding:4px!important;gap:6px!important}
+#teamBoardPageV29.r17mCompact2 .r17lTeamHead{padding:4px 7px!important;row-gap:3px!important}
+#teamBoardPageV29.r17mCompact2 .r17lMemberSlot{font-size:91%!important}
+#teamBoardPageV29.r17mCompact2 .r17lMemberSlot .v16PCommonMemberCard{padding:5px 6px!important}
+#teamBoardPageV29.r17mCompact2 .r17lLocBadge,
+#teamBoardPageV29.r17mCompact2 .r17lDetail{font-size:9px!important}
+
+#teamBoardPageV29.r17mCompact3 #cmdTeamTable{gap:3px!important;padding-top:4px!important;padding-bottom:4px!important}
+#teamBoardPageV29.r17mCompact3 .r17lTeamRow{padding:3px!important;gap:5px!important}
+#teamBoardPageV29.r17mCompact3 .r17lTeamHead{padding:3px 6px!important;row-gap:2px!important}
+#teamBoardPageV29.r17mCompact3 .r17lMemberSlot{font-size:86%!important}
+#teamBoardPageV29.r17mCompact3 .r17lMemberSlot .v16PCommonMemberCard{padding:4px 5px!important}
+#teamBoardPageV29.r17mCompact3 .r17lTeamName{font-size:13px!important;padding:5px 8px!important}
+#teamBoardPageV29.r17mCompact3 .r17lLocBadge,
+#teamBoardPageV29.r17mCompact3 .r17lDetail{font-size:8px!important}
+</style>
+
+<script id="r17m-personnel-layout-logic">
+(function(){
+  function restoreOverview(){
+    const page=document.getElementById('teamBoardPageV29');
+    if(!page)return;
+    /* 기존 인원현황 DOM을 숨기는 후속 스타일/상태가 있어도 다시 표시 */
+    const candidates=[
+      page.querySelector('.cmdOverviewSection'),
+      page.querySelector('#cmdOverview'),
+      page.querySelector('.cmdPeopleSection')
+    ].filter(Boolean);
+    candidates.forEach(el=>{
+      el.style.removeProperty('display');
+      el.style.removeProperty('height');
+      el.style.removeProperty('max-height');
+      el.style.removeProperty('overflow');
+    });
+  }
+
+  function fitPersonnelBoard(){
+    const page=document.getElementById('teamBoardPageV29');
+    const table=document.getElementById('cmdTeamTable');
+    if(!page||!table||page.classList.contains('hidden'))return;
+
+    restoreOverview();
+
+    page.classList.remove('r17mCompact1','r17mCompact2','r17mCompact3');
+
+    /* 실제 행 수: 조별 대원 6명마다 한 행으로 계산 */
+    let requiredRows=0;
+    page.querySelectorAll('.r17lMembers').forEach(box=>{
+      const n=box.children.length;
+      requiredRows+=Math.max(1,Math.ceil(n/6));
+    });
+
+    /* 현재 기본 크기가 들어가면 절대 축소하지 않는다.
+       조/대원이 늘어나 남은 화면을 초과할 때만 단계적으로 축소 */
+    const rect=table.getBoundingClientRect();
+    const available=Math.max(100,window.innerHeight-rect.top-10);
+    const needed=table.scrollHeight;
+
+    if(needed>available){
+      page.classList.add('r17mCompact1');
+      void table.offsetHeight;
+    }
+    if(table.scrollHeight>available){
+      page.classList.remove('r17mCompact1');
+      page.classList.add('r17mCompact2');
+      void table.offsetHeight;
+    }
+    if(table.scrollHeight>available){
+      page.classList.remove('r17mCompact2');
+      page.classList.add('r17mCompact3');
+    }
+
+    /* 스크롤은 계속 만들지 않음 */
+    const section=table.closest('.cmdSection');
+    if(section){
+      section.style.maxHeight=available+'px';
+      section.style.overflow='hidden';
+    }
+  }
+
+  const prevDraw=window.drawTeamBoardV29;
+  window.drawTeamBoardV29=function(){
+    if(typeof prevDraw==='function')prevDraw.apply(this,arguments);
+    requestAnimationFrame(()=>{
+      restoreOverview();
+      fitPersonnelBoard();
+    });
+  };
+
+  window.addEventListener('resize',()=>requestAnimationFrame(fitPersonnelBoard));
+
+  /* 페이지 진입 직후에도 인원현황/크기 재확인 */
+  document.addEventListener('click',function(e){
+    if(e.target.closest && e.target.closest('[data-page="teamBoardPageV29"],#btnTeamBoardV29,.goTeamBoard')){
+      setTimeout(()=>{restoreOverview();fitPersonnelBoard();},50);
+    }
+  });
 })();
 </script>
 
