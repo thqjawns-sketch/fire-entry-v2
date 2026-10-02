@@ -7461,7 +7461,7 @@ function v16NMemberCardHtml(member){
       '<span class="memberId compactId">'+escapeHtml(member.memberId)+'</span>'+
     '</div>'+
     '<div class="insideCompactLocation">'+
-      '<span class="insideLocText">'+escapeHtml(team)+(vm.teamActivityNo?' · '+Number(vm.teamActivityNo)+'차':'')+' · '+escapeHtml(dir)+' / </span>'+
+      '<span class="insideLocText">'+escapeHtml(team)+' · '+activityNo+'차 · '+escapeHtml(dir)+' / </span>'+
       '<span class="floorMini '+v23FloorClass(floor)+'">'+escapeHtml(floor)+'</span>'+
       '<span class="insideLocText"> / '+escapeHtml(detail)+'</span>'+
     '</div>'+
@@ -8583,9 +8583,9 @@ window.v251R9OpenTeam=function(team){
     const i=info(m);
     return {
       activityNo:Number(i.activityNo||m.activityNo||m.entryCount||1)||1,
-      direction:old.entryDirection||i.direction||m.direction||'',
-      floor:old.activityFloor||i.floor||m.floor||'',
-      detail:old.detailLocation||i.detail||m.detail||''
+      direction:i.direction||m.direction||'',
+      floor:i.floor||m.floor||'',
+      detail:i.detail||m.detail||''
     };
   });
   const first=infos.find(x=>x.direction||x.floor||x.detail)||infos[0]||{};
