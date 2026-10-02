@@ -1680,9 +1680,6 @@ PPE 점검 대기
       👥 조 편성 후 투입
     </button>
   </div>
-  <div class="entryModeHelp">
-    PPE 완료 후 바로 투입하거나, 필요 시 조·위치를 지정하세요.
-  </div>
 </div>
 </div>
 
@@ -1763,7 +1760,7 @@ PPE 점검 대기
 
 <div id="exitReader"></div>
 <div id="exitScanInfo" class="info" style="display:none;">
-현재 내부 대원만 QR 인식 즉시 철수 처리됩니다.
+QR을 스캔하면 해당 대원이 선택됩니다.
 </div>
 
 <button
@@ -1775,7 +1772,6 @@ PPE 점검 대기
 <span id="insideRefreshInfo" class="refreshSubV22">수동 갱신 · 마지막 갱신 --:--:--</span>
 </button>
 
-<div id="v23InsideSummary" class="v23Summary">활동 중 조·위치 요약은 현장현황을 불러오면 표시됩니다.</div>
 <div id="insideList"></div>
 
 <button
@@ -1793,7 +1789,7 @@ PPE 점검 대기
   class="batchExit"
   onclick="batchExitMembers()"
 >
-🟢 선택 대원 일괄 철수처리
+🚪 철수대원을 선택하세요
 </button>
 
 </div>
@@ -2039,6 +2035,14 @@ function v17ApplyStationName(){
   const status=document.getElementById("v17StationNameStatus");
   if(status)status.textContent=name?("현재 설정: "+name):"소방서명을 입력해 주세요.";
 }
+const V17_APP_VERSION = "R17C";
+function v17RenderAppInfo(){
+  const el=document.getElementById("v17AppVersionText");
+  if(el) el.textContent=V17_APP_VERSION;
+}
+
+document.addEventListener("DOMContentLoaded",v17RenderAppInfo);
+
 function v17SaveStationName(){
   const input=document.getElementById("v17StationNameInput");
   const name=String(input?.value||"").trim();
@@ -5772,23 +5776,24 @@ V2.49L40-R4 철수대원 QR 연속 스캔
 ===================================================== */
 
 async function v249L26LoadExitInsideMap(){
-  const site=(document.getElementById("site")||{}).value||"";
-  if(!site) throw new Error("화재현장을 선택하세요.");
-
-  const response=await fetch(
-    API+"?action=inside&site="+encodeURIComponent(site)+"&t="+Date.now()
-  );
-  const data=await response.json();
-
-  if(!data || !data.success){
-    throw new Error((data&&data.message)||"현재 내부 대원 조회 실패");
-  }
+  /* R17C: 철수 QR은 서버 철수 명령이 아니라 현재 활동대원 선택만 담당 */
+  const current=Array.isArray(window.__dashboardInsideMembers)
+    ? window.__dashboardInsideMembers
+    : (Array.isArray(window.__insideMembers) ? window.__insideMembers : []);
 
   const nextMap=new Map();
-  (data.members||[]).forEach(m=>{
+  current.forEach(m=>{
     const id=String(m.memberId||m.id||"").trim();
     if(id) nextMap.set(id,m);
   });
+
+  /* 첫 화면 직후 공통 캐시가 비어 있는 경우 현재 카드에서 최소 식별정보 복원 */
+  if(!nextMap.size){
+    document.querySelectorAll("#insideList .insideCheck").forEach(ch=>{
+      const id=String(ch.dataset.id||"").trim();
+      if(id) nextMap.set(id,{memberId:id,memberName:ch.dataset.name||""});
+    });
+  }
   exitInsideMap=nextMap;
   return exitInsideMap;
 }
@@ -5883,7 +5888,7 @@ async function startExitScanner(){
     if(button) button.innerText="❌ 철수 QR 스캔 종료";
     if(info){
       info.style.display="block";
-      info.innerText="현재 내부 "+exitInsideMap.size+"명 대상 · QR 인식 즉시 철수 처리";
+      info.innerText="현재 내부 "+exitInsideMap.size+"명 대상 · QR 스캔 시 대원 선택";
     }
 
     console.log(
@@ -5955,86 +5960,44 @@ async function stopExitScanner(){
 async function v249L26HandleExitQr(decodedText){
   const id=String(decodedText||"").trim();
   const now=Date.now();
-
   if(!id) return;
-  if(id===exitLastScannedId && now-exitLastScannedAt<1800) return;
-
+  if(id===exitLastScannedId && now-exitLastScannedAt<1200) return;
   exitLastScannedId=id;
   exitLastScannedAt=now;
 
-  if(exitScanPending.has(id)) return;
-
   const inside=exitInsideMap.get(id);
-
   if(!inside){
-    const roster=members.find(
-      m=>String(m.id||m.memberId||"").trim()===id
-    );
+    const roster=members.find(m=>String(m.id||m.memberId||"").trim()===id);
     showExitScanMessage(
-      roster
-        ? "⚠️ "+roster.name+" 대원은 현재 내부 활동대원이 아닙니다."
-        : "⚠️ 등록되지 않았거나 현재 내부 대원이 아닌 QR입니다.",
+      roster ? "⚠️ "+roster.name+" 대원은 현재 내부 활동대원이 아닙니다."
+             : "⚠️ 등록되지 않았거나 현재 내부 대원이 아닌 QR입니다.",
       true
     );
     if(navigator.vibrate) navigator.vibrate([100,80,100]);
     return;
   }
 
-  const site=(document.getElementById("site")||{}).value||"";
-  const officer=((document.getElementById("officer")||{}).value||"").trim();
+  const checkbox=Array.from(document.querySelectorAll("#insideList .insideCheck"))
+    .find(ch=>String(ch.dataset.id||"").trim()===id);
   const name=inside.memberName||inside.name||getMemberDisplay(id,"")||id;
 
-  exitScanPending.add(id);
-  showExitScanMessage("⏳ "+name+" 대원 철수 처리중...",false);
-
-  const form=new URLSearchParams();
-  form.append("action","batchExit");
-  form.append("site",site);
-  form.append("officer",officer);
-  form.append("members",JSON.stringify([{id:id,name:name}]));
-
-  try{
-    const response=await fetch(API,{method:"POST",body:form});
-    const data=await response.json();
-    const failed=data.failed||[];
-    const successCount=Number(data.successCount)||0;
-    const ok=(data.success===true || data.ok===true || successCount>0) && failed.length===0;
-
-    if(!ok){
-      const reason=failed.length
-        ? (failed[0].message||"철수 처리 제외")
-        : (data.message||"철수 처리 실패");
-
-      showExitScanMessage("⚠️ "+name+" 대원 · "+reason,true);
-
-      try{ await v249L26LoadExitInsideMap(); }catch(e){}
-      return;
-    }
-
-    exitInsideMap.delete(id);
-
-    playScanBeep();
-    if(navigator.vibrate) navigator.vibrate(80);
-
-    /* 서버 성공 확인 뒤에만 완료 문구 표시 */
-    showExitScanMessage("✅ "+name+" 대원 철수하였습니다.",false);
-
-    const info=document.getElementById("exitScanInfo");
-    if(info){
-      info.innerText="현재 내부 "+exitInsideMap.size+"명 대상 · QR 인식 즉시 철수 처리";
-    }
-
-    /* 기존 현황/대시보드 갱신 함수 사용 */
-    void loadInsideMembers();
-
-  }catch(error){
-    console.error("철수 QR 처리 오류",error);
-    showExitScanMessage("⚠️ "+name+" 대원 철수 처리 오류 · 다시 스캔하세요.",true);
-    try{ await v249L26LoadExitInsideMap(); }catch(e){}
-  }finally{
-    exitScanPending.delete(id);
+  if(!checkbox){
+    showExitScanMessage("⚠️ "+name+" 대원 카드를 찾을 수 없습니다. 현황을 확인해주세요.",true);
+    return;
   }
+
+  if(checkbox.checked){
+    showExitScanMessage("✓ "+name+" 대원은 이미 선택되어 있습니다.",false);
+    return;
+  }
+
+  checkbox.checked=true;
+  updateSelectedCount();
+  playScanBeep();
+  if(navigator.vibrate) navigator.vibrate(80);
+  showExitScanMessage("☑ "+name+" 대원 선택",false);
 }
+
 
 
 /* =====================================================
@@ -6064,25 +6027,18 @@ function toggleSelectAll(){
 
 
 function updateSelectedCount(){
+  const count=document.querySelectorAll(".insideCheck:checked").length;
+  const countEl=document.getElementById("selectedCount");
+  if(countEl) countEl.innerText="선택 대원 "+count+"명";
 
-  const count =
-    document
-      .querySelectorAll(
-        ".insideCheck:checked"
-      )
-      .length;
-
-
-  document
-    .getElementById(
-      "selectedCount"
-    )
-    .innerText =
-    "선택 대원 " +
-    count +
-    "명";
-
+  const exitButton=document.querySelector("button.batchExit");
+  if(exitButton && !exitSubmitting){
+    exitButton.textContent=count>0
+      ? "🚪 선택 대원 "+count+"명 철수처리"
+      : "🚪 철수대원을 선택하세요";
+  }
 }
+
 
 
 /* =====================================================
@@ -6187,7 +6143,7 @@ async function batchExitMembers(){
 
   /* R15B: 서버 응답을 기다리는 동안 중복 클릭/혼동 방지 */
   const exitButton=document.querySelector("button.batchExit");
-  const exitButtonOriginalText=exitButton?exitButton.textContent:"🟢 선택 대원 일괄 철수처리";
+  const exitButtonOriginalText=exitButton?exitButton.textContent:"🚪 철수대원을 선택하세요";
   if(exitButton){
     exitButton.disabled=true;
     exitButton.textContent="⏳ 선택한 "+checked.length+"명 철수 처리중...";
@@ -8476,6 +8432,13 @@ document.addEventListener("focusin",v249L22DetailQuickEdit);
   <input id="v17StationNameInput" type="text" placeholder="예: ○○소방서" autocomplete="off">
   <button type="button" class="addBtn" onclick="v17SaveStationName()">💾 소방서명 저장</button>
   <div id="v17StationNameStatus" class="status">소방서명을 입력해 주세요.</div>
+
+  <hr style="margin:18px 0">
+  <div class="v249l31SectionTitle">ℹ️ 앱 정보</div>
+  <div class="info" style="line-height:1.8">
+    앱 버전 : <strong id="v17AppVersionText"></strong><br>
+    앱 개발자 : <strong>소범준</strong>
+  </div>
 
   <button type="button" class="v249l31Secondary" onclick="v249L31CloseSiteManager()">닫기</button>
  </div>
