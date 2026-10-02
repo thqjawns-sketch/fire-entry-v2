@@ -2002,7 +2002,7 @@ function v17ApplyStationName(){
   const status=document.getElementById("v17StationNameStatus");
   if(status)status.textContent=name?("현재 설정: "+name):"소방서명을 입력해 주세요.";
 }
-const V17_APP_VERSION = "R17K";
+const V17_APP_VERSION = "R17L";
 function v17RenderAppInfo(){
   const el=document.getElementById("v17AppVersionText");
   if(el) el.textContent=V17_APP_VERSION;
@@ -9606,6 +9606,266 @@ window.v251R9OpenMember=function(id,name){
   /* 삭제된 3페이지 층별 전용 렌더는 실행하지 않음 */
   window.v33RenderFloorPanel=function(){};
   window.v34RenderFloorMembers=function(){};
+})();
+</script>
+
+
+<style id="r17l-personnel-control-final">
+/* R17L
+   3페이지는 카드 HTML/상태/점멸을 새로 만들지 않는다.
+   2페이지 공통 카드(v16NMemberCardHtml + v16QMemberRowClass)를 그대로 사용하고
+   3페이지에서는 위치정보/진입정보만 숨긴다. */
+
+/* 3페이지 자체 스크롤 금지 */
+#teamBoardPageV29{
+  height:100vh!important;
+  max-height:100vh!important;
+  overflow:hidden!important;
+  box-sizing:border-box!important;
+}
+#teamBoardPageV29 .cmdBoardMain{
+  height:calc(100vh - 82px)!important;
+  max-height:calc(100vh - 82px)!important;
+  overflow:hidden!important;
+  box-sizing:border-box!important;
+}
+
+/* 중앙 즉시확인 오버레이 */
+#teamBoardPageV29 #cmdAlertBar.r17iOverlay{
+  left:50%!important;top:50%!important;
+  transform:translate(-50%,-50%) scale(.96)!important;
+  background:rgba(132,18,14,.60)!important;
+  border-color:rgba(255,216,211,.78)!important;
+  backdrop-filter:blur(1px)!important;
+  -webkit-backdrop-filter:blur(1px)!important;
+}
+#teamBoardPageV29 #cmdAlertBar.r17iOverlay.r17iShow{
+  transform:translate(-50%,-50%) scale(1)!important;
+}
+
+/* 조 행: 대표 조 정보 + 오른쪽 실제 2페이지 카드 */
+#teamBoardPageV29 .r17lTeamRow{
+  --team:#64748b;
+  display:grid!important;
+  grid-template-columns:150px minmax(0,1fr)!important;
+  gap:8px!important;
+  align-items:stretch!important;
+  border:1px solid #dfe6ec!important;
+  border-left:6px solid var(--team)!important;
+  border-radius:10px!important;
+  background:#fff!important;
+  padding:6px!important;
+  box-sizing:border-box!important;
+  min-height:0!important;
+}
+#teamBoardPageV29 .r17lTeamHead{
+  display:flex!important;
+  flex-direction:column!important;
+  justify-content:center!important;
+  align-items:center!important;
+  gap:5px!important;
+  padding:5px!important;
+  border-radius:8px!important;
+  background:#f5f7f9!important;
+  text-align:center!important;
+  min-width:0!important;
+}
+#teamBoardPageV29 .r17lTeamName{
+  min-width:52px;padding:6px 10px;border-radius:7px;
+  background:var(--team);color:#fff;font-size:15px;font-weight:950;line-height:1;
+}
+#teamBoardPageV29 .r17lLocBadges{
+  display:flex;align-items:center;justify-content:center;gap:4px;flex-wrap:wrap;
+}
+#teamBoardPageV29 .r17lLocBadge{
+  padding:3px 6px;border:1px solid #d5e0e8;border-radius:6px;background:#fff;
+  color:#334e68;font-size:10px;font-weight:900;white-space:nowrap;
+}
+#teamBoardPageV29 .r17lDetail{
+  width:100%;font-size:10px;font-weight:800;color:#66798b;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+
+/* 최대 6명 한 줄, 7명부터 같은 조의 다음 줄 */
+#teamBoardPageV29 .r17lMembers{
+  display:grid!important;
+  grid-template-columns:repeat(6,minmax(0,1fr))!important;
+  gap:6px!important;
+  align-items:stretch!important;
+  min-width:0!important;
+}
+
+/* 핵심: wrapper에도 2페이지와 동일한 v16QMemberRowClass를 부여하므로
+   30분 즉시확인/재확인/고립 점멸 상태가 2페이지와 동일하게 작동 */
+#teamBoardPageV29 .r17lMemberSlot{
+  min-width:0!important;
+  margin:0!important;
+  padding:0!important;
+  border-radius:8px!important;
+  overflow:hidden!important;
+}
+#teamBoardPageV29 .r17lMemberSlot .v16PCommonMemberCard{
+  width:100%!important;
+  min-width:0!important;
+  height:100%!important;
+  box-sizing:border-box!important;
+}
+
+/* 3페이지에서만 불필요한 두 정보줄 제거 */
+#teamBoardPageV29 .r17lMemberSlot .insideCompactLocation{display:none!important}
+#teamBoardPageV29 .r17lMemberSlot .v251EntryInfo{display:none!important}
+
+/* 원본 카드의 나머지 모양/상태는 유지.
+   한 화면 6열 수용을 위해 크기만 화면폭에 맞춰 유동 축소 */
+#teamBoardPageV29 .r17lMemberSlot .v16PCommonMemberCard{padding:7px 8px!important}
+#teamBoardPageV29 .r17lMemberSlot .v16PIdentityLine{gap:4px!important;min-width:0!important}
+#teamBoardPageV29 .r17lMemberSlot .memberLine{
+  font-size:clamp(10px,.72vw,14px)!important;
+  overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important;
+}
+#teamBoardPageV29 .r17lMemberSlot .compactId{
+  font-size:clamp(8px,.55vw,10px)!important;white-space:nowrap!important;
+}
+#teamBoardPageV29 .r17lMemberSlot .insideCompactBottom{
+  margin-top:5px!important;gap:4px!important;flex-wrap:nowrap!important;
+}
+#teamBoardPageV29 .r17lMemberSlot .insideElapsed,
+#teamBoardPageV29 .r17lMemberSlot .insideStatus{
+  font-size:clamp(9px,.58vw,11px)!important;white-space:nowrap!important;
+}
+
+/* 조가 많아져도 화면 높이를 넘기지 않도록 조별 영역이 남은 높이를 균등 사용 */
+#teamBoardPageV29 #cmdTeamTable{
+  display:grid!important;
+  grid-template-rows:repeat(var(--r17l-team-count,1),minmax(0,1fr))!important;
+  gap:6px!important;
+  padding:7px 12px 10px!important;
+  overflow:hidden!important;
+  min-height:0!important;
+  height:var(--r17l-team-area-height,auto)!important;
+  box-sizing:border-box!important;
+}
+#teamBoardPageV29 .cmdSection:has(#cmdTeamTable){
+  overflow:hidden!important;
+  min-height:0!important;
+}
+
+/* 팀 색 */
+#teamBoardPageV29 .r17lTeamRow.teamC1,#teamBoardPageV29 .r17lTeamName.teamC1{--team:#2563eb}
+#teamBoardPageV29 .r17lTeamRow.teamC2,#teamBoardPageV29 .r17lTeamName.teamC2{--team:#f28705}
+#teamBoardPageV29 .r17lTeamRow.teamC3,#teamBoardPageV29 .r17lTeamName.teamC3{--team:#8b46d8}
+#teamBoardPageV29 .r17lTeamRow.teamC4,#teamBoardPageV29 .r17lTeamName.teamC4{--team:#0f9588}
+#teamBoardPageV29 .r17lTeamRow.teamC5,#teamBoardPageV29 .r17lTeamName.teamC5{--team:#d64c72}
+#teamBoardPageV29 .r17lTeamRow.teamC6,#teamBoardPageV29 .r17lTeamName.teamC6{--team:#607c18}
+#teamBoardPageV29 .r17lTeamRow.teamC7,#teamBoardPageV29 .r17lTeamName.teamC7{--team:#6d42d8}
+#teamBoardPageV29 .r17lTeamRow.teamC8,#teamBoardPageV29 .r17lTeamName.teamC8{--team:#08758d}
+</style>
+
+<script id="r17l-personnel-control-logic">
+(function(){
+  function esc(v){return escapeHtml(String(v??''));}
+  function cleanDetail(v){
+    const s=String(v??'').trim();
+    return (!s||s==='미지정'||/세부\s*장소\s*미지정/i.test(s))?'-':s;
+  }
+
+  /* 30분 '이상'부터 기존 2페이지 안전상태가 작동하도록 공통 상태함수의 경계만 통일 */
+  const oldState=window.v251GetMemberState;
+  if(typeof oldState==='function'){
+    window.v251GetMemberState=function(m){
+      const s=oldState(m);
+      const mins=(s&&Number.isFinite(Number(s.mins)))?Number(s.mins):
+        (typeof v29MemberMinutes==='function'?v29MemberMinutes(m):Number(m&&m.currentMinutes||0));
+      /* 기존 함수가 정확히 30분을 아직 due로 보지 않는 경우만 30분 즉시확인으로 보정 */
+      if(mins===30 && s && !s.isolated && !s.confirmed && !s.due){
+        return Object.assign({},s,{icon:'🚨',text:'즉시확인',due:true,confirmed:false,mins:mins});
+      }
+      return s;
+    };
+  }
+
+  window.v29DrawCommandTeamTable=function(teams){
+    const area=document.getElementById('cmdTeamTable');
+    if(!area)return;
+
+    if(!teams.length){
+      area.style.setProperty('--r17l-team-count','1');
+      area.innerHTML='<div class="cmdFloorEmpty">현재 활동 중인 조가 없습니다.</div>';
+      return;
+    }
+
+    area.style.setProperty('--r17l-team-count',String(teams.length));
+
+    area.innerHTML=teams.map(t=>{
+      const css=(typeof v29TeamCss==='function'?v29TeamCss(t.team):'')||'';
+      const floor=String(t.floor||'미지정').trim()||'미지정';
+      const dir=String(t.direction||'미지정').trim()||'미지정';
+      const detail=cleanDetail(t.detail);
+
+      const cards=(t.members||[]).map(m=>{
+        const cardMember=Object.assign({},m,{
+          team:t.team,
+          activityNo:Number(t.activityNo||1),
+          direction:dir,
+          floor:floor,
+          detail:detail
+        });
+
+        /* 2페이지와 동일:
+           1) v16QMemberRowClass() = 상태/점멸 class
+           2) v16NMemberCardHtml() = 카드 본문 */
+        const rowClass=(typeof v16QMemberRowClass==='function')
+          ? v16QMemberRowClass(cardMember)
+          : 'memberRow';
+
+        return '<div class="r17lMemberSlot '+rowClass+'">'+
+          v16NMemberCardHtml(cardMember)+
+        '</div>';
+      }).join('');
+
+      return '<div class="r17lTeamRow '+css+'">'+
+        '<div class="r17lTeamHead">'+
+          '<div class="r17lTeamName '+css+'">'+esc(t.team)+'</div>'+
+          '<div class="r17lLocBadges">'+
+            '<span class="r17lLocBadge">'+esc(dir)+'</span>'+
+            '<span class="r17lLocBadge">'+esc(floor)+'</span>'+
+          '</div>'+
+          '<div class="r17lDetail">'+esc(detail)+'</div>'+
+        '</div>'+
+        '<div class="r17lMembers">'+cards+'</div>'+
+      '</div>';
+    }).join('');
+
+    requestAnimationFrame(r17lFitTeamArea);
+  };
+
+  function r17lFitTeamArea(){
+    const page=document.getElementById('teamBoardPageV29');
+    const table=document.getElementById('cmdTeamTable');
+    if(!page||!table||page.classList.contains('hidden'))return;
+
+    const section=table.closest('.cmdSection');
+    if(!section)return;
+
+    const top=section.getBoundingClientRect().top;
+    const viewport=window.innerHeight;
+    const available=Math.max(180,viewport-top-12);
+    section.style.height=available+'px';
+    section.style.maxHeight=available+'px';
+
+    /* section 제목/overview 높이를 제외한 실제 조 카드 영역 */
+    const tableTop=table.getBoundingClientRect().top;
+    table.style.setProperty('--r17l-team-area-height',Math.max(120,viewport-tableTop-12)+'px');
+  }
+
+  const oldDraw=window.drawTeamBoardV29;
+  window.drawTeamBoardV29=function(){
+    /* R17K의 인원관제 draw를 그대로 수행 */
+    if(typeof oldDraw==='function')oldDraw.apply(this,arguments);
+    requestAnimationFrame(r17lFitTeamArea);
+  };
+
+  window.addEventListener('resize',r17lFitTeamArea);
 })();
 </script>
 
