@@ -4,7 +4,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>QR기반-진·출입 안전관리앱 V2.49L40-R4</title>
+<title>QR기반 진·출입 안전관리</title>
 
 <script src="https://unpkg.com/html5-qrcode" type="text/javascript" onerror="this.onerror=null;this.src='https://cdn.jsdelivr.net/npm/html5-qrcode/html5-qrcode.min.js';"></script>
 <script>
@@ -1467,13 +1467,6 @@ button:disabled{
 ===================================================== -->
 <div id="mainPage">
 
-<div class="title">
-🚒 QR기반-진·출입 안전관리앱 V2.49L40-R4
-</div>
-
-<div class="stationLogo">
-<img src="./wanju-fire-logo.png" alt="완주소방서 WANJU FIRE STATION">
-</div>
 
 <div class="card">
 
@@ -1812,9 +1805,6 @@ PPE 점검 대기
 
 </div>
 
-<div class="stationLogo">
-<img src="./wanju-fire-logo.png" alt="완주소방서 WANJU FIRE STATION">
-</div>
 
 <div class="card personnelStatusCardStable">
 
@@ -1885,7 +1875,6 @@ PPE 점검 대기
     <span class="commandOverviewArrow">›</span>
   </button>
 </div>
-<button type="button" id="v16XTest4Banner" onclick="openTest4Page()" style="width:100%;margin-top:10px;min-height:48px;border:2px dashed #d97706;border-radius:10px;background:#fff7d6;color:#6b4600;font-weight:950;font-size:14px;cursor:pointer;">🔎 4. 데이터 비교 · 2페이지 대원카드 그대로 보기</button>
 
 </div>
 
@@ -1927,7 +1916,7 @@ PPE 점검 대기
         <div class="cmdBoardTitle">📊 현장활동 종합현황</div>
         <div id="v29BoardSite" class="cmdBoardSite">-</div>
       </div>
-      <div class="cmdBoardBrand"><img src="./wanju-fire-logo.png" alt="완주소방서 WANJU FIRE STATION"></div>
+      <div class="cmdBoardBrand"></div>
       <div class="cmdBoardHeadActions">
         <button type="button" id="v29BoardRefreshBtn" class="cmdRefreshMini" onclick="refreshTeamBoardV29()">
           <span class="cmdRefreshMain">↻ 새로고침</span>
@@ -1991,7 +1980,7 @@ PPE 점검 대기
     <div id="exitedPageSiteName" class="siteName">-</div>
   </div>
   <div class="stationLogo">
-    <img src="./wanju-fire-logo.png" alt="완주소방서 WANJU FIRE STATION">
+    
   </div>
   <button type="button" class="back v249ExitedTopBack" onclick="closeExitedPage()">⬅ 현장 활동 현황으로 돌아가기</button>
   <button type="button" id="exitedRefreshBtn" class="refresh" onclick="loadExitedStatus(false)">
@@ -2587,16 +2576,9 @@ let v249L31FireType="";
 
 async function v249L31OpenSiteManager(){
   alert("현장관리는 현장대응단만 기록할 수 있습니다.");
-  const pin=v249L31ManagerPin();
-  if(pin===null)return;
-  if(pin!=="1190"){alert("현장대응단 현장관리 PIN이 올바르지 않습니다.");return;}
-  const town=document.getElementById("v249l31Town");
-  town.innerHTML='<option value="">읍·면 선택</option>'+Object.keys(V249L31_AREA).map(x=>'<option value="'+x+'">'+x+'</option>').join("");
-  document.getElementById("v249l31Ri").innerHTML='<option value="">리 선택</option>';
-  v249L31FireType="";
-  document.getElementById("v249l31OtherType").style.display="none";
-  document.getElementById("v249l31SiteModal").style.display="block";
-  await v249L34LoadActiveSites();
+  const pin=v249L31ManagerPin();if(pin===null)return;if(pin!=="1190"){alert("현장대응단 현장관리 PIN이 올바르지 않습니다.");return;}
+  const name=document.getElementById("v249l31SiteNameInput");if(name)name.value="";const preview=document.getElementById("v249l31SitePreview");if(preview)preview.innerText="현장명을 직접 입력하세요.";
+  document.getElementById("v249l31SiteModal").style.display="block";await v249L34LoadActiveSites();
 }
 function v249L31CloseSiteManager(){document.getElementById("v249l31SiteModal").style.display="none";}
 function v249L31RenderRi(){
@@ -2620,36 +2602,18 @@ function v249L31UpdatePreview(){
 document.addEventListener("input",e=>{if(e.target&&e.target.id==="v249l31OtherType")v249L31UpdatePreview();});
 document.addEventListener("change",e=>{if(e.target&&e.target.id==="v249l31Ri")v249L31UpdatePreview();});
 
+
+/* R17A manual site-name preview */
+function v17SiteNamePreview(){const name=(document.getElementById("v249l31SiteNameInput")?.value||"").trim();const el=document.getElementById("v249l31SitePreview");if(el)el.innerText=name?("🔥 "+name):"현장명을 직접 입력하세요.";}
+document.addEventListener("input",e=>{if(e.target&&e.target.id==="v249l31SiteNameInput")v17SiteNamePreview();});
 function v249L31ManagerPin(){
  const pin=prompt("현장대응단 현장관리 PIN을 입력하세요.");
  return pin===null?null:String(pin).trim();
 }
 async function v249L31CreateSite(){
- const t=document.getElementById("v249l31Town").value;
- const r=document.getElementById("v249l31Ri").value;
- let f=v249L31FireType;
- if(f==="기타")f=(document.getElementById("v249l31OtherType").value||"").trim();
- if(!t||!r||!f){alert("읍·면, 리, 화재 대상을 모두 선택하세요.");return;}
- const pin="1190";
- const siteName=t+" "+r+" "+f+"화재";
- if(!confirm(siteName+"\\n\\n새 화재현장을 생성하시겠습니까?"))return;
- const p=new URLSearchParams();
- p.set("action","createSite");p.set("siteName",siteName);p.set("managerPin",pin);
- p.set("safetyOfficer",(document.getElementById("officer").value||"").trim());
- try{
-  const d=await v2CallPost(p);
-  if(!d.ok)throw new Error(d.error||d.message||"현장 생성 실패");
-  if(d.siteId)V2_SITE_ID_BY_NAME.set(String(siteName),String(d.siteId));
-  const siteEl=document.getElementById("site");
-  if(siteEl && ![...siteEl.options].some(o=>o.value===siteName)){
-    const op=document.createElement("option");op.value=siteName;op.textContent=siteName;siteEl.appendChild(op);
-  }
-  if(siteEl)siteEl.value=siteName;
-  v249L31CloseSiteManager();
-  alert("🔥 "+siteName+"\\n현장을 생성했습니다.\\n첫 조는 1조 / 1차 활동부터 시작합니다.");
-  if(typeof siteChanged==="function")Promise.resolve(siteChanged()).catch(e=>console.warn("새 현장 초기화 지연",e));
-  Promise.resolve(loadSites()).catch(e=>console.warn("현장목록 백그라운드 동기화 실패",e));
- }catch(e){alert(e.message||"현장 생성 실패");}
+ const siteName=(document.getElementById("v249l31SiteNameInput")?.value||"").trim();if(!siteName){alert("현장명을 입력하세요.");return;}const pin="1190";if(!confirm(siteName+"\n\n새 화재현장을 생성하시겠습니까?"))return;
+ const p=new URLSearchParams();p.set("action","createSite");p.set("siteName",siteName);p.set("managerPin",pin);p.set("safetyOfficer",(document.getElementById("officer").value||"").trim());
+ return v2CallPost(p).then(d=>{if(!d.ok)throw new Error(d.error||d.message||"현장 생성 실패");if(d.siteId)V2_SITE_ID_BY_NAME.set(String(siteName),String(d.siteId));const siteEl=document.getElementById("site");if(siteEl&&![...siteEl.options].some(o=>o.value===siteName)){const op=document.createElement("option");op.value=siteName;op.textContent=siteName;siteEl.appendChild(op);}if(siteEl)siteEl.value=siteName;v249L31CloseSiteManager();alert("🔥 "+siteName+"\n현장을 생성했습니다.\n첫 조는 1조 / 1차 활동부터 시작합니다.");if(typeof siteChanged==="function")Promise.resolve(siteChanged()).catch(e=>console.warn("새 현장 초기화 지연",e));}).catch(e=>alert(e&&e.message?e.message:"현장 생성 중 오류가 발생했습니다."));
 }
 async function v249L34LoadActiveSites(){
   const box=document.getElementById("v249l34ActiveSites");
@@ -6377,8 +6341,8 @@ try{
     v16XTest4Channel.onmessage=(ev)=>{
       const msg=ev&&ev.data;
       if(!msg||msg.type!=='ACTIVE_MEMBERS'||!Array.isArray(msg.members))return;
-      window.__v16XTest4RemoteMembers=msg.members;
-      if(document.getElementById('test4Page')?.style.display==='block') drawTest4Members(msg.members);
+      window.__v16XTest4RemoteMembers=msg.members;window.__dashboardInsideMembers=msg.members;window.__insideMembers=window.__dashboardInsideMembers;
+      if(document.getElementById('test4Page')?.style.display==='block') drawTest4Members(msg.members);if(document.getElementById('mainPage')?.style.display!=='none')v16TRenderInsideFromCache();
     };
   }
 }catch(e){console.warn('TEST4 channel init',e);}
@@ -8431,23 +8395,9 @@ document.addEventListener("focusin",v249L22DetailQuickEdit);
  <div class="v249l31Panel">
   <h2>⚙️ 현장대응단 현장관리</h2>
   <div class="info">현장 생성·종료는 현장대응단에서 관리합니다.</div>
-  <label>읍·면</label>
-  <select id="v249l31Town" onchange="v249L31RenderRi()"></select>
-  <label>리</label>
-  <select id="v249l31Ri"></select>
-  <label>화재 대상</label>
-  <div class="v249l31FireTypes">
-   <button type="button" onclick="v249L31SetFireType('주택')">주택</button>
-   <button type="button" onclick="v249L31SetFireType('공장')">공장</button>
-   <button type="button" onclick="v249L31SetFireType('창고')">창고</button>
-   <button type="button" onclick="v249L31SetFireType('축사')">축사</button>
-   <button type="button" onclick="v249L31SetFireType('상가')">상가</button>
-   <button type="button" onclick="v249L31SetFireType('차량')">차량</button>
-   <button type="button" onclick="v249L31SetFireType('산림')">산림</button>
-   <button type="button" onclick="v249L31SetFireType('기타')">기타</button>
-  </div>
-  <input id="v249l31OtherType" type="text" placeholder="기타 화재대상 직접 입력" style="display:none;margin-top:8px">
-  <div id="v249l31SitePreview" class="status">화재 대상을 선택하세요.</div>
+  <label>현장명</label>
+  <input id="v249l31SiteNameInput" type="text" placeholder="예: 전주시 완산구 효자동 ○○아파트 화재" autocomplete="off">
+  <div id="v249l31SitePreview" class="status">현장명을 직접 입력하세요.</div>
   <button type="button" onclick="v249L31CreateSite()">🔥 새 화재현장 생성</button>
   <hr style="margin:18px 0">
   <div class="v249l31SectionTitle">📋 현장정보</div>
@@ -8558,35 +8508,11 @@ function v16RApplyConfirmedMutation(action,ids,extra,d){
 }
 /* R16T: 2페이지에서 서버 저장 성공이 확정된 값을 1페이지가 재조회 없이 그대로 표현한다. */
 function v16TRenderInsideFromCache(){
-  const list=document.getElementById('insideList');
-  const members=Array.isArray(window.__dashboardInsideMembers)?window.__dashboardInsideMembers:null;
-  if(!list||!members)return;
-  const checked=new Set([...list.querySelectorAll('input.insideCheck:checked')].map(x=>String(x.dataset.id||'')));
-  list.innerHTML='';
-  const sorted=[...members].sort((a,b)=>{
-    const an=v19TeamNumber(v19TeamInfo(a).team), bn=v19TeamNumber(v19TeamInfo(b).team);
-    return an-bn;
-  });
-  const counts={};
-  sorted.forEach(m=>{const ti=v19TeamInfo(m);counts[ti.team]=(counts[ti.team]||0)+1;});
-  let lastTeam=null;
-  sorted.forEach(member=>{
-    const ti=v19TeamInfo(member);
-    if(ti.team!==lastTeam){
-      lastTeam=ti.team;
-      v19AddTeamDivider(list,ti.team,ti.activityNo,counts[ti.team],v20TeamLocation(sorted,ti.team));
-    }
-    const row=document.createElement('div');
-    row.className=v16QMemberRowClass(member);
-    row.innerHTML='<input type="checkbox" class="insideCheck" data-id="'+escapeAttr(member.memberId)+'" data-name="'+escapeAttr(member.memberName)+'" onchange="updateSelectedCount()">'+v16NMemberCardHtml(member);
-    const cb=row.querySelector('input.insideCheck');
-    if(cb&&checked.has(String(member.memberId)))cb.checked=true;
-    list.appendChild(row);
-  });
-  const count=document.getElementById('insideCount');
-  if(count)count.innerText='🔴 현재 현장 내부 '+members.length+'명';
-  if(typeof updateV23Summary==='function')updateV23Summary(members);
-  if(typeof updateSelectedCount==='function')updateSelectedCount();
+  const list=document.getElementById('insideList');const members=Array.isArray(window.__dashboardInsideMembers)?window.__dashboardInsideMembers:[];if(!list)return;
+  const checked=new Set([...list.querySelectorAll('input.insideCheck:checked')].map(x=>String(x.dataset.id||'')));list.innerHTML='';
+  const sorted=[...members].sort((a,b)=>{const ai=v19TeamInfo(a),bi=v19TeamInfo(b),an=v19TeamNumber(ai.team),bn=v19TeamNumber(bi.team);if(an!==bn)return an-bn;return Number(ai.activityNo||1)-Number(bi.activityNo||1);});const counts={};sorted.forEach(m=>{const t=v19TeamInfo(m).team;counts[t]=(counts[t]||0)+1;});let last=null;
+  sorted.forEach(member=>{const ti=v19TeamInfo(member);if(ti.team!==last){last=ti.team;v19AddTeamDivider(list,ti.team,ti.activityNo,counts[ti.team],v20TeamLocation(sorted,ti.team));}const row=document.createElement('div');row.className=v16QMemberRowClass(member);row.innerHTML='<input type="checkbox" class="insideCheck" data-id="'+escapeAttr(member.memberId)+'" data-name="'+escapeAttr(member.memberName)+'" onchange="updateSelectedCount()">'+v16NMemberCardHtml(member);const cb=row.querySelector('input.insideCheck');if(cb&&checked.has(String(member.memberId)))cb.checked=true;list.appendChild(row);});
+  const count=document.getElementById('insideCount');if(count)count.innerText='🔴 현재 현장 내부 '+members.length+'명';if(typeof updateV23Summary==='function')updateV23Summary(members);if(typeof updateSelectedCount==='function')updateSelectedCount();try{if(typeof applyRows==='function')applyRows();}catch(e){}
 }
 window.v16TRenderInsideFromCache=v16TRenderInsideFromCache;
 
