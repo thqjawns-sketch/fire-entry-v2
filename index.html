@@ -1885,6 +1885,7 @@ PPE 점검 대기
     <span class="commandOverviewArrow">›</span>
   </button>
 </div>
+<button type="button" id="v16XTest4Banner" onclick="openTest4Page()" style="width:100%;margin-top:10px;min-height:48px;border:2px dashed #d97706;border-radius:10px;background:#fff7d6;color:#6b4600;font-weight:950;font-size:14px;cursor:pointer;">🔎 4. 데이터 비교 · 2페이지 대원카드 그대로 보기</button>
 
 </div>
 
@@ -1971,6 +1972,16 @@ PPE 점검 대기
   </div>
   <div id="v29BoardDetail" style="display:none"></div>
   <div id="v33BoardStats" style="display:none"></div>
+</div>
+
+<!-- R16X 분리시험 4페이지 -->
+<div id="test4Page" style="display:none;">
+  <div class="dashboardHeader"><div class="dashboardTitle">🔎 4. 데이터 비교</div><div class="dashboardHeaderRight"><div class="siteName">2페이지 현재 활동대원 원본 직접 표시</div></div></div>
+  <div class="card">
+    <button type="button" onclick="closeTest4Page()" style="width:100%;min-height:46px;border:1px solid #173d67;border-radius:9px;background:#173d67;color:#fff;font-weight:950;">← 2페이지로 돌아가기</button>
+    <div style="margin-top:10px;padding:10px;border-radius:9px;background:#fff7d6;font-size:12px;font-weight:800;line-height:1.5;">시험용 화면 · 서버조회 없음 · 1페이지 데이터 없음 · 2페이지 현재 활동대원 데이터만 같은 카드 렌더러로 표시</div>
+  </div>
+  <div class="card"><div class="v29TeamHeader"><div class="v29TeamHeaderTitle" id="test4Title">👨‍🚒 시험 대원카드</div></div><div id="test4Inside"></div></div>
 </div>
 
 <!-- 3번째 창 : 철수 대원 확인 -->
@@ -6353,6 +6364,59 @@ async function batchExitMembers(){
 
 
 /* =====================================================
+R16X TEST4 - 2페이지 원본 분리시험
+- 서버조회 없음
+- __insideMembers / v23 meta 사용 없음
+- 2페이지 __dashboardInsideMembers를 동일 카드 렌더러로 출력
+- 복제 탭 시험을 위해 BroadcastChannel로 2페이지의 현재 원본 스냅샷만 전달
+===================================================== */
+let v16XTest4Channel=null;
+try{
+  if('BroadcastChannel' in window){
+    v16XTest4Channel=new BroadcastChannel('r16x-test4-active-members');
+    v16XTest4Channel.onmessage=(ev)=>{
+      const msg=ev&&ev.data;
+      if(!msg||msg.type!=='ACTIVE_MEMBERS'||!Array.isArray(msg.members))return;
+      window.__v16XTest4RemoteMembers=msg.members;
+      if(document.getElementById('test4Page')?.style.display==='block') drawTest4Members(msg.members);
+    };
+  }
+}catch(e){console.warn('TEST4 channel init',e);}
+function v16XPublishTest4(list){
+  if(!v16XTest4Channel||!Array.isArray(list))return;
+  try{v16XTest4Channel.postMessage({type:'ACTIVE_MEMBERS',members:list,at:Date.now()});}catch(e){console.warn('TEST4 publish',e);}
+}
+function drawTest4Members(list){
+  const area=document.getElementById('test4Inside'); if(!area)return;
+  const src=Array.isArray(list)?list:[];
+  area.innerHTML='';
+  const title=document.getElementById('test4Title'); if(title)title.textContent='👨‍🚒 시험 대원카드 '+src.length+'명';
+  if(!src.length){area.innerHTML='<div class="empty">현재 전달된 2페이지 대원자료가 없습니다.</div>';return;}
+  const sorted=[...src].sort((a,b)=>v19TeamNumber(v19TeamInfo(a).team)-v19TeamNumber(v19TeamInfo(b).team));
+  sorted.forEach(member=>{
+    const row=document.createElement('div');
+    row.className=v16QMemberRowClass(member);
+    row.innerHTML=v16NMemberCardHtml(member);
+    area.appendChild(row);
+  });
+  try{applyRows();}catch(e){}
+}
+function openTest4Page(){
+  stopDashboardAutoRefresh();
+  document.getElementById('dashboardPage').style.display='none';
+  document.getElementById('test4Page').style.display='block';
+  const src=Array.isArray(window.__v16XTest4RemoteMembers)?window.__v16XTest4RemoteMembers:(Array.isArray(window.__dashboardInsideMembers)?window.__dashboardInsideMembers:[]);
+  drawTest4Members(src);
+  window.scrollTo(0,0);
+}
+function closeTest4Page(){
+  document.getElementById('test4Page').style.display='none';
+  document.getElementById('dashboardPage').style.display='block';
+  startDashboardAutoRefresh();
+  window.scrollTo(0,0);
+}
+
+/* =====================================================
 현장 활동 현황 열기
 ===================================================== */
 
@@ -7525,6 +7589,8 @@ function drawDashboardInside(list){
 
     area.appendChild(row);
   });
+  /* TEST4: 2페이지가 실제로 그린 현재 원본을 복제 탭의 시험화면에도 전달 */
+  v16XPublishTest4(window.__dashboardInsideMembers||list||[]);
 }
 function findDashboardInsideMember(memberId){
   return (window.__dashboardInsideMembers||[]).find(m=>String(m.memberId)===String(memberId));
