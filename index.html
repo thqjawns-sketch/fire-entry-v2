@@ -6301,12 +6301,7 @@ async function batchExitMembers(){
       selectAllState=false;
       updateSelectedCount();
 
-      /* R16S: 철수 확정 즉시 1·2페이지 메모리 원본에서도 같은 대원을 제거 */
-      if(Array.isArray(window.__insideMembers)){
-        window.__insideMembers=window.__insideMembers.filter(m=>
-          !succeededIds.has(String(m.memberId||"").trim())
-        );
-      }
+      /* R16P: 철수 확정 즉시 2페이지도 같은 활동대원 집합에서 제거 */
       if(Array.isArray(window.__dashboardInsideMembers)){
         window.__dashboardInsideMembers=window.__dashboardInsideMembers.filter(m=>
           !succeededIds.has(String(m.memberId||"").trim())
@@ -7702,10 +7697,8 @@ async function saveDashboardTeamLocation(team){
     if(typeof drawDashboardTeamSummary==="function"){
       drawDashboardTeamSummary(window.__dashboardInsideMembers||[]);
     }
-    /* R16P: 2페이지 정보변경은 1페이지 동일 카드에도 즉시 반영 */
-    if(typeof loadInsideMembers==="function"){
-      void loadInsideMembers(false);
-    }
+    /* R16T: 서버 성공값을 1페이지 캐시에 반영한 뒤 재조회 없이 즉시 표현 */
+    if(typeof v16TRenderInsideFromCache==="function") v16TRenderInsideFromCache();
 
     const board=document.getElementById("teamBoardPageV29");
     if(board && board.style.display==="block"){
@@ -7806,10 +7799,8 @@ async function saveDashboardMemberLocation(memberId){
     if(typeof drawDashboardTeamSummary==="function"){
       drawDashboardTeamSummary(window.__dashboardInsideMembers||[]);
     }
-    /* R16P: 2페이지 정보변경은 1페이지 동일 카드에도 즉시 반영 */
-    if(typeof loadInsideMembers==="function"){
-      void loadInsideMembers(false);
-    }
+    /* R16T: 서버 성공값을 1페이지 캐시에 반영한 뒤 재조회 없이 즉시 표현 */
+    if(typeof v16TRenderInsideFromCache==="function") v16TRenderInsideFromCache();
 
     const board=document.getElementById("teamBoardPageV29");
     if(board && board.style.display==="block"){
@@ -8452,14 +8443,14 @@ function v16RMemberStores(){
   return [window.__insideMembers,window.__dashboardInsideMembers].filter(Array.isArray);
 }
 function v16RSuccessMap(d,ids){
-  const rows=(d&&Array.isArray(d.succeeded))?d.succeeded:[];
-  const failed=(d&&Array.isArray(d.failed))?d.failed:[];
+  const hasSucceeded=d&&Array.isArray(d.succeeded);
+  const rows=hasSucceeded?d.succeeded:[];
   const map=new Map();
   rows.forEach(x=>{const k=String((x&&(x.id||x.memberId))||'').trim();if(k)map.set(k,x||{});});
-  /* R16S: 부분성공 응답에서 실패 대원을 성공으로 오인하지 않는다.
-     succeeded 상세가 없는 '전체 성공' 응답일 때만 요청 ID 전체를 성공으로 본다. */
-  if(!rows.length && !failed.length && d && (d.ok===true || d.success===true)){
-    (ids||[]).forEach(id=>{const k=String(id||'').trim();if(k)map.set(k,{});});
+  /* R16T: 서버가 succeeded 목록을 준 경우 그 목록만 성공으로 인정한다.
+     목록이 없는 구형 성공응답에서만 요청 ids 전체를 성공으로 본다. */
+  if(!hasSucceeded){
+    (ids||[]).forEach(id=>{const k=String(id||'').trim();if(k&&!map.has(k))map.set(k,{});});
   }
   return map;
 }
@@ -8491,32 +8482,90 @@ function v16RApplyConfirmedMutation(action,ids,extra,d){
     }
   }));
 }
+/* R16T: 2페이지에서 서버 저장 성공이 확정된 값을 1페이지가 재조회 없이 그대로 표현한다. */
+function v16TRenderInsideFromCache(){
+  const list=document.getElementById('insideList');
+  const members=Array.isArray(window.__insideMembers)?window.__insideMembers:null;
+  if(!list||!members)return;
+  const checked=new Set([...list.querySelectorAll('input.insideCheck:checked')].map(x=>String(x.dataset.id||'')));
+  list.innerHTML='';
+  const sorted=[...members].sort((a,b)=>{
+    const an=v19TeamNumber(v19TeamInfo(a).team), bn=v19TeamNumber(v19TeamInfo(b).team);
+    return an-bn;
+  });
+  const counts={};
+  sorted.forEach(m=>{const ti=v19TeamInfo(m);counts[ti.team]=(counts[ti.team]||0)+1;});
+  let lastTeam=null;
+  sorted.forEach(member=>{
+    const ti=v19TeamInfo(member);
+    if(ti.team!==lastTeam){
+      lastTeam=ti.team;
+      v19AddTeamDivider(list,ti.team,ti.activityNo,counts[ti.team],v20TeamLocation(sorted,ti.team));
+    }
+    const row=document.createElement('div');
+    row.className=v16QMemberRowClass(member);
+    row.innerHTML='<input type="checkbox" class="insideCheck" data-id="'+escapeAttr(member.memberId)+'" data-name="'+escapeAttr(member.memberName)+'" onchange="updateSelectedCount()">'+v16NMemberCardHtml(member);
+    const cb=row.querySelector('input.insideCheck');
+    if(cb&&checked.has(String(member.memberId)))cb.checked=true;
+    list.appendChild(row);
+  });
+  const count=document.getElementById('insideCount');
+  if(count)count.innerText='🔴 현재 현장 내부 '+members.length+'명';
+  if(typeof updateV23Summary==='function')updateV23Summary(members);
+  if(typeof updateSelectedCount==='function')updateSelectedCount();
+}
+window.v16TRenderInsideFromCache=v16TRenderInsideFromCache;
+
 function v16RRefreshActiveViews(opts){
   opts=opts||{};
-  try{if(typeof applyRows==='function')applyRows();}catch(e){console.warn('R16R applyRows',e);}
+  /* R16T: 위치/편성 변경은 이미 서버 성공이 확인된 값이므로 1페이지도 로컬 확정값으로 즉시 다시 그린다. */
+  if(opts.renderInside){
+    try{v16TRenderInsideFromCache();}catch(e){console.warn('R16T inside render',e);}
+  }
+  try{if(typeof applyRows==='function')applyRows();}catch(e){console.warn('R16T applyRows',e);}
   try{if(typeof applyTeamSafetyButtons==='function')applyTeamSafetyButtons();}catch(e){}
   try{if(typeof summary==='function')summary();}catch(e){}
-  try{if(typeof drawDashboardInside==='function'&&Array.isArray(window.__dashboardInsideMembers))drawDashboardInside(window.__dashboardInsideMembers);}catch(e){console.warn('R16R dashboard',e);}
+  try{if(typeof drawDashboardInside==='function'&&Array.isArray(window.__dashboardInsideMembers))drawDashboardInside(window.__dashboardInsideMembers);}catch(e){console.warn('R16T dashboard',e);}
   try{if(typeof drawDashboardTeamSummary==='function'&&Array.isArray(window.__dashboardInsideMembers))drawDashboardTeamSummary(window.__dashboardInsideMembers);}catch(e){}
-  try{
-    const board=document.getElementById('teamBoardPageV29');
-    if(board&&board.style.display!=='none'&&typeof drawTeamBoardV29==='function')drawTeamBoardV29();
-  }catch(e){console.warn('R16R board',e);}
-  /* 위치/편성 변경은 1페이지 카드 본문도 달라지므로 서버 확정값으로 즉시 재조회 */
-  if(opts.reloadInside&&typeof loadInsideMembers==='function')setTimeout(()=>{void loadInsideMembers(false);},0);
+  /* 3페이지는 이번 작업 범위에서 의도적으로 건드리지 않는다. */
 }
 window.v16RRefreshActiveViews=v16RRefreshActiveViews;
 function ensureUI(){ return; }
-async function post(action,ids,extra,btn){const o=officer();const sid=siteId();if(!sid){alert('화재현장을 선택하세요.');return null;}const f=new URLSearchParams();f.set('action',action);f.set('siteId',sid);f.set('officer',o);f.set('members',JSON.stringify((ids||[]).map(id=>({id:String(id)}))));Object.keys(extra||{}).forEach(k=>f.set(k,extra[k]));const old=btn?btn.textContent:'';if(btn){btn.disabled=true;btn.textContent='⏳ 반영중...';}let timedOut=false;try{const TIMEOUT=10000;const d=await Promise.race([v2CallPost(f),new Promise(resolve=>setTimeout(()=>{timedOut=true;resolve({__uiTimeout:true});},TIMEOUT))]);if(d&&d.__uiTimeout){if(btn){btn.disabled=false;btn.textContent='↻ 저장 확인중';setTimeout(()=>{if(btn)btn.textContent=old;},1800);}void loadDashboard(false).then(()=>refresh()).catch(()=>{});return null;}if(!d||(!d.ok&&!d.success))throw new Error((d&&d.error)||(d&&d.message)||'처리 실패');if(btn)btn.textContent='✅ 반영완료';
-/* R16S: 성공 직후 서버 재조회로 로컬 확정값을 덮어쓰지 않는다.
-   서버 성공값 -> 양쪽 메모리 패치 -> 즉시 화면 반영을 한 경로로만 처리한다. */
-v16RApplyConfirmedMutation(action,ids,extra,d);
-v16RRefreshActiveViews({reloadInside:action==='updateSafetyManagement'});
-return d;}catch(e){alert((e&&e.message)||'반영 실패');return null;}finally{if(btn&&!timedOut)setTimeout(()=>{btn.disabled=false;btn.textContent=old;},500);}}
+async function post(action,ids,extra,btn){
+  const o=officer(), sid=siteId();
+  if(!sid){alert('화재현장을 선택하세요.');return null;}
+  const f=new URLSearchParams();
+  f.set('action',action); f.set('siteId',sid); f.set('officer',o);
+  f.set('members',JSON.stringify((ids||[]).map(id=>({id:String(id)}))));
+  Object.keys(extra||{}).forEach(k=>f.set(k,extra[k]));
+  const old=btn?btn.textContent:'';
+  if(btn){btn.disabled=true;btn.textContent='⏳ 반영중...';}
+  let timedOut=false;
+  try{
+    const TIMEOUT=10000;
+    const d=await Promise.race([v2CallPost(f),new Promise(resolve=>setTimeout(()=>{timedOut=true;resolve({__uiTimeout:true});},TIMEOUT))]);
+    if(d&&d.__uiTimeout){
+      if(btn){btn.disabled=false;btn.textContent='↻ 저장 확인중';setTimeout(()=>{if(btn)btn.textContent=old;},1800);}
+      /* 응답을 확정하지 못한 경우에만 서버 재조회로 보정 */
+      void loadDashboard(false).then(()=>refresh()).catch(()=>{});
+      return null;
+    }
+    if(!d||(!d.ok&&!d.success))throw new Error((d&&d.error)||(d&&d.message)||'처리 실패');
+    if(btn)btn.textContent='✅ 반영완료';
+    v16RApplyConfirmedMutation(action,ids,extra,d);
+    v16RRefreshActiveViews({renderInside:action==='updateSafetyManagement'});
+    return d;
+  }catch(e){
+    alert((e&&e.message)||'반영 실패');
+    return null;
+  }finally{
+    if(btn&&!timedOut)setTimeout(()=>{btn.disabled=false;btn.textContent=old;},500);
+  }
+}
 async function safety(ids){if(!ids||!ids.length)return;if(!confirm(ids.length+'명을 안전확인 완료 처리하시겠습니까?\n확인 후 10분 동안 빨간 깜빡임이 중지되고, 10분 후 재확인 대상이 됩니다.'))return;await post('setSafetyCheck',ids,{},null);}
 function recentSafety(m){const t=parseTime(m&&m.safetyCheckedAt);return Number.isFinite(t)&&Math.max(0,(Date.now()-t)/60000)<RECHECK;}
 function applyTeamSafetyButtons(){document.querySelectorAll('#dashboardInside .teamDividerV19').forEach(div=>{const team=div.dataset.team||'';const btn=div.querySelector('.dashboardTeamSafetyBtn');if(!btn)return;const ms=(window.__dashboardInsideMembers||[]).filter(m=>teamName(m)===team);const done=ms.length>0&&ms.every(recentSafety);btn.classList.toggle('isConfirmed',done);if(!btn.disabled){if(done){const remains=ms.map(m=>state(m).remain).filter(Number.isFinite);const r=remains.length?Math.min(...remains):10;btn.textContent='✓ 안전확인 · 재확인 '+r+'분';}else btn.textContent='🛡 조 안전확인';}});}
-window.v251TeamSafety=async function(team,btn){const ms=(window.__dashboardInsideMembers||[]).filter(m=>teamName(m)===team);if(!ms.length)return;const old=btn?btn.textContent:'🛡 조 안전확인';if(btn){btn.disabled=true;btn.textContent='⏳ 처리중...';}const d=await post('setSafetyCheck',ms.map(m=>m.memberId),{},null);if(!d&&btn)btn.textContent=old;if(btn)btn.disabled=false;applyTeamSafetyButtons();};
+window.v251TeamSafety=async function(team,btn){const ms=(window.__dashboardInsideMembers||[]).filter(m=>teamName(m)===team);if(!ms.length)return;const old=btn?btn.textContent:'🛡 조 안전확인';if(btn){btn.disabled=true;btn.textContent='⏳ 처리중...';}const d=await post('setSafetyCheck',ms.map(m=>m.memberId),{},null);if(d){const now=new Date().toISOString();ms.forEach(m=>{m.safetyCheckedAt=(d.succeeded||[]).find(x=>String(x.id)===String(m.memberId))?.checkedAt||now;});if(btn){btn.classList.add('isConfirmed');btn.textContent='✓ 안전확인';}}else if(btn){btn.textContent=old;}if(btn)btn.disabled=false;applyTeamSafetyButtons();};
 function renderTargets(){const box=document.getElementById('v251SafetyTargets');if(box)box.remove();}
 function applyRows(){['dashboardInside','insideList'].forEach(rootId=>{const root=document.getElementById(rootId);if(!root)return;const source=(rootId==='insideList'?(window.__insideMembers||window.__dashboardInsideMembers||[]):(window.__dashboardInsideMembers||[]));root.querySelectorAll('.memberRow').forEach(row=>{const idEl=row.querySelector('.compactId');if(!idEl)return;const id=idEl.textContent.trim();const m=source.find(x=>String(x.memberId)===String(id));if(!m)return;const s=state(m);row.classList.remove('v251NeedsCheck','v251SafetyConfirmed','v251IsolationBlink');if(s.isolated)row.classList.add('v251IsolationBlink');else if(s.due)row.classList.add('v251NeedsCheck');else if(s.confirmed)row.classList.add('v251SafetyConfirmed');const elapsed=row.querySelector('.insideElapsed');if(elapsed)elapsed.textContent=(s.mins>=31?'🔴 ':'')+s.mins+'분 경과';const st=row.querySelector('.insideStatus');if(st){st.classList.remove('v251NeedsCheck','v251SafetyConfirmed','v251IsolationBlink');if(s.isolated)st.classList.add('v251IsolationBlink');else if(s.due)st.classList.add('v251NeedsCheck');else if(s.confirmed)st.classList.add('v251SafetyConfirmed');st.textContent=s.icon+' '+s.text;}});});}
 function summary(){const box=document.getElementById('criticalSummary');if(!box)return;const targets=(window.__dashboardInsideMembers||[]).filter(m=>m.isolated||liveMinutes(m)>=31),due=targets.filter(m=>state(m).due).length,confirmed=targets.filter(m=>state(m).confirmed).length;box.classList.remove('v251StableCritical');if(due){box.classList.add('hasCritical');box.textContent='⚠️ 31분 이상 또는 고립대원 확인대상 '+due+'명';}else if(confirmed){box.classList.remove('hasCritical');box.classList.add('v251StableCritical');box.textContent='🔴 31분 이상 '+confirmed+'명 · ✓ 안전확인 완료';}else{box.classList.remove('hasCritical');box.textContent='✅ 31분 이상 또는 고립대원 확인대상 0명';}}
@@ -8581,8 +8630,12 @@ async function r16mMemberSafety(id,btn){
   try{
     const d=await post('setSafetyCheck',[id],{},null);
     if(!d){btn.textContent=old;return;}
-    /* R16S: safetyCheckedAt은 post()의 공통 성공처리에서 이미 양쪽 저장소에 반영됨. */
+    const hit=(d.succeeded||[]).find(x=>String(x.id||x.memberId)===String(id));
+    m.safetyCheckedAt=(hit&&hit.checkedAt)||new Date().toISOString();
     r16mApplyMemberSafetyButton(btn,m);
+    if(typeof applyTeamSafetyButtons==='function')applyTeamSafetyButtons();
+    if(typeof summary==='function')summary();
+    if(typeof refresh==='function')setTimeout(refresh,0);
   }catch(e){console.error('대원 안전확인 오류',e);btn.textContent=old;}
   finally{btn.disabled=false;r16mApplyMemberSafetyButton(btn,m);}
 }
