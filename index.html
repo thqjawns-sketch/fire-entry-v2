@@ -3841,11 +3841,11 @@ function editMemberLocation(memberId, memberName){
 }
 function updateV23Summary(members){
   const el=document.getElementById("v23InsideSummary"); if(!el)return;
-  const meta=v23LoadMeta(), teams=new Set(), floors={};
+  const teams=new Set(), floors={};
   (members||[]).forEach(m=>{
-    const x=meta[String(m.memberId)]||{};
-    if(x.teamName)teams.add(x.teamName);
-    const f=x.activityFloor||"미지정";
+    const ti=v19TeamInfo(m);
+    if(ti.team&&ti.team!=="조 미지정")teams.add(ti.team);
+    const f=String(m.floor||"").trim()||"미지정";
     floors[f]=(floors[f]||0)+1;
   });
   const parts=Object.keys(floors).map(f=>f+" "+floors[f]+"명");
@@ -5420,9 +5420,9 @@ function getStayStatus(
 
 
 function v19TeamInfo(member){
-  const vm=v23LoadMeta()[String(member.memberId)]||{};
-  const team=vm.teamName||"조 미지정";
-  const activityNo=Number(vm.teamActivityNo)||1;
+  member=member||{};
+  const team=String(member.team||"").trim()||"조 미지정";
+  const activityNo=Number(member.activityNo||member.entryCount)||1;
   return {team,activityNo};
 }
 function v19TeamNumber(team){
@@ -5435,11 +5435,11 @@ function v19TeamColorClass(team){
 }
 function v20TeamLocation(members,team){
   const vals=(members||[]).filter(m=>v19TeamInfo(m).team===team).map(m=>{
-    const vm=v23LoadMeta()[String(m.memberId)]||{};
+    const detail=String(m.detail||"").trim();
     return {
-      dir:vm.entryDirection||"미지정",
-      floor:vm.activityFloor||"미지정",
-      detail:(!vm.detailLocation||vm.detailLocation==="미지정"||/세부\s*장소\s*미지정/i.test(vm.detailLocation))?"-":vm.detailLocation
+      dir:String(m.direction||"").trim()||"미지정",
+      floor:String(m.floor||"").trim()||"미지정",
+      detail:(!detail||detail==="미지정"||/세부\s*장소\s*미지정/i.test(detail))?"-":detail
     };
   });
   if(!vals.length)return "위치 미지정";
@@ -5613,9 +5613,10 @@ async function loadInsideMembers(isAutoRefresh = false){
 
     }
 
-    /* R16R: 1페이지도 자기 최신 활동대원 원본을 보관한다.
-       안전상태 재적용 시 2페이지 캐시를 대신 참조하지 않도록 분리한다. */
-    window.__insideMembers = Array.isArray(data.members) ? data.members : [];
+    /* R16U: 현재 활동대원 원본은 하나만 유지한다.
+       1페이지 조회 결과도 2페이지 기준 배열에 넣고, 구형 참조는 같은 배열을 가리키는 alias로만 유지한다. */
+    window.__dashboardInsideMembers = Array.isArray(data.members) ? data.members : [];
+    window.__insideMembers = window.__dashboardInsideMembers;
 
     /* R15A: 최신 정상 응답을 받은 뒤에만 기존 목록을 교체 */
     list.innerHTML = "";
@@ -6306,6 +6307,7 @@ async function batchExitMembers(){
         window.__dashboardInsideMembers=window.__dashboardInsideMembers.filter(m=>
           !succeededIds.has(String(m.memberId||"").trim())
         );
+        window.__insideMembers=window.__dashboardInsideMembers;
         if(typeof drawDashboardInside==="function") drawDashboardInside(window.__dashboardInsideMembers);
         if(typeof drawDashboardTeamSummary==="function") drawDashboardTeamSummary(window.__dashboardInsideMembers);
         if(typeof window.v16RRefreshActiveViews==="function") window.v16RRefreshActiveViews();
@@ -6898,6 +6900,7 @@ async function loadDashboard(
     const v251PrevSignature = window.__v251InsideStructureSignature || "";
     const v251NextSignature = v251R16EStructureSignature(v251NextInside);
     window.__dashboardInsideMembers = v251NextInside;
+    window.__insideMembers = window.__dashboardInsideMembers;
     window.__v251InsideStructureSignature = v251NextSignature;
 
     /* R16F: 큰 화면 상황판은 데이터 변화 때만 구조를 다시 그려 깜빡임을 억제 */
@@ -7307,7 +7310,7 @@ function drawTeamBoardV29(){
               const dir=vm.entryDirection||"미지정";
               const detailLoc=(!vm.detailLocation||vm.detailLocation==="미지정"||/세부\s*장소\s*미지정/i.test(vm.detailLocation))?"-":vm.detailLocation;
               return '<div class="insideCompactLocation">'+
-                '<span class="insideLocText">'+escapeHtml(team)+(vm.teamActivityNo?' · '+Number(vm.teamActivityNo)+'차':'')+' · '+escapeHtml(dir)+' / </span>'+
+                '<span class="insideLocText">'+escapeHtml(team)+' · '+activityNo+'차 · '+escapeHtml(dir)+' / </span>'+
                 '<span class="floorMini '+v23FloorClass(floor)+'">'+escapeHtml(floor)+'</span>'+
                 '<span class="insideLocText"> / '+escapeHtml(detailLoc)+'</span>'+
               '</div>';
@@ -7445,11 +7448,12 @@ function v16NMemberCardHtml(member){
     : null;
   const stay=live||getStayStatus(member.currentMinutes);
   const mins=Number.isFinite(Number(stay.mins))?Number(stay.mins):Number(member.currentMinutes||0);
-  const vm=v23LoadMeta()[String(member.memberId)]||{};
-  const floor=vm.activityFloor||'미지정';
-  const team=vm.teamName||'미지정';
-  const dir=vm.entryDirection||'미지정';
-  const detail=(!vm.detailLocation||vm.detailLocation==='미지정'||/세부\s*장소\s*미지정/i.test(vm.detailLocation))?'-':vm.detailLocation;
+  const floor=String(member.floor||'').trim()||'미지정';
+  const team=String(member.team||'').trim()||'미지정';
+  const dir=String(member.direction||'').trim()||'미지정';
+  const rawDetail=String(member.detail||'').trim();
+  const detail=(!rawDetail||rawDetail==='미지정'||/세부\s*장소\s*미지정/i.test(rawDetail))?'-':rawDetail;
+  const activityNo=Number(member.activityNo||member.entryCount)||1;
   const stateClass=live?(live.isolated?'v251IsolationBlink':live.due?'v251NeedsCheck':live.confirmed?'v251SafetyConfirmed':''):stay.className;
   return '<div class="memberDetail v16PCommonMemberCard" data-member-id="'+escapeAttr(member.memberId)+'">'+
     '<div class="v16PIdentityLine">'+
@@ -8440,7 +8444,10 @@ window.v251GetMemberState=state;
 
 /* R16R: 서버 변경 성공 직후 1·2·3페이지가 같은 활동대원 상태를 즉시 공유 */
 function v16RMemberStores(){
-  return [window.__insideMembers,window.__dashboardInsideMembers].filter(Array.isArray);
+  const list=Array.isArray(window.__dashboardInsideMembers)?window.__dashboardInsideMembers:[];
+  /* R16U: 구형 __insideMembers는 별도 저장소가 아니라 동일 배열 alias */
+  window.__insideMembers=list;
+  return [list];
 }
 function v16RSuccessMap(d,ids){
   const hasSucceeded=d&&Array.isArray(d.succeeded);
@@ -8465,27 +8472,23 @@ function v16RApplyConfirmedMutation(action,ids,extra,d){
     if(action==='updateSafetyManagement'){
       const iso=String(patch.isolationMode||'KEEP').toUpperCase();
       if(iso==='Y')m.isolated=true; else if(iso==='N')m.isolated=false;
-      if(patch.team!=null&&String(patch.team).trim())m.team=String(patch.team).trim();
-      if(patch.activityNo!=null&&String(patch.activityNo).trim())m.activityNo=Number(patch.activityNo)||m.activityNo||1;
-      if(patch.direction!=null)m.direction=String(patch.direction);
-      if(patch.floor!=null)m.floor=String(patch.floor);
-      if(patch.detail!=null)m.detail=String(patch.detail);
-      if(typeof v23SetMemberMeta==='function'){
-        const mp={};
-        if(patch.team!=null)mp.teamName=String(patch.team);
-        if(patch.activityNo!=null)mp.teamActivityNo=Number(patch.activityNo)||1;
-        if(patch.direction!=null)mp.entryDirection=String(patch.direction);
-        if(patch.floor!=null)mp.activityFloor=String(patch.floor);
-        if(patch.detail!=null)mp.detailLocation=String(patch.detail);
-        if(Object.keys(mp).length)v23SetMemberMeta(key,mp);
-      }
+      const confirmedTeam=(hit.team!=null?hit.team:patch.team);
+      const confirmedActivityNo=(hit.activityNo!=null?hit.activityNo:patch.activityNo);
+      const confirmedDirection=(hit.direction!=null?hit.direction:patch.direction);
+      const confirmedFloor=(hit.floor!=null?hit.floor:patch.floor);
+      const confirmedDetail=(hit.detail!=null?hit.detail:patch.detail);
+      if(confirmedTeam!=null&&String(confirmedTeam).trim())m.team=String(confirmedTeam).trim();
+      if(confirmedActivityNo!=null&&String(confirmedActivityNo).trim())m.activityNo=Number(confirmedActivityNo)||m.activityNo||1;
+      if(confirmedDirection!=null)m.direction=String(confirmedDirection);
+      if(confirmedFloor!=null)m.floor=String(confirmedFloor);
+      if(confirmedDetail!=null)m.detail=String(confirmedDetail);
     }
   }));
 }
 /* R16T: 2페이지에서 서버 저장 성공이 확정된 값을 1페이지가 재조회 없이 그대로 표현한다. */
 function v16TRenderInsideFromCache(){
   const list=document.getElementById('insideList');
-  const members=Array.isArray(window.__insideMembers)?window.__insideMembers:null;
+  const members=Array.isArray(window.__dashboardInsideMembers)?window.__dashboardInsideMembers:null;
   if(!list||!members)return;
   const checked=new Set([...list.querySelectorAll('input.insideCheck:checked')].map(x=>String(x.dataset.id||'')));
   list.innerHTML='';
@@ -8567,7 +8570,7 @@ function recentSafety(m){const t=parseTime(m&&m.safetyCheckedAt);return Number.i
 function applyTeamSafetyButtons(){document.querySelectorAll('#dashboardInside .teamDividerV19').forEach(div=>{const team=div.dataset.team||'';const btn=div.querySelector('.dashboardTeamSafetyBtn');if(!btn)return;const ms=(window.__dashboardInsideMembers||[]).filter(m=>teamName(m)===team);const done=ms.length>0&&ms.every(recentSafety);btn.classList.toggle('isConfirmed',done);if(!btn.disabled){if(done){const remains=ms.map(m=>state(m).remain).filter(Number.isFinite);const r=remains.length?Math.min(...remains):10;btn.textContent='✓ 안전확인 · 재확인 '+r+'분';}else btn.textContent='🛡 조 안전확인';}});}
 window.v251TeamSafety=async function(team,btn){const ms=(window.__dashboardInsideMembers||[]).filter(m=>teamName(m)===team);if(!ms.length)return;const old=btn?btn.textContent:'🛡 조 안전확인';if(btn){btn.disabled=true;btn.textContent='⏳ 처리중...';}const d=await post('setSafetyCheck',ms.map(m=>m.memberId),{},null);if(d){const now=new Date().toISOString();ms.forEach(m=>{m.safetyCheckedAt=(d.succeeded||[]).find(x=>String(x.id)===String(m.memberId))?.checkedAt||now;});if(btn){btn.classList.add('isConfirmed');btn.textContent='✓ 안전확인';}}else if(btn){btn.textContent=old;}if(btn)btn.disabled=false;applyTeamSafetyButtons();};
 function renderTargets(){const box=document.getElementById('v251SafetyTargets');if(box)box.remove();}
-function applyRows(){['dashboardInside','insideList'].forEach(rootId=>{const root=document.getElementById(rootId);if(!root)return;const source=(rootId==='insideList'?(window.__insideMembers||window.__dashboardInsideMembers||[]):(window.__dashboardInsideMembers||[]));root.querySelectorAll('.memberRow').forEach(row=>{const idEl=row.querySelector('.compactId');if(!idEl)return;const id=idEl.textContent.trim();const m=source.find(x=>String(x.memberId)===String(id));if(!m)return;const s=state(m);row.classList.remove('v251NeedsCheck','v251SafetyConfirmed','v251IsolationBlink');if(s.isolated)row.classList.add('v251IsolationBlink');else if(s.due)row.classList.add('v251NeedsCheck');else if(s.confirmed)row.classList.add('v251SafetyConfirmed');const elapsed=row.querySelector('.insideElapsed');if(elapsed)elapsed.textContent=(s.mins>=31?'🔴 ':'')+s.mins+'분 경과';const st=row.querySelector('.insideStatus');if(st){st.classList.remove('v251NeedsCheck','v251SafetyConfirmed','v251IsolationBlink');if(s.isolated)st.classList.add('v251IsolationBlink');else if(s.due)st.classList.add('v251NeedsCheck');else if(s.confirmed)st.classList.add('v251SafetyConfirmed');st.textContent=s.icon+' '+s.text;}});});}
+function applyRows(){['dashboardInside','insideList'].forEach(rootId=>{const root=document.getElementById(rootId);if(!root)return;const source=(window.__dashboardInsideMembers||[]);root.querySelectorAll('.memberRow').forEach(row=>{const idEl=row.querySelector('.compactId');if(!idEl)return;const id=idEl.textContent.trim();const m=source.find(x=>String(x.memberId)===String(id));if(!m)return;const s=state(m);row.classList.remove('v251NeedsCheck','v251SafetyConfirmed','v251IsolationBlink');if(s.isolated)row.classList.add('v251IsolationBlink');else if(s.due)row.classList.add('v251NeedsCheck');else if(s.confirmed)row.classList.add('v251SafetyConfirmed');const elapsed=row.querySelector('.insideElapsed');if(elapsed)elapsed.textContent=(s.mins>=31?'🔴 ':'')+s.mins+'분 경과';const st=row.querySelector('.insideStatus');if(st){st.classList.remove('v251NeedsCheck','v251SafetyConfirmed','v251IsolationBlink');if(s.isolated)st.classList.add('v251IsolationBlink');else if(s.due)st.classList.add('v251NeedsCheck');else if(s.confirmed)st.classList.add('v251SafetyConfirmed');st.textContent=s.icon+' '+s.text;}});});}
 function summary(){const box=document.getElementById('criticalSummary');if(!box)return;const targets=(window.__dashboardInsideMembers||[]).filter(m=>m.isolated||liveMinutes(m)>=31),due=targets.filter(m=>state(m).due).length,confirmed=targets.filter(m=>state(m).confirmed).length;box.classList.remove('v251StableCritical');if(due){box.classList.add('hasCritical');box.textContent='⚠️ 31분 이상 또는 고립대원 확인대상 '+due+'명';}else if(confirmed){box.classList.remove('hasCritical');box.classList.add('v251StableCritical');box.textContent='🔴 31분 이상 '+confirmed+'명 · ✓ 안전확인 완료';}else{box.classList.remove('hasCritical');box.textContent='✅ 31분 이상 또는 고립대원 확인대상 0명';}}
 function refresh(){ensureUI();renderTargets();applyRows();applyTeamSafetyButtons();summary();}
 function overlay(){let o=document.getElementById('dashboardDetailOverlay');if(!o){o=document.createElement('div');o.id='dashboardDetailOverlay';o.className='dashboardDetailOverlay';document.body.appendChild(o);}return o;}
@@ -8576,11 +8579,10 @@ function floorOptions(cur){const base=['옥상','상층부','직상층','화점�
 window.v251R9OpenTeam=function(team){
   const ms=(window.__dashboardInsideMembers||[]).filter(m=>teamName(m)===team);
   if(!ms.length)return;
-  const meta=(typeof v23LoadMeta==='function'?v23LoadMeta():{});
   const infos=ms.map(function(m){
-    const i=info(m), old=meta[String(m.memberId)]||{};
+    const i=info(m);
     return {
-      activityNo:Number(old.teamActivityNo||i.activityNo||m.entryCount||1)||1,
+      activityNo:Number(i.activityNo||m.activityNo||m.entryCount||1)||1,
       direction:old.entryDirection||i.direction||m.direction||'',
       floor:old.activityFloor||i.floor||m.floor||'',
       detail:old.detailLocation||i.detail||m.detail||''
@@ -8605,7 +8607,7 @@ window.v251R9OpenTeam=function(team){
     if(d)setTimeout(()=>o.classList.remove('show'),300);
   };
 };
-window.v251R9OpenMember=function(id,name){const m=find(id);if(!m)return;const i=info(m),meta=(typeof v23LoadMeta==='function'?v23LoadMeta():{}),old=meta[String(id)]||{},team=old.teamName||i.team||'',dir=old.entryDirection||i.direction||'',floor=old.activityFloor||i.floor||'',detail=old.detailLocation||i.detail||'',act=Number(old.teamActivityNo||i.activityNo||m.entryCount||1)||1,o=overlay();o.innerHTML='<div class="dashboardDetailSheet"><div class="sheetHeader"><b>🛡️ 대원정보변경</b><button type="button" id="r9MClose" class="sheetClose">×</button></div><div class="sheetMemberTitle">'+esc(getMemberDisplay(id,name||m.memberName||''))+'</div><div class="v251R9State">현재 상태: '+(m.isolated?'🚨 고립대원':'정상')+'</div><div class="locationEditForm"><label>조<input id="r9MTeam" value="'+attr(team)+'"></label><label>진입방면<select id="r9MDir">'+directionOptions(dir||'미지정')+'</select></label><label>활동층<select id="r9MFloor">'+floorOptions(floor||'미지정')+'</select></label><label>세부장소<input id="r9MDetail" value="'+attr(detail)+'" placeholder="예: 기계실 / 1203호 / 계단실"></label><div class="v251R9IsoBox"><label>고립대원 설정/해제</label><select id="r9MIso"><option value="KEEP">변경없음</option><option value="Y">🚨 고립대원 설정</option><option value="N">✅ 고립대원 해제</option></select></div></div><button type="button" id="r9MSave" class="sheetSave">대원정보변경 반영</button></div>';o.classList.add('show');document.getElementById('r9MClose').onclick=()=>o.classList.remove('show');document.getElementById('r9MSave').onclick=async function(){const d=await post('updateSafetyManagement',[id],{team:document.getElementById('r9MTeam').value,activityNo:String(act),direction:document.getElementById('r9MDir').value,floor:document.getElementById('r9MFloor').value,detail:document.getElementById('r9MDetail').value,isolationMode:document.getElementById('r9MIso').value},this);if(d)setTimeout(()=>o.classList.remove('show'),300);};};
+window.v251R9OpenMember=function(id,name){const m=find(id);if(!m)return;const i=info(m),team=i.team||m.team||'',dir=i.direction||m.direction||'',floor=i.floor||m.floor||'',detail=i.detail||m.detail||'',act=Number(i.activityNo||m.activityNo||m.entryCount||1)||1,o=overlay();o.innerHTML='<div class="dashboardDetailSheet"><div class="sheetHeader"><b>🛡️ 대원정보변경</b><button type="button" id="r9MClose" class="sheetClose">×</button></div><div class="sheetMemberTitle">'+esc(getMemberDisplay(id,name||m.memberName||''))+'</div><div class="v251R9State">현재 상태: '+(m.isolated?'🚨 고립대원':'정상')+'</div><div class="locationEditForm"><label>조<input id="r9MTeam" value="'+attr(team)+'"></label><label>진입방면<select id="r9MDir">'+directionOptions(dir||'미지정')+'</select></label><label>활동층<select id="r9MFloor">'+floorOptions(floor||'미지정')+'</select></label><label>세부장소<input id="r9MDetail" value="'+attr(detail)+'" placeholder="예: 기계실 / 1203호 / 계단실"></label><div class="v251R9IsoBox"><label>고립대원 설정/해제</label><select id="r9MIso"><option value="KEEP">변경없음</option><option value="Y">🚨 고립대원 설정</option><option value="N">✅ 고립대원 해제</option></select></div></div><button type="button" id="r9MSave" class="sheetSave">대원정보변경 반영</button></div>';o.classList.add('show');document.getElementById('r9MClose').onclick=()=>o.classList.remove('show');document.getElementById('r9MSave').onclick=async function(){const d=await post('updateSafetyManagement',[id],{team:document.getElementById('r9MTeam').value,activityNo:String(act),direction:document.getElementById('r9MDir').value,floor:document.getElementById('r9MFloor').value,detail:document.getElementById('r9MDetail').value,isolationMode:document.getElementById('r9MIso').value},this);if(d)setTimeout(()=>o.classList.remove('show'),300);};};
 const oldTeam=window.openDashboardTeamLocationEdit;window.openDashboardTeamLocationEdit=function(team){v251R9OpenTeam(team);};
 const oldDetail=window.openDashboardMemberDetail;
 function r16mDetailText(v){
