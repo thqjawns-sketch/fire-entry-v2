@@ -2002,7 +2002,7 @@ function v17ApplyStationName(){
   const status=document.getElementById("v17StationNameStatus");
   if(status)status.textContent=name?("현재 설정: "+name):"소방서명을 입력해 주세요.";
 }
-const V17_APP_VERSION = "R17M";
+const V17_APP_VERSION = "R17N";
 function v17RenderAppInfo(){
   const el=document.getElementById("v17AppVersionText");
   if(el) el.textContent=V17_APP_VERSION;
@@ -10027,6 +10027,167 @@ window.v251R9OpenMember=function(id,name){
       setTimeout(()=>{restoreOverview();fitPersonnelBoard();},50);
     }
   });
+})();
+</script>
+
+
+<style id="r17n-density-typography">
+/* R17N: 틀 크기는 유지하고 내부 공간을 글자에 최대한 배분 */
+
+/* 1) 조별현황 상단 요약배너 — 높이/틀 유지, 글자만 확대 */
+#teamBoardPageV29 .cmdTeamSectionHead,
+#teamBoardPageV29 .cmdTeamSummary,
+#teamBoardPageV29 .cmdTeamSummaryRow{
+  min-height:0!important;
+}
+#teamBoardPageV29 .cmdSectionTitle,
+#teamBoardPageV29 .cmdTeamTitle{
+  font-size:20px!important;
+  font-weight:950!important;
+  line-height:1.05!important;
+}
+#teamBoardPageV29 .cmdTeamStat,
+#teamBoardPageV29 .cmdSummaryBox{
+  padding-top:5px!important;
+  padding-bottom:5px!important;
+}
+#teamBoardPageV29 .cmdTeamStat .label,
+#teamBoardPageV29 .cmdSummaryBox .label{
+  font-size:11px!important;
+  line-height:1!important;
+}
+#teamBoardPageV29 .cmdTeamStat b,
+#teamBoardPageV29 .cmdSummaryBox b{
+  font-size:20px!important;
+  line-height:1!important;
+  font-weight:950!important;
+}
+#teamBoardPageV29 .cmdTeamActivitySummary,
+#teamBoardPageV29 .cmdActivitySummary{
+  font-size:14px!important;
+  font-weight:850!important;
+  line-height:1.15!important;
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+}
+
+/* 실제 현재 DOM에서 쓰는 요약칸도 같은 원칙 */
+#teamBoardPageV29 #cmdTeamOverview{
+  font-size:14px!important;
+  font-weight:850!important;
+}
+#teamBoardPageV29 #cmdTeamOverview b{font-size:16px!important;font-weight:950!important}
+
+/* 2) 조 대표부 — 정확한 2줄, 공간 활용 */
+#teamBoardPageV29 .r17lTeamRow{
+  grid-template-columns:205px minmax(0,1fr)!important;
+}
+#teamBoardPageV29 .r17lTeamHead{
+  grid-template-columns:auto 1fr!important;
+  grid-template-rows:1fr 1fr!important;
+  padding:4px 8px!important;
+  column-gap:7px!important;
+  row-gap:1px!important;
+}
+#teamBoardPageV29 .r17lTeamName{
+  font-size:16px!important;
+  font-weight:950!important;
+  padding:6px 10px!important;
+}
+#teamBoardPageV29 .r17lLocBadge{
+  font-size:11px!important;
+  font-weight:950!important;
+  padding:3px 6px!important;
+}
+#teamBoardPageV29 .r17lDetail{
+  font-size:11px!important;
+  line-height:1.05!important;
+}
+
+/* 3) 대원카드 — 원본 기능/상태/점멸은 그대로.
+      숨긴 두 줄의 빈 공간까지 제거해서 '실제 2줄 높이'로 압축 */
+#teamBoardPageV29 .r17lMemberSlot .insideCompactLocation,
+#teamBoardPageV29 .r17lMemberSlot .v251EntryInfo{
+  display:none!important;
+  height:0!important;
+  min-height:0!important;
+  margin:0!important;
+  padding:0!important;
+}
+#teamBoardPageV29 .r17lMemberSlot .v16PCommonMemberCard{
+  padding:6px 9px!important;
+  min-height:0!important;
+  height:auto!important;
+  display:flex!important;
+  flex-direction:column!important;
+  justify-content:center!important;
+  gap:4px!important;
+}
+#teamBoardPageV29 .r17lMemberSlot .v16PIdentityLine{
+  min-height:0!important;
+  margin:0!important;
+  line-height:1.08!important;
+  align-items:baseline!important;
+}
+#teamBoardPageV29 .r17lMemberSlot .memberLine{
+  font-size:clamp(12px,.83vw,16px)!important;
+  line-height:1.08!important;
+  font-weight:950!important;
+}
+#teamBoardPageV29 .r17lMemberSlot .compactId{
+  font-size:clamp(9px,.60vw,11px)!important;
+  line-height:1!important;
+}
+#teamBoardPageV29 .r17lMemberSlot .insideCompactBottom{
+  min-height:0!important;
+  margin:0!important;
+  padding:0!important;
+  line-height:1.05!important;
+  gap:6px!important;
+}
+#teamBoardPageV29 .r17lMemberSlot .insideElapsed{
+  font-size:clamp(11px,.72vw,14px)!important;
+  line-height:1.05!important;
+  font-weight:950!important;
+}
+#teamBoardPageV29 .r17lMemberSlot .insideStatus{
+  font-size:clamp(10px,.66vw,13px)!important;
+  line-height:1.05!important;
+  font-weight:850!important;
+}
+
+/* 조 사이 세로 여백만 줄여 6개 조 기본크기를 한 화면에 우선 수용 */
+#teamBoardPageV29 #cmdTeamTable{
+  gap:4px!important;
+  padding-top:5px!important;
+  padding-bottom:5px!important;
+}
+#teamBoardPageV29 .r17lTeamRow{
+  padding:4px!important;
+  gap:6px!important;
+}
+
+/* 축소단계에서도 글자 가독성을 최대한 보존 */
+#teamBoardPageV29.r17mCompact1 .r17lMemberSlot{font-size:100%!important}
+#teamBoardPageV29.r17mCompact1 .r17lMemberSlot .v16PCommonMemberCard{padding:5px 8px!important}
+#teamBoardPageV29.r17mCompact2 .r17lMemberSlot{font-size:97%!important}
+#teamBoardPageV29.r17mCompact3 .r17lMemberSlot{font-size:93%!important}
+</style>
+
+<script id="r17n-fit-after-fonts">
+(function(){
+  /* R17M의 화면맞춤 로직은 유지하되,
+     새 2줄 카드 높이가 적용된 뒤 다시 한 번 계산 */
+  const previousDraw=window.drawTeamBoardV29;
+  window.drawTeamBoardV29=function(){
+    if(typeof previousDraw==='function')previousDraw.apply(this,arguments);
+    requestAnimationFrame(()=>{
+      requestAnimationFrame(()=>{
+        if(typeof fitPersonnelBoard==='function') fitPersonnelBoard();
+      });
+    });
+  };
 })();
 </script>
 
