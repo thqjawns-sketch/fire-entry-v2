@@ -1796,6 +1796,8 @@ QR을 스캔하면 해당 대원이 선택됩니다.
 현장 활동 현황
 ===================================================== -->
 <div id="dashboardPage">
+  <!-- R17F: 현장명 상태 호환 요소. 상단 배너는 삭제 상태 유지 -->
+  <span id="dashboardSiteName" hidden></span>
 
 
 <div class="stationLogo v17StationBanner">
@@ -1994,7 +1996,6 @@ QR을 스캔하면 해당 대원이 선택됩니다.
 
 
 <!-- V2.49L5 스크롤 이동 보조 버튼 -->
-<button type="button" id="v249DashboardFloatBack" class="v249FloatNav v249FloatRight" onclick="closeDashboard()" aria-label="안전관리 화면으로 돌아가기">⬅ 안전관리</button>
 <button type="button" id="v249ExitedFloatBack" class="v249FloatNav v249FloatRight" onclick="closeExitedPage()" aria-label="현장 활동 현황으로 돌아가기">⬅ 현장현황</button>
 
 <script>
@@ -2011,7 +2012,7 @@ function v17ApplyStationName(){
   const status=document.getElementById("v17StationNameStatus");
   if(status)status.textContent=name?("현재 설정: "+name):"소방서명을 입력해 주세요.";
 }
-const V17_APP_VERSION = "R17E";
+const V17_APP_VERSION = "R17F";
 function v17RenderAppInfo(){
   const el=document.getElementById("v17AppVersionText");
   if(el) el.textContent=V17_APP_VERSION;
@@ -9145,7 +9146,7 @@ setInterval(function(){const p=document.getElementById('teamBoardPageV29');if(p&
 </style>
 
 <style id="r17eCleanUi">
-/* R17E: 현장 안전관리 상단/대원 상세 정리 */
+/* R17F: 현장 안전관리 상단/대원 상세 정리 */
 #dashboardPage>.dashboardHeader{display:none!important}
 #dashboardPage>.v17StationBanner{position:relative!important;padding-right:66px!important}
 #dashboardPage .r17eStationRefresh{position:absolute;right:16px;top:50%;transform:translateY(-50%);width:40px;height:40px;min-width:40px;padding:0;border:1px solid #d8e1ea;border-radius:12px;background:#f7f9fb;color:#31506f;font-size:23px;font-weight:900;line-height:1;box-shadow:0 2px 8px rgba(15,23,42,.07);cursor:pointer;display:flex;align-items:center;justify-content:center}
