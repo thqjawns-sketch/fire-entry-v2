@@ -1847,12 +1847,12 @@ QR을 스캔하면 해당 대원이 선택됩니다.
 </div>
 
 <div class="staySummaryRow">
-<span>🔴 26~30분</span>
+<span>🔴 26~29분</span>
 <span id="stayRedCount" class="red">0명</span>
 </div>
 
 <div class="staySummaryRow">
-<span>🔴 31분 이상</span>
+<span>🔴 30분 이상</span>
 <span id="stayCriticalCount" class="red">0명</span>
 </div>
 
@@ -1866,7 +1866,7 @@ QR을 스캔하면 해당 대원이 선택됩니다.
   id="criticalSummary"
   class="criticalSummary"
 >
-✅ 31분 이상 즉시 확인 대상 0명
+✅ 30분 이상 즉시 확인 대상 0명
 </div>
 <div class="dashboardNavPair">
   <button type="button" class="dashboardNavBack" onclick="closeDashboard()">← 진·출입 관리</button>
@@ -1909,46 +1909,41 @@ QR을 스캔하면 해당 대원이 선택됩니다.
 
 
 <!-- 현장활동 종합현황 : 지휘관용 대형 모니터 상황판 -->
-<div id="teamBoardPageV29">
-  <div class="cmdBoardShell">
-    <header class="cmdBoardHeader">
-      <div class="cmdBoardHeadLeft">
-        <div class="cmdBoardTitle">📊 현장활동 종합현황</div>
-        <div id="v29BoardSite" class="cmdBoardSite">-</div>
+<div id="teamBoardPageV29" class="r17pBoard">
+  <header class="r17pHeader">
+    <div class="r17pHeadLeft">
+      <div class="r17pTitle">📊 현장활동 종합현황</div>
+      <div id="v29BoardSite" class="r17pSite">-</div>
+    </div>
+    <div class="r17pStation">
+      <img id="r17pStationLogo" src="" alt="소방 공통 로고">
+      <span class="stationNameDynamic" data-station-name>소방서명 미설정</span>
+    </div>
+    <div class="r17pHeadActions">
+      <button type="button" id="v29BoardRefreshBtn" class="r17pRefresh" onclick="refreshTeamBoardV29()">
+        <b class="cmdRefreshMain">↻ 새로고침</b>
+        <small>10초 자동 · <span id="v29BoardRefreshTime">--:--:--</span></small>
+      </button>
+      <button type="button" class="r17pBack" onclick="closeTeamBoardV29()">← 현장 활동대원</button>
+    </div>
+  </header>
+
+  <main class="r17pMain">
+    <section class="r17pSection r17pPeopleSection">
+      <div class="r17pSectionTitle"><span>1</span> 인원현황 <small>2페이지 실시간 상태 연동</small></div>
+      <div id="cmdPeopleStats" class="r17pPeopleStats"></div>
+    </section>
+
+    <section class="r17pSection r17pTeamSection">
+      <div class="r17pTeamTop">
+        <div class="r17pSectionTitle"><span>2</span> 조별현황</div>
+        <div id="cmdTeamOverview" class="r17pTeamOverview"></div>
       </div>
-      <div class="cmdBoardBrand">
-  <div class="r17iStation">
-    <img id="r17iStationLogo" src="" alt="소방 공통 로고">
-    <span class="stationNameDynamic" data-station-name>소방서명 미설정</span>
-  </div>
-</div>
-      <div class="cmdBoardHeadActions">
-        <button type="button" id="v29BoardRefreshBtn" class="cmdRefreshMini" onclick="refreshTeamBoardV29()">
-          <span class="cmdRefreshMain">↻ 새로고침</span>
-          <span>10초 자동</span>
-          <span id="v29BoardRefreshTime">--:--:--</span>
-        </button>
-        <button type="button" class="cmdBoardBack" onclick="closeTeamBoardV29()">← 현장 활동대원</button>
-      </div>
-    </header>
+      <div id="cmdTeamTable" class="r17pTeamTable"></div>
+    </section>
+  </main>
 
-    <main class="cmdBoardMain">
-      <section class="cmdSection cmdPeopleSection">
-        <div class="cmdSectionTitle"><span class="cmdSectionNo">1</span> 인원현황 <span class="cmdSectionHint">실시간 체류상태</span></div>
-        <div id="cmdPeopleStats" class="cmdPeopleStats"></div>
-        <div id="cmdAlertBar" class="cmdAlertBar ok">✓ 현재 즉시확인 대상 없음</div>
-      </section>
-
-      <section class="cmdSection cmdTeamSection">
-        <div class="cmdSectionTitleRow">
-          <div class="cmdSectionTitle"><span class="cmdSectionNo">2</span> 조별현황</div>
-          <div id="cmdTeamOverview" class="cmdTeamOverview"></div>
-        </div>
-        <div id="cmdTeamTable" class="cmdTeamTable"></div>
-      </section>
-
-    </main>
-  </div>
+  <div id="cmdAlertBar" class="r17pAlert" aria-live="assertive"></div>
   <div id="v29BoardDetail" style="display:none"></div>
   <div id="v33BoardStats" style="display:none"></div>
 </div>
@@ -2002,7 +1997,7 @@ function v17ApplyStationName(){
   const status=document.getElementById("v17StationNameStatus");
   if(status)status.textContent=name?("현재 설정: "+name):"소방서명을 입력해 주세요.";
 }
-const V17_APP_VERSION = "R17N";
+const V17_APP_VERSION = "R17Q";
 function v17RenderAppInfo(){
   const el=document.getElementById("v17AppVersionText");
   if(el) el.textContent=V17_APP_VERSION;
@@ -2839,7 +2834,7 @@ async function v249L31OpenReport(siteIdOverride,siteNameOverride){
       "총 투입 <b>"+Number(d.totalEntries||0)+"회</b> · "+
       "현재 내부 <b>"+Number(d.insideCount||0)+"명</b> · "+
       "최장 체류 <b>"+Number(d.maxMinutes||0)+"분</b> · "+
-      "31분 이상 <b>"+Number(d.over31Count||0)+"건</b></p>"+
+      "30분 이상 <b>"+Number(d.over31Count||0)+"건</b></p>"+
 
       "<h3>조별 활동현황</h3>"+
       "<table><thead><tr>"+
@@ -5375,7 +5370,7 @@ function getStayStatus(
 
 
   if(
-    minutes <= 30
+    minutes <30
   ){
 
     return{
@@ -6855,7 +6850,7 @@ async function loadDashboard(
           orange++;
 
         }else if(
-          minutes <= 30
+          minutes <30
         ){
 
           red++;
@@ -7004,7 +6999,7 @@ async function loadDashboard(
 
 
 /* =====================================================
-31분 이상
+30분 이상
 ===================================================== */
 
 function updateCriticalSummary(
@@ -7027,7 +7022,7 @@ function updateCriticalSummary(
 
 
     box.innerText =
-      "⚠️ 31분 이상 즉시 확인 대상 " +
+      "⚠️ 30분 이상 즉시 확인 대상 " +
       count +
       "명";
 
@@ -7039,7 +7034,7 @@ function updateCriticalSummary(
 
 
     box.innerText =
-      "✅ 31분 이상 즉시 확인 대상 0명";
+      "✅ 30분 이상 즉시 확인 대상 0명";
 
   }
 
@@ -7478,7 +7473,7 @@ function v16NMemberCardHtml(member){
     '</div>'+
     '<div class="insideCompactBottom v251R16EStatusRow">'+
       '<span class="v251EntryInfo">진입 '+escapeHtml(member.entryTime)+' · '+Number(member.entryCount)+'회차</span>'+
-      '<span class="insideElapsed" data-member-id="'+escapeAttr(member.memberId)+'">'+(mins>=31?'🔴 ':'')+mins+'분 경과</span>'+
+      '<span class="insideElapsed" data-member-id="'+escapeAttr(member.memberId)+'">'+(mins>=30?'🔴 ':'')+mins+'분 경과</span>'+
       '<span class="insideStatus '+stateClass+'">'+stay.icon+' '+stay.text+'</span>'+
     '</div>'+
   '</div>';
@@ -8454,7 +8449,7 @@ function teamName(m){try{return v19TeamInfo(m).team||m.team||'미지정';}catch(
 function info(m){try{return v19TeamInfo(m);}catch(e){return {team:m.team||'',activityNo:m.activityNo||m.entryCount||1,direction:m.direction||'',floor:m.floor||'',detail:m.detail||''};}}
 function find(id){return (window.__dashboardInsideMembers||[]).find(m=>String(m.memberId)===String(id));}
 function liveMinutes(m){const server=Number(m&&m.currentMinutes)||0,t=parseTime(m&&m.entryTime);if(!Number.isFinite(t))return server;return Math.max(server,Math.floor(Math.max(0,Date.now()-t)/60000));}
-function state(m){const mins=liveMinutes(m);if(m&&m.isolated)return {icon:'🚨',text:'고립대원',due:true,isolated:true,confirmed:false,mins:mins};if(mins<=30)return {icon:mins<=20?'🟢':mins<=25?'🟠':'🔴',text:mins<=20?'정상':mins<=25?'주의':'경고',due:false,confirmed:false,mins:mins};const t=parseTime(m&&m.safetyCheckedAt);if(Number.isFinite(t)){const elapsed=Math.max(0,(Date.now()-t)/60000);if(elapsed<RECHECK){const remain=Math.max(1,Math.ceil(RECHECK-elapsed));return {icon:'✓',text:'안전확인 '+hm(m.safetyCheckedAt)+' · 재확인 '+remain+'분 후',due:false,confirmed:true,remain:remain,mins:mins};}return {icon:'🚨',text:'재확인 필요',due:true,recheck:true,confirmed:false,mins:mins};}return {icon:'🚨',text:'즉시확인',due:true,confirmed:false,mins:mins};}
+function state(m){const mins=liveMinutes(m);if(m&&m.isolated)return {icon:'🚨',text:'고립대원',due:true,isolated:true,confirmed:false,mins:mins};if(mins<30)return {icon:mins<=20?'🟢':mins<=25?'🟠':'🔴',text:mins<=20?'정상':mins<=25?'주의':'경고',due:false,confirmed:false,mins:mins};const t=parseTime(m&&m.safetyCheckedAt);if(Number.isFinite(t)){const elapsed=Math.max(0,(Date.now()-t)/60000);if(elapsed<RECHECK){const remain=Math.max(1,Math.ceil(RECHECK-elapsed));return {icon:'✓',text:'안전확인 '+hm(m.safetyCheckedAt)+' · 재확인 '+remain+'분 후',due:false,confirmed:true,remain:remain,mins:mins};}return {icon:'🚨',text:'재확인 필요',due:true,recheck:true,confirmed:false,mins:mins};}return {icon:'🚨',text:'즉시확인',due:true,confirmed:false,mins:mins};}
 window.v251GetMemberState=state;
 
 /* R16R: 서버 변경 성공 직후 1·2·3페이지가 같은 활동대원 상태를 즉시 공유 */
@@ -8561,8 +8556,8 @@ function recentSafety(m){const t=parseTime(m&&m.safetyCheckedAt);return Number.i
 function applyTeamSafetyButtons(){document.querySelectorAll('#dashboardInside .teamDividerV19').forEach(div=>{const team=div.dataset.team||'';const btn=div.querySelector('.dashboardTeamSafetyBtn');if(!btn)return;const ms=(window.__dashboardInsideMembers||[]).filter(m=>teamName(m)===team);const done=ms.length>0&&ms.every(recentSafety);btn.classList.toggle('isConfirmed',done);if(!btn.disabled){if(done){const remains=ms.map(m=>state(m).remain).filter(Number.isFinite);const r=remains.length?Math.min(...remains):10;btn.textContent='✓ 안전확인 · 재확인 '+r+'분';}else btn.textContent='🛡 조 안전확인';}});}
 window.v251TeamSafety=async function(team,btn){const ms=(window.__dashboardInsideMembers||[]).filter(m=>teamName(m)===team);if(!ms.length)return;const old=btn?btn.textContent:'🛡 조 안전확인';if(btn){btn.disabled=true;btn.textContent='⏳ 처리중...';}const d=await post('setSafetyCheck',ms.map(m=>m.memberId),{},null);if(d){const now=new Date().toISOString();ms.forEach(m=>{m.safetyCheckedAt=(d.succeeded||[]).find(x=>String(x.id)===String(m.memberId))?.checkedAt||now;});if(btn){btn.classList.add('isConfirmed');btn.textContent='✓ 안전확인';}}else if(btn){btn.textContent=old;}if(btn)btn.disabled=false;applyTeamSafetyButtons();};
 function renderTargets(){const box=document.getElementById('v251SafetyTargets');if(box)box.remove();}
-function applyRows(){['dashboardInside','insideList'].forEach(rootId=>{const root=document.getElementById(rootId);if(!root)return;const source=(window.__dashboardInsideMembers||[]);root.querySelectorAll('.memberRow').forEach(row=>{const idEl=row.querySelector('.compactId');if(!idEl)return;const id=idEl.textContent.trim();const m=source.find(x=>String(x.memberId)===String(id));if(!m)return;const s=state(m);row.classList.remove('v251NeedsCheck','v251SafetyConfirmed','v251IsolationBlink');if(s.isolated)row.classList.add('v251IsolationBlink');else if(s.due)row.classList.add('v251NeedsCheck');else if(s.confirmed)row.classList.add('v251SafetyConfirmed');const elapsed=row.querySelector('.insideElapsed');if(elapsed)elapsed.textContent=(s.mins>=31?'🔴 ':'')+s.mins+'분 경과';const st=row.querySelector('.insideStatus');if(st){st.classList.remove('v251NeedsCheck','v251SafetyConfirmed','v251IsolationBlink');if(s.isolated)st.classList.add('v251IsolationBlink');else if(s.due)st.classList.add('v251NeedsCheck');else if(s.confirmed)st.classList.add('v251SafetyConfirmed');st.textContent=s.icon+' '+s.text;}});});}
-function summary(){const box=document.getElementById('criticalSummary');if(!box)return;const targets=(window.__dashboardInsideMembers||[]).filter(m=>m.isolated||liveMinutes(m)>=31),due=targets.filter(m=>state(m).due).length,confirmed=targets.filter(m=>state(m).confirmed).length;box.classList.remove('v251StableCritical');if(due){box.classList.add('hasCritical');box.textContent='⚠️ 31분 이상 또는 고립대원 확인대상 '+due+'명';}else if(confirmed){box.classList.remove('hasCritical');box.classList.add('v251StableCritical');box.textContent='🔴 31분 이상 '+confirmed+'명 · ✓ 안전확인 완료';}else{box.classList.remove('hasCritical');box.textContent='✅ 31분 이상 또는 고립대원 확인대상 0명';}}
+function applyRows(){['dashboardInside','insideList'].forEach(rootId=>{const root=document.getElementById(rootId);if(!root)return;const source=(window.__dashboardInsideMembers||[]);root.querySelectorAll('.memberRow').forEach(row=>{const idEl=row.querySelector('.compactId');if(!idEl)return;const id=idEl.textContent.trim();const m=source.find(x=>String(x.memberId)===String(id));if(!m)return;const s=state(m);row.classList.remove('v251NeedsCheck','v251SafetyConfirmed','v251IsolationBlink');if(s.isolated)row.classList.add('v251IsolationBlink');else if(s.due)row.classList.add('v251NeedsCheck');else if(s.confirmed)row.classList.add('v251SafetyConfirmed');const elapsed=row.querySelector('.insideElapsed');if(elapsed)elapsed.textContent=(s.mins>=30?'🔴 ':'')+s.mins+'분 경과';const st=row.querySelector('.insideStatus');if(st){st.classList.remove('v251NeedsCheck','v251SafetyConfirmed','v251IsolationBlink');if(s.isolated)st.classList.add('v251IsolationBlink');else if(s.due)st.classList.add('v251NeedsCheck');else if(s.confirmed)st.classList.add('v251SafetyConfirmed');st.textContent=s.icon+' '+s.text;}});});}
+function summary(){const box=document.getElementById('criticalSummary');if(!box)return;const targets=(window.__dashboardInsideMembers||[]).filter(m=>m.isolated||liveMinutes(m)>=31),due=targets.filter(m=>state(m).due).length,confirmed=targets.filter(m=>state(m).confirmed).length;box.classList.remove('v251StableCritical');if(due){box.classList.add('hasCritical');box.textContent='⚠️ 30분 이상 또는 고립대원 확인대상 '+due+'명';}else if(confirmed){box.classList.remove('hasCritical');box.classList.add('v251StableCritical');box.textContent='🔴 30분 이상 '+confirmed+'명 · ✓ 안전확인 완료';}else{box.classList.remove('hasCritical');box.textContent='✅ 30분 이상 또는 고립대원 확인대상 0명';}}
 function refresh(){ensureUI();renderTargets();applyRows();applyTeamSafetyButtons();summary();}
 function overlay(){let o=document.getElementById('dashboardDetailOverlay');if(!o){o=document.createElement('div');o.id='dashboardDetailOverlay';o.className='dashboardDetailOverlay';document.body.appendChild(o);}return o;}
 function directionOptions(cur){const base=['A방면','B방면','C방면','D방면'];const vals=(cur&&!base.includes(cur)?[cur]:[]).concat(base);return vals.map(v=>'<option value="'+attr(v)+'" '+(v===cur?'selected':'')+'>'+esc(v)+'</option>').join('');}
@@ -8728,13 +8723,13 @@ function v29UpdateLiveBoardMetrics(){
   const list=window.__dashboardInsideMembers||[], dash=window.__v29Dashboard||{}, teams=v29GroupTeams(list);
   let g=0,o=0,r=0,c=0; const urgent=[];
   list.forEach(m=>{
-    const min=v29MemberMinutes(m); if(min<=20)g++; else if(min<=25)o++; else if(min<=30)r++; else c++;
-    if(min>30 || m.isolated) urgent.push({m,min});
+    const min=v29MemberMinutes(m); if(min<=20)g++; else if(min<=25)o++; else if(min<30)r++; else c++;
+    if(min>=30 || m.isolated) urgent.push({m,min});
   });
   const uniqueUrgent=[...new Map(urgent.map(x=>[String(x.m.memberId),x])).values()];
   const stats=document.getElementById('cmdPeopleStats');
   if(stats)stats.innerHTML=[
-    ['현장 참여',Number(dash.uniqueMemberCount||list.length),''],['현재 내부',list.length,'inside'],['0~20분',g,'green'],['21~25분',o,'orange'],['26~30분',r,'red'],['31분 이상',c,'critical'],['즉시확인',uniqueUrgent.length,'critical'],['철수완료',Number(dash.exitedCount||0),'exited']
+    ['현장 참여',Number(dash.uniqueMemberCount||list.length),''],['현재 내부',list.length,'inside'],['0~20분',g,'green'],['21~25분',o,'orange'],['26~29분',r,'red'],['30분 이상',c,'critical'],['즉시확인',uniqueUrgent.length,'critical'],['철수완료',Number(dash.exitedCount||0),'exited']
   ].map(x=>'<div class="cmdStat '+x[2]+'"><div class="cmdStatLabel">'+x[0]+'</div><div class="cmdStatValue">'+x[1]+'명</div></div>').join('');
   const alert=document.getElementById('cmdAlertBar');
   if(alert){
@@ -8843,7 +8838,7 @@ setInterval(function(){const p=document.getElementById('teamBoardPageV29');if(p&
   const RECHECK_MIN=10;
   function parseT(v){if(!v)return NaN;return Date.parse(String(v).includes('T')?String(v):String(v).replace(' ','T'));}
   function liveMin(m){const server=Number(m&&m.currentMinutes)||0,t=parseT(m&&m.entryTime);return Number.isFinite(t)?Math.max(server,Math.floor(Math.max(0,Date.now()-t)/60000)):server;}
-  function safeState(m){const mins=liveMin(m);if(m&&m.isolated)return {due:true,isolated:true,confirmed:false,text:'🚨 고립대원',mins};if(mins<=30)return {due:false,confirmed:false,text:(mins<=20?'🟢 정상':mins<=25?'🟠 주의':'🔴 경고'),mins};const t=parseT(m&&m.safetyCheckedAt);if(Number.isFinite(t)){const e=(Date.now()-t)/60000;if(e<RECHECK_MIN){const r=Math.max(1,Math.ceil(RECHECK_MIN-e));return {due:false,confirmed:true,text:'✓ 안전확인 · 재확인 '+r+'분',remain:r,mins};}return {due:true,confirmed:false,text:'🚨 재확인 필요',mins};}return {due:true,confirmed:false,text:'🚨 즉시확인',mins};}
+  function safeState(m){const mins=liveMin(m);if(m&&m.isolated)return {due:true,isolated:true,confirmed:false,text:'🚨 고립대원',mins};if(mins<30)return {due:false,confirmed:false,text:(mins<=20?'🟢 정상':mins<=25?'🟠 주의':'🔴 경고'),mins};const t=parseT(m&&m.safetyCheckedAt);if(Number.isFinite(t)){const e=(Date.now()-t)/60000;if(e<RECHECK_MIN){const r=Math.max(1,Math.ceil(RECHECK_MIN-e));return {due:false,confirmed:true,text:'✓ 안전확인 · 재확인 '+r+'분',remain:r,mins};}return {due:true,confirmed:false,text:'🚨 재확인 필요',mins};}return {due:true,confirmed:false,text:'🚨 즉시확인',mins};}
   function teamInfo(m){try{return v19TeamInfo(m)}catch(e){return {team:m.team||'미지정',activityNo:m.activityNo||m.entryCount||1,direction:m.direction||'',floor:m.floor||'',detail:m.detail||''}}}
   function cleanName(m){return v29CleanName(m)||m.memberName||'-'}
   function dept(m){const d=typeof getMemberDisplay==='function'?String(getMemberDisplay(m.memberId,m.memberName)||''):'';const a=d.split(' / ');return a.length>=3?a.slice(2).join(' / '):'';}
@@ -8868,7 +8863,7 @@ setInterval(function(){const p=document.getElementById('teamBoardPageV29');if(p&
     summary.innerHTML='<div class="v33PanelTitle">선택층 활동요약</div>'+(teams.length?teams.map(t=>{const ms=groups[t], warn=ms.filter(m=>safeState(m).due).length;return '<div class="cmdSelectedTeamBox '+css(t)+'"><div class="cmdSelectedTeamTop"><span>'+esc(t)+' · '+ms.length+'명</span>'+(warn?'<span class="cmdFloorWarning">⚠ '+warn+'명</span>':'<span>정상</span>')+'</div><div class="cmdSelectedNames">'+ms.map(cleanName).map(esc).join(' · ')+'</div><div class="cmdSelectedMeta">'+esc(memberDirection(ms[0]))+' · '+esc(memberDetail(ms[0]))+'</div></div>';}).join(''):'<div class="cmdNoMembers">현재 선택한 층에 활동대원이 없습니다.</div>');
     let html='<div class="cmdFloorMemberHead"><span>'+(v33SelectedFloor==='화점층'?'🔥 ':'')+esc(v33SelectedFloor)+' 현장 활동대원 '+fm.length+'명</span><span style="font-size:12px;opacity:.85">2페이지와 동일 상태기준</span></div>';
     if(!fm.length){area.innerHTML=html+'<div class="cmdNoMembers">현재 이 층에서 활동 중인 대원이 없습니다.</div>';return;}
-    teams.forEach(t=>{const ms=groups[t], first=ms[0];html+='<div class="cmdMonitorTeamGroup"><div class="cmdMonitorTeamTitle '+css(t)+'"><span>'+esc(t)+' · '+memberAct(first)+'차 · '+ms.length+'명</span><span class="loc">'+esc(memberDirection(first))+' · '+esc(memberDetail(first))+'</span></div><div class="cmdMonitorMemberGrid">';ms.forEach(m=>{const st=safeState(m), cls=st.isolated?'isolated':st.due?'due':st.confirmed?'confirmed':'';html+='<div class="cmdMonitorMemberCard '+css(t)+' '+cls+'"><div><span class="cmdMonitorMemberName">'+esc(cleanName(m))+'</span>'+(dept(m)?'<span class="cmdMonitorMemberDept">'+esc(dept(m))+'</span>':'')+'</div><div class="cmdMonitorMemberLoc">'+esc(memberTeam(m))+' · '+memberAct(m)+'차 · '+esc(memberFloor(m))+' · '+esc(memberDirection(m))+' · '+esc(memberDetail(m))+'</div><div class="cmdMonitorMemberBottom"><span class="cmdMonitorPill">진입 '+esc(m.entryTime||'-')+'</span><span class="cmdMonitorPill elapsed '+(st.mins>=31?'warn':'')+'">'+(st.mins>=31?'🔴 ':'')+st.mins+'분 경과</span><span class="cmdMonitorPill safety '+(st.due?'due':'')+'">'+esc(st.text)+'</span></div></div>';});html+='</div></div>';});area.innerHTML=html;
+    teams.forEach(t=>{const ms=groups[t], first=ms[0];html+='<div class="cmdMonitorTeamGroup"><div class="cmdMonitorTeamTitle '+css(t)+'"><span>'+esc(t)+' · '+memberAct(first)+'차 · '+ms.length+'명</span><span class="loc">'+esc(memberDirection(first))+' · '+esc(memberDetail(first))+'</span></div><div class="cmdMonitorMemberGrid">';ms.forEach(m=>{const st=safeState(m), cls=st.isolated?'isolated':st.due?'due':st.confirmed?'confirmed':'';html+='<div class="cmdMonitorMemberCard '+css(t)+' '+cls+'"><div><span class="cmdMonitorMemberName">'+esc(cleanName(m))+'</span>'+(dept(m)?'<span class="cmdMonitorMemberDept">'+esc(dept(m))+'</span>':'')+'</div><div class="cmdMonitorMemberLoc">'+esc(memberTeam(m))+' · '+memberAct(m)+'차 · '+esc(memberFloor(m))+' · '+esc(memberDirection(m))+' · '+esc(memberDetail(m))+'</div><div class="cmdMonitorMemberBottom"><span class="cmdMonitorPill">진입 '+esc(m.entryTime||'-')+'</span><span class="cmdMonitorPill elapsed '+(st.mins>=30?'warn':'')+'">'+(st.mins>=30?'🔴 ':'')+st.mins+'분 경과</span><span class="cmdMonitorPill safety '+(st.due?'due':'')+'">'+esc(st.text)+'</span></div></div>';});html+='</div></div>';});area.innerHTML=html;
   };
   const oldDraw=window.drawTeamBoardV29;
   window.drawTeamBoardV29=function(){
@@ -8893,162 +8888,6 @@ setInterval(function(){const p=document.getElementById('teamBoardPageV29');if(p&
 
 
 <!-- R16H : 안전판정 통합 + 조별정보 강화 + 층별현황 2영역 재설계 -->
-<style id="r16h-command-board-style">
-/* 1. 인원현황: 26~30분/31분 이상은 같은 체류경고 계열, 즉시확인만 행동경고 */
-#teamBoardPageV29 .cmdStat.red,#teamBoardPageV29 .cmdStat.over31{background:#fff6f5;border-color:#efb0aa}
-#teamBoardPageV29 .cmdStat.red .cmdStatValue,#teamBoardPageV29 .cmdStat.over31 .cmdStatValue{color:#c83a32}
-#teamBoardPageV29 .cmdStat.immediate{background:#fff0ef;border:2px solid #dc4037}
-#teamBoardPageV29 .cmdStat.immediate .cmdStatLabel,#teamBoardPageV29 .cmdStat.immediate .cmdStatValue{color:#b42318}
-#teamBoardPageV29 .cmdStat.immediate.active{animation:r16hAlertPulse 1.35s ease-in-out infinite}
-#teamBoardPageV29 .cmdStat.zero:not(.inside):not(.exited){background:#f8fafc;border-color:#dce4ec}
-#teamBoardPageV29 .cmdStat.zero .cmdStatValue{color:#718294}
-#teamBoardPageV29 .cmdAlertBar.ok{display:none!important}
-#teamBoardPageV29 .cmdAlertBar.danger{display:block!important;animation:r16hAlertPulse 1.35s ease-in-out infinite}
-@keyframes r16hAlertPulse{0%,100%{box-shadow:0 0 0 0 rgba(211,40,32,.04)}50%{box-shadow:0 0 0 4px rgba(211,40,32,.15);background:#ffe5e2}}
-
-/* 2. 조별현황: 넓은 화면을 대원 신원정보에 사용 */
-#teamBoardPageV29 .cmdTeamHead,#teamBoardPageV29 .cmdTeamRow{grid-template-columns:78px 58px 96px 118px 88px minmax(520px,1fr) 96px}
-#teamBoardPageV29 .cmdTeamRow{min-height:58px;padding-top:5px;padding-bottom:5px}
-#teamBoardPageV29 .cmdTeamPeople{display:flex;align-items:center;gap:10px;white-space:normal!important;overflow:visible!important}
-#teamBoardPageV29 .cmdTeamPeopleCount{flex:0 0 auto;font-size:14px;font-weight:950;color:#172b3d}
-#teamBoardPageV29 .cmdTeamMemberList{display:flex;align-items:center;flex-wrap:wrap;column-gap:0;row-gap:4px;min-width:0}
-#teamBoardPageV29 .cmdTeamMemberItem{display:inline-flex;align-items:baseline;gap:5px;padding:0 11px;border-left:1px solid #cfd9e2;line-height:1.35}
-#teamBoardPageV29 .cmdTeamMemberItem:first-child{border-left:0;padding-left:0}
-#teamBoardPageV29 .cmdTeamMemberName{font-size:13px;font-weight:950;color:#18344d}
-#teamBoardPageV29 .cmdTeamMemberMeta{font-size:11px;font-weight:800;color:#6a7d8f}
-
-/* 3. 층별현황: [층선택+선택층 상세] + [대형 전술배치] 두 영역 */
-#teamBoardPageV29 .cmdLocationGrid{grid-template-columns:minmax(500px,34%) minmax(760px,66%)!important;gap:14px!important;align-items:stretch}
-#teamBoardPageV29 #v33SummaryPanel{display:none!important}
-#teamBoardPageV29 .cmdFloorPanel{min-height:360px!important;padding:13px!important;background:#f8fafc}
-#teamBoardPageV29 .r16hFloorButtons{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-bottom:12px}
-#teamBoardPageV29 .cmdFloorPanel .r16hFloorButtons .v33FloorBtn{margin:0!important;min-height:42px!important;font-size:12px!important}
-#teamBoardPageV29 .r16hSelectedFloor{border-top:1px solid #dbe4ec;padding-top:11px}
-#teamBoardPageV29 .r16hSelectedTitle{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;font-size:17px;font-weight:950;color:#173d67}
-#teamBoardPageV29 .r16hSelectedTitle .warn{color:#b42318;animation:r16hTextPulse 1.35s ease-in-out infinite}
-@keyframes r16hTextPulse{50%{opacity:.45}}
-#teamBoardPageV29 .r16hFloorTeam{--team:#64748b;border-left:6px solid var(--team);background:#fff;border-radius:9px;padding:9px 11px;margin-top:7px;box-shadow:0 1px 4px rgba(20,45,70,.05)}
-#teamBoardPageV29 .r16hFloorTeamTop{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13px;font-weight:950;color:#213b53}
-#teamBoardPageV29 .r16hFloorTeamTop .teamBadge{background:var(--team);color:#fff;border-radius:7px;padding:4px 8px}
-#teamBoardPageV29 .r16hFloorTeamNames{margin-top:7px;display:flex;flex-wrap:wrap;align-items:center;row-gap:4px}
-#teamBoardPageV29 .r16hFloorPerson{display:inline-flex;align-items:baseline;gap:4px;padding:0 9px;border-left:1px solid #d5dee7}
-#teamBoardPageV29 .r16hFloorPerson:first-child{border-left:0;padding-left:0}
-#teamBoardPageV29 .r16hFloorPerson b{font-size:13px;color:#17344e}
-#teamBoardPageV29 .r16hFloorPerson small{font-size:10px;font-weight:800;color:#728395}
-#teamBoardPageV29 .r16hFloorSafety{margin-top:7px;font-size:11px;font-weight:900;color:#617487}
-#teamBoardPageV29 .r16hFloorSafety.due{color:#b42318}
-#teamBoardPageV29 .cmdPlanPanel{min-height:360px!important;display:flex!important;align-items:center!important;justify-content:center!important;background:#fff}
-#teamBoardPageV29 .cmdPlanPanel .v33Plan{width:min(720px,88%)!important;height:320px!important;aspect-ratio:auto!important}
-#teamBoardPageV29 .cmdPlanPanel .v33PlanInner{inset:34px!important}
-#teamBoardPageV29 .cmdPlanPanel .v33DirLabel{font-size:15px!important}
-#teamBoardPageV29 .cmdPlanPanel .v33FaceChip{font-size:13px!important;padding:6px 9px!important}
-
-/* 4. 선택층 대원카드: 즉시확인/고립만 깜빡임, 안전확인 완료는 정지 */
-#teamBoardPageV29 .cmdMonitorMemberCard.due{border:2px solid #dc4037!important;border-top:5px solid #dc4037!important;background:#fff3f2!important;animation:r16hMemberPulse 1.45s ease-in-out infinite}
-#teamBoardPageV29 .cmdMonitorMemberCard.isolated{border:2px solid #b91c1c!important;border-top:6px solid #b91c1c!important;background:#ffe9e7!important;animation:r16hIsolationPulse 1s ease-in-out infinite}
-#teamBoardPageV29 .cmdMonitorMemberCard.confirmed{animation:none!important;background:#f5fbf7!important}
-@keyframes r16hMemberPulse{0%,100%{box-shadow:0 2px 6px rgba(20,45,70,.05)}50%{box-shadow:0 0 0 4px rgba(220,64,55,.15);background:#ffe6e3}}
-@keyframes r16hIsolationPulse{0%,100%{box-shadow:0 0 0 1px rgba(185,28,28,.12)}50%{box-shadow:0 0 0 6px rgba(185,28,28,.22);background:#ffd8d4}}
-
-/* 조 색상 */
-.r16hFloorTeam.teamC1{--team:#2563eb}.r16hFloorTeam.teamC2{--team:#f28705}.r16hFloorTeam.teamC3{--team:#8b46d8}.r16hFloorTeam.teamC4{--team:#0f9588}.r16hFloorTeam.teamC5{--team:#d64c72}.r16hFloorTeam.teamC6{--team:#607c18}.r16hFloorTeam.teamC7{--team:#6d42d8}.r16hFloorTeam.teamC8{--team:#08758d}
-@media(max-width:1500px){#teamBoardPageV29 .cmdLocationGrid{grid-template-columns:minmax(420px,36%) minmax(650px,64%)!important}#teamBoardPageV29 .cmdTeamHead,#teamBoardPageV29 .cmdTeamRow{grid-template-columns:68px 52px 84px 104px 78px minmax(430px,1fr) 84px}}
-</style>
-<script id="r16h-command-board-logic">
-(function(){
-  const RECHECK_MIN=10;
-  function parseT(v){if(!v)return NaN;return Date.parse(String(v).includes('T')?String(v):String(v).replace(' ','T'));}
-  function liveMin(m){const server=Number(m&&m.currentMinutes)||0,t=parseT(m&&m.entryTime);return Number.isFinite(t)?Math.max(server,Math.floor(Math.max(0,Date.now()-t)/60000)):server;}
-  function norm(v){let s=String(v??'').trim();if(!s)return '미지정';return s;}
-  function detailText(v){let s=String(v??'').trim();if(!s)return '-';s=s.replace(/세부\s*장소\s*미지정/gi,'-').replace(/세부장소미지정/gi,'-');return s==='미지정'?'-':s;}
-  function status(m){
-    const mins=liveMin(m);
-    if(m&&m.isolated)return {mins,due:true,isolated:true,confirmed:false,reason:'고립',text:'🚨 고립대원'};
-    if(mins<=30)return {mins,due:false,isolated:false,confirmed:false,reason:'',text:mins<=20?'🟢 정상':mins<=25?'🟠 주의':'🔴 경고'};
-    const t=parseT(m&&m.safetyCheckedAt);
-    if(Number.isFinite(t)){
-      const elapsed=Math.max(0,(Date.now()-t)/60000);
-      if(elapsed<RECHECK_MIN){const remain=Math.max(1,Math.ceil(RECHECK_MIN-elapsed));return {mins,due:false,isolated:false,confirmed:true,remain,reason:'',text:'✓ 안전확인 · 재확인 '+remain+'분 후'};}
-      return {mins,due:true,isolated:false,confirmed:false,recheck:true,reason:'재확인',text:'🚨 재확인 필요'};
-    }
-    return {mins,due:true,isolated:false,confirmed:false,reason:'31분',text:'🚨 즉시확인'};
-  }
-  window.v251R16HImmediateState=status;
-  function esc(v){return escapeHtml(String(v??''));}
-  function teamCss(t){return v29TeamCss(t)||'';}
-  function profile(m){
-    let info={};try{info=getMemberInfoById(m.memberId)||{};}catch(e){}
-    const raw=String(m.memberName||info.name||'').trim();
-    const name=(typeof v29CleanName==='function'?v29CleanName(m):raw)||'-';
-    return {name,rank:String(info.rank||m.rank||'').trim(),dept:String(info.dept||m.dept||'').trim()};
-  }
-  function personHtml(m,cls){const p=profile(m);const meta=[p.rank,p.dept].filter(Boolean).join(' · ');return '<span class="'+cls+'"><b>'+esc(p.name)+'</b>'+(meta?'<small>'+esc(meta)+'</small>':'')+'</span>';}
-  function metaFor(m){const vm=(typeof v23LoadMeta==='function'?v23LoadMeta():{})[String(m.memberId)]||{},ti=(typeof v19TeamInfo==='function'?v19TeamInfo(m):{});return {team:norm(vm.teamName||ti.team||'조 미지정'),act:Number(vm.teamActivityNo||ti.activityNo||m.entryCount||1)||1,floor:norm(vm.activityFloor||ti.floor),dir:norm(vm.entryDirection||ti.direction),detail:detailText(vm.detailLocation||ti.detail)};}
-
-  /* 즉시확인은 31분 초과 자체가 아니라 공통 안전판정의 due만 사용 */
-  window.v29UpdateLiveBoardMetrics=function(){
-    const list=window.__dashboardInsideMembers||[],dash=window.__v29Dashboard||{},teams=v29GroupTeams(list);
-    let g=0,o=0,r=0,c=0;const urgent=[];
-    list.forEach(m=>{const st=status(m),min=st.mins;if(min<=20)g++;else if(min<=25)o++;else if(min<=30)r++;else c++;if(st.due)urgent.push({m,st});});
-    const stats=document.getElementById('cmdPeopleStats');
-    if(stats){
-      const rows=[['현장 참여',Number(dash.uniqueMemberCount||list.length),''],['현재 내부',list.length,'inside'],['0~20분',g,'green'],['21~25분',o,'orange'],['26~30분',r,'red'],['31분 이상',c,'over31'],['즉시확인',urgent.length,'immediate'+(urgent.length?' active':'')],['철수완료',Number(dash.exitedCount||0),'exited']];
-      stats.innerHTML=rows.map(x=>'<div class="cmdStat '+x[2]+(Number(x[1])===0?' zero':'')+'"><div class="cmdStatLabel">'+x[0]+'</div><div class="cmdStatValue">'+x[1]+'명</div></div>').join('');
-    }
-    const alert=document.getElementById('cmdAlertBar');
-    if(alert){
-      if(!urgent.length){alert.className='cmdAlertBar ok';alert.textContent='';}
-      else{
-        const iso=urgent.filter(x=>x.st.isolated).length,recheck=urgent.filter(x=>x.st.recheck).length;
-        const reason=(iso?'고립 '+iso+'명':'')+(iso&&recheck?' · ':'')+(recheck?'재확인 '+recheck+'명':'');
-        const txt=urgent.slice(0,5).map(x=>{const mt=metaFor(x.m);return mt.team+' '+profile(x.m).name+(x.st.isolated?' 고립':x.st.recheck?' 재확인':(' '+x.st.mins+'분'));}).join('　│　');
-        alert.className='cmdAlertBar danger';alert.textContent='⚠ 즉시확인 '+urgent.length+'명'+(reason?' ('+reason+')':'')+'　│　'+txt+(urgent.length>5?' 외 '+(urgent.length-5)+'명':'');
-      }
-    }
-    const ov=document.getElementById('cmdTeamOverview');
-    if(ov){const total=teams.reduce((a,t)=>a+t.count,0);ov.innerHTML='<div class="cmdOverviewBox"><span>활동조</span><b>'+teams.length+'개 조</b></div><div class="cmdOverviewBox"><span>총 조원</span><b>'+total+'명</b></div><div class="cmdOverviewBox"><span>현재 활동요약</span><span class="cmdOverviewText">'+esc(v29BuildActivitySummary(teams))+'</span></div>';}
-    const sel=document.getElementById('cmdSelectedFloorSummary');
-    if(sel){const here=list.filter(m=>v29FloorKey(metaFor(m).floor)===v33SelectedFloor),warn=here.filter(m=>status(m).due).length;sel.textContent=(v33SelectedFloor==='화점층'?'🔥 ':'')+v33SelectedFloor+' · '+here.length+'명'+(warn?' · ⚠ '+warn+'명':'');}
-  };
-
-  /* 조별현황: 이름 + 계급 + 소속, 대원별 구분 */
-  window.v29DrawCommandTeamTable=function(teams){
-    const area=document.getElementById('cmdTeamTable');if(!area)return;
-    if(!teams.length){area.innerHTML='<div class="cmdFloorEmpty">현재 활동 중인 조가 없습니다.</div>';return;}
-    let h='<div class="cmdTeamHead"><div>조</div><div>차수</div><div>층</div><div>세부장소</div><div>방면</div><div>인원 · 대원정보</div><div>진입시간</div></div>';
-    teams.forEach(t=>{
-      const members=(t.members||[]).map(m=>personHtml(m,'cmdTeamMemberItem')).join('');
-      h+='<div class="cmdTeamRow '+teamCss(t.team)+'"><div class="cmdTeamCell"><span class="cmdTeamBadge">'+esc(t.team)+'</span></div><div class="cmdTeamCell">'+Number(t.activityNo||1)+'차</div><div class="cmdTeamCell"><span class="cmdMini">'+esc(norm(t.floor))+'</span></div><div class="cmdTeamCell"><span class="cmdMini">'+esc(norm(t.detail))+'</span></div><div class="cmdTeamCell"><span class="cmdMini">'+esc(norm(t.direction))+'</span></div><div class="cmdTeamCell cmdTeamPeople"><span class="cmdTeamPeopleCount">'+t.count+'명</span><span class="cmdTeamMemberList">'+members+'</span></div><div class="cmdTeamCell cmdEntry">'+esc(t.entryTime||'-')+'</div></div>';
-    });
-    area.innerHTML=h;
-  };
-
-  function renderSelectedFloor(){
-    const list=window.__dashboardInsideMembers||[],floorPanel=document.getElementById('v33FloorPanel'),area=document.getElementById('v34FloorMembers');if(!floorPanel||!area)return;
-    const floors=['옥상','상층','직상층','화점층','직하층','하층','지하층'];
-    const fm=list.filter(m=>v29FloorKey(metaFor(m).floor)===v33SelectedFloor),groups={};
-    fm.forEach(m=>{const mt=metaFor(m);(groups[mt.team]||(groups[mt.team]=[])).push(m);});
-    const teams=Object.keys(groups).sort((a,b)=>v19TeamNumber(a)-v19TeamNumber(b));
-    const buttons=floors.map(f=>{const ms=list.filter(m=>v29FloorKey(metaFor(m).floor)===f),warn=ms.filter(m=>status(m).due).length;return '<button type="button" class="v33FloorBtn '+(f===v33SelectedFloor?'active ':'')+(f==='화점층'?'fire':'')+'" onclick="selectTeamBoardFloorV33(\''+f+'\')"><span>'+(f==='화점층'?'🔥 ':'')+f+'</span><span>'+ms.length+'명'+(warn?' · ⚠'+warn:'')+'</span></button>';}).join('');
-    let details='<div class="r16hSelectedFloor"><div class="r16hSelectedTitle"><span>'+(v33SelectedFloor==='화점층'?'🔥 ':'')+esc(v33SelectedFloor)+' · 활동대원 '+fm.length+'명</span>';
-    const allWarn=fm.filter(m=>status(m).due).length;details+=(allWarn?'<span class="warn">⚠ 즉시확인 '+allWarn+'명</span>':'<span>정상</span>')+'</div>';
-    if(!teams.length)details+='<div class="cmdNoMembers">현재 이 층에서 활동 중인 대원이 없습니다.</div>';
-    teams.forEach(t=>{const ms=groups[t],first=ms[0],mt=metaFor(first),warn=ms.filter(m=>status(m).due).length,confirmed=ms.length&&ms.every(m=>status(m).confirmed);details+='<div class="r16hFloorTeam '+teamCss(t)+'"><div class="r16hFloorTeamTop"><span class="teamBadge">'+esc(t)+'</span><span>'+mt.act+'차 · '+esc(mt.dir)+' · '+esc(mt.detail)+' · '+ms.length+'명</span></div><div class="r16hFloorTeamNames">'+ms.map(m=>personHtml(m,'r16hFloorPerson')).join('')+'</div><div class="r16hFloorSafety '+(warn?'due':'')+'">'+(warn?'⚠ 즉시확인 '+warn+'명':confirmed?'✓ 안전확인 완료':'현재 즉시확인 대상 없음')+'</div></div>';});
-    floorPanel.innerHTML='<div class="v33PanelTitle">층 선택</div><div class="r16hFloorButtons">'+buttons+'</div>'+details+'</div>';
-
-    let html='<div class="cmdFloorMemberHead"><span>'+(v33SelectedFloor==='화점층'?'🔥 ':'')+esc(v33SelectedFloor)+' 현장 활동대원 '+fm.length+'명</span><span style="font-size:12px;opacity:.85">2페이지 동일 안전판정</span></div>';
-    if(!fm.length){area.innerHTML=html+'<div class="cmdNoMembers">현재 이 층에서 활동 중인 대원이 없습니다.</div>';return;}
-    teams.forEach(t=>{const ms=groups[t],mt=metaFor(ms[0]);html+='<div class="cmdMonitorTeamGroup"><div class="cmdMonitorTeamTitle '+teamCss(t)+'"><span>'+esc(t)+' · '+mt.act+'차 · '+ms.length+'명</span><span class="loc">'+esc(mt.dir)+' · '+esc(mt.detail)+'</span></div><div class="cmdMonitorMemberGrid">';ms.forEach(m=>{const st=status(m),p=profile(m),mm=metaFor(m),cls=st.isolated?'isolated':st.due?'due':st.confirmed?'confirmed':'';html+='<div class="cmdMonitorMemberCard '+teamCss(t)+' '+cls+'"><div><span class="cmdMonitorMemberName">'+esc(p.name)+'</span>'+(p.rank||p.dept?'<span class="cmdMonitorMemberDept">'+esc([p.rank,p.dept].filter(Boolean).join(' · '))+'</span>':'')+'</div><div class="cmdMonitorMemberLoc">'+esc(mm.team)+' · '+mm.act+'차 · '+esc(mm.floor)+' · '+esc(mm.dir)+' · '+esc(mm.detail)+'</div><div class="cmdMonitorMemberBottom"><span class="cmdMonitorPill">진입 '+esc(m.entryTime||'-')+'</span><span class="cmdMonitorPill elapsed '+(st.mins>=31?'warn':'')+'">'+(st.mins>=31?'🔴 ':'')+st.mins+'분 경과</span><span class="cmdMonitorPill safety '+(st.due?'due':'')+'">'+esc(st.text)+'</span></div></div>';});html+='</div></div>';});area.innerHTML=html;
-  }
-  window.v29RenderSelectedFloorPremium=renderSelectedFloor;
-
-  /* 기존 draw를 이용해 전술배치도를 그린 뒤 R16H 패널/표현으로 덮어씀 */
-  const prevDraw=window.drawTeamBoardV29;
-  window.drawTeamBoardV29=function(){if(typeof prevDraw==='function')prevDraw();window.v29UpdateLiveBoardMetrics();window.v29DrawCommandTeamTable(v29GroupTeams(window.__dashboardInsideMembers||[]));renderSelectedFloor();};
-})();
-</script>
-
-
 <!-- R16I : 층=세로축 / 방면=가로축, 층선택+활동정보 좌우배치 -->
 <style id="r16i-floor-axis-style">
 /* 전체: 왼쪽 35%는 층+사람, 오른쪽 65%는 방면 배치도 */
@@ -9224,970 +9063,223 @@ window.v251R9OpenMember=function(id,name){
 </script>
 
 
-<style id="r17i-final-board-style">
-/* R17I FINAL OVERRIDE — 기존 3페이지 골격은 유지 */
-#teamBoardPageV29 .cmdBoardBrand{display:flex!important;align-items:center!important;justify-content:center!important}
-#teamBoardPageV29 .r17iStation{
-  display:flex;align-items:center;justify-content:center;gap:13px;width:min(560px,100%);
-  min-height:62px;background:#fff;border:1px solid #dce5ed;border-radius:13px;
-  box-shadow:0 2px 8px rgba(20,45,70,.07);padding:6px 18px;box-sizing:border-box
-}
-#teamBoardPageV29 .r17iStation img{
-  width:72px!important;height:50px!important;max-width:72px!important;object-fit:contain!important;
-  filter:none!important;opacity:1!important;background:transparent!important;padding:0!important
-}
-#teamBoardPageV29 .r17iStation .stationNameDynamic{
-  color:#111!important;font-size:25px!important;font-weight:950!important;letter-spacing:-1px;white-space:nowrap
-}
 
-/* 즉시확인 상시 칸 제거 → 인원현황 7칸 */
-#teamBoardPageV29 .cmdPeopleStats{grid-template-columns:repeat(7,minmax(0,1fr))!important}
+<style id="r17p-clean-personnel-board">
+/* R17P CLEAN 3PAGE — 2페이지 데이터/카드/상태를 그대로 쓰는 인원관제 View */
+#teamBoardPageV29.r17pBoard{
+  display:none;position:fixed;inset:0;z-index:5000;width:100vw;height:100vh;
+  overflow:hidden;background:#e9eef3;color:#16283a;font-family:inherit;box-sizing:border-box;
+}
+.r17pHeader{
+  height:82px;display:grid;grid-template-columns:minmax(360px,1fr) minmax(390px,.9fr) minmax(390px,1fr);
+  align-items:center;gap:12px;padding:8px 1.5vw;background:#173d67;color:#fff;box-sizing:border-box;
+}
+.r17pHeadLeft{min-width:0}.r17pTitle{font-size:21px;font-weight:950;line-height:1.1}.r17pSite{margin-top:7px;font-size:14px;font-weight:850;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.r17pStation{height:62px;display:flex;align-items:center;justify-content:center;gap:13px;background:#fff;border-radius:13px;padding:5px 17px;box-sizing:border-box}
+.r17pStation img{width:72px;height:50px;object-fit:contain}.r17pStation .stationNameDynamic{color:#111;font-size:25px;font-weight:950;letter-spacing:-1px;white-space:nowrap}
+.r17pHeadActions{display:flex;align-items:center;justify-content:flex-end;gap:10px}
+.r17pRefresh,.r17pBack{height:58px;border-radius:10px;font-weight:900;cursor:pointer}.r17pRefresh{width:142px;border:1px solid #9ab0c5;background:#fff;color:#173d67}.r17pRefresh b,.r17pRefresh small{display:block}.r17pRefresh b{font-size:14px}.r17pRefresh small{font-size:10px;margin-top:3px}.r17pBack{padding:0 18px;border:1px solid #9ab0c5;background:#fff;color:#173d67;font-size:14px}
 
-/* 대상이 있을 때만 기존 화면 위로 나타나는 반투명 경고 */
-#teamBoardPageV29 #cmdAlertBar.r17iOverlay{
-  position:fixed!important;z-index:9999!important;left:50%!important;top:102px!important;
-  width:min(1120px,76vw)!important;min-height:80px!important;margin:0!important;
-  padding:13px 20px!important;box-sizing:border-box!important;
-  transform:translate(-50%,-20px) scale(.96);opacity:0;pointer-events:none;
-  border:1px solid rgba(255,180,174,.72)!important;border-radius:16px!important;
-  background:rgba(142,20,15,.80)!important;color:#fff!important;
-  box-shadow:0 18px 46px rgba(83,17,13,.28)!important;
-  backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);
-  align-items:center!important;justify-content:center!important;gap:14px!important;
-  text-align:center!important
-}
-#teamBoardPageV29 #cmdAlertBar.r17iOverlay.r17iShow{
-  display:flex!important;opacity:1;transform:translate(-50%,0) scale(1);
-  animation:r17iIn .38s cubic-bezier(.2,.9,.25,1),r17iGlow 1.8s ease-in-out .4s infinite!important
-}
-.r17iAlertIcon{font-size:34px;line-height:1}
-.r17iAlertBody{min-width:0}.r17iAlertBody b{display:block;font-size:24px;font-weight:950;letter-spacing:-.5px}
-.r17iAlertBody small{display:block;margin-top:5px;font-size:12px;font-weight:850;color:rgba(255,255,255,.9);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-@keyframes r17iIn{from{opacity:0;transform:translate(-50%,-22px) scale(.94)}to{opacity:1;transform:translate(-50%,0) scale(1)}}
-@keyframes r17iGlow{50%{box-shadow:0 18px 50px rgba(130,20,15,.40),0 0 0 4px rgba(225,72,61,.13)!important}}
+.r17pMain{height:calc(100vh - 82px);display:grid;grid-template-rows:auto minmax(0,1fr);gap:7px;padding:7px 1.4vw 8px;box-sizing:border-box;overflow:hidden}
+.r17pSection{background:#fff;border:1px solid #dbe4ec;border-radius:11px;box-shadow:0 1px 3px rgba(20,45,70,.05);overflow:hidden}
+.r17pSectionTitle{display:flex;align-items:center;gap:7px;padding:7px 10px 5px;font-size:18px;font-weight:950;line-height:1}
+.r17pSectionTitle>span{display:inline-flex;width:24px;height:24px;align-items:center;justify-content:center;border-radius:50%;background:#173d67;color:#fff;font-size:13px}
+.r17pSectionTitle small{font-size:10px;color:#7a8794;font-weight:800;margin-left:2px}
 
-/* 조별현황: 세로는 조, 가로는 2페이지 공통 대원카드 */
-#teamBoardPageV29 #cmdTeamTable{display:flex!important;flex-direction:column!important;gap:8px!important;padding:8px 12px 12px!important}
-#teamBoardPageV29 .r17iTeamRow{
-  --team:#64748b;display:grid!important;grid-template-columns:132px minmax(0,1fr)!important;gap:9px!important;
-  border:1px solid #dfe7ee!important;border-left:6px solid var(--team)!important;border-radius:10px!important;
-  background:#fff!important;padding:7px!important;box-sizing:border-box!important;min-width:0
-}
-#teamBoardPageV29 .r17iTeamInfo{
-  display:flex;flex-wrap:wrap;align-content:center;align-items:center;gap:5px;
-  background:#f6f8fa;border-radius:8px;padding:6px
-}
-#teamBoardPageV29 .r17iTeamBadge{background:var(--team);color:#fff;border-radius:7px;padding:6px 9px;font-size:13px;font-weight:950}
-#teamBoardPageV29 .r17iMeta{font-size:10px;font-weight:900;color:#4c6275;background:#fff;border:1px solid #d8e1e8;border-radius:6px;padding:4px 5px}
-#teamBoardPageV29 .r17iCount{margin-left:auto;font-size:11px;font-weight:950;color:#173d67}
-#teamBoardPageV29 .r17iMembers{display:flex!important;align-items:stretch!important;gap:7px!important;min-width:0!important;overflow:hidden!important}
-#teamBoardPageV29 .r17iMember{--team:#64748b;flex:1 1 330px;min-width:260px;max-width:500px;border-top:4px solid var(--team);border-radius:8px;overflow:hidden}
-#teamBoardPageV29 .r17iMember .v16PCommonMemberCard{width:100%!important;height:100%!important;box-sizing:border-box!important;padding:7px 9px!important}
-#teamBoardPageV29 .r17iMember .memberLine{font-size:12px!important}
-#teamBoardPageV29 .r17iMember .compactId{font-size:9px!important}
-#teamBoardPageV29 .r17iMember .insideCompactLocation{font-size:10px!important;margin-top:3px!important}
-#teamBoardPageV29 .r17iMember .insideCompactBottom{font-size:9px!important;margin-top:4px!important;gap:4px!important}
-#teamBoardPageV29 .r17iTeamRow.teamC1,#teamBoardPageV29 .r17iMember.teamC1{--team:#2563eb}
-#teamBoardPageV29 .r17iTeamRow.teamC2,#teamBoardPageV29 .r17iMember.teamC2{--team:#f28705}
-#teamBoardPageV29 .r17iTeamRow.teamC3,#teamBoardPageV29 .r17iMember.teamC3{--team:#8b46d8}
-#teamBoardPageV29 .r17iTeamRow.teamC4,#teamBoardPageV29 .r17iMember.teamC4{--team:#0f9588}
-#teamBoardPageV29 .r17iTeamRow.teamC5,#teamBoardPageV29 .r17iMember.teamC5{--team:#d64c72}
-#teamBoardPageV29 .r17iTeamRow.teamC6,#teamBoardPageV29 .r17iMember.teamC6{--team:#607c18}
-#teamBoardPageV29 .r17iTeamRow.teamC7,#teamBoardPageV29 .r17iMember.teamC7{--team:#6d42d8}
-#teamBoardPageV29 .r17iTeamRow.teamC8,#teamBoardPageV29 .r17iMember.teamC8{--team:#08758d}
+/* 2페이지의 실시간 활동대원 데이터에서 동일 상태를 계산해 표시 */
+.r17pPeopleStats{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:7px;padding:0 9px 8px}
+.r17pStat{min-height:54px;border:1px solid #dce4eb;border-radius:8px;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.r17pStatLabel{font-size:11px;font-weight:850;color:#536578}.r17pStatValue{margin-top:3px;font-size:24px;font-weight:950;line-height:1}
+.r17pStat.inside{background:#eef5ff;border-color:#a9c6e8}.r17pStat.green{background:#eef8f1;border-color:#a9d5b6}.r17pStat.orange{background:#fff8e8;border-color:#ecd38f}.r17pStat.red{background:#fff0ef;border-color:#e8aaa5}.r17pStat.critical{background:#fff0ef;border-color:#d93025}.r17pStat.exited{background:#f4f7f9}
+
+.r17pTeamSection{min-height:0;display:grid;grid-template-rows:auto minmax(0,1fr)}
+.r17pTeamTop{display:grid;grid-template-columns:auto minmax(0,1fr);align-items:stretch;border-bottom:1px solid #e1e8ee}
+.r17pTeamOverview{display:grid;grid-template-columns:140px 140px minmax(0,1fr);min-width:0}
+.r17pOverviewBox{display:flex;align-items:center;justify-content:center;gap:7px;border-left:1px solid #e1e8ee;padding:4px 10px;min-width:0}
+.r17pOverviewBox span{font-size:12px;font-weight:850;color:#52677a}.r17pOverviewBox b{font-size:19px;font-weight:950;color:#173d67;white-space:nowrap}
+.r17pOverviewText{font-size:13px!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+.r17pTeamTable{min-height:0;display:flex;flex-direction:column;gap:4px;padding:5px 8px 6px;overflow:hidden}
+.r17pTeamRow{--team:#64748b;display:grid;grid-template-columns:210px minmax(0,1fr);gap:6px;min-height:0;flex:1 1 0;border:1px solid #dfe6ec;border-left:6px solid var(--team);border-radius:9px;background:#fff;padding:4px;box-sizing:border-box}
+.r17pTeamHead{display:grid;grid-template-columns:auto 1fr;grid-template-rows:1fr 1fr;align-items:center;column-gap:7px;row-gap:1px;padding:3px 7px;border-radius:7px;background:#f5f7f9;min-width:0}
+.r17pTeamName{grid-row:1;background:var(--team);color:#fff;border-radius:6px;padding:5px 9px;font-size:15px;font-weight:950;white-space:nowrap}
+.r17pLocs{grid-row:1;display:flex;gap:4px;min-width:0}.r17pLoc{padding:3px 6px;border:1px solid #d4dfe7;border-radius:5px;background:#fff;font-size:10px;font-weight:950;white-space:nowrap}
+.r17pDetail{grid-column:1/-1;grid-row:2;font-size:10px;font-weight:850;color:#657789;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* 최대 6명/행, 7명부터 동일 조 안에서 다음 행 */
+.r17pMembers{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:5px;align-items:stretch;min-width:0;min-height:0}
+.r17pMemberSlot{min-width:0;min-height:0;overflow:hidden;border-radius:7px}
+
+/* 핵심: 카드 본문과 상태 class는 2페이지 원본 그대로.
+   3페이지는 필요없는 두 줄만 숨긴다. */
+.r17pMemberSlot .v16PCommonMemberCard{width:100%;height:100%;min-height:0!important;box-sizing:border-box;padding:5px 7px!important;display:flex!important;flex-direction:column!important;justify-content:center!important;gap:4px!important}
+.r17pMemberSlot .insideCompactLocation,.r17pMemberSlot .v251EntryInfo{display:none!important}
+.r17pMemberSlot .v16PIdentityLine{margin:0!important;min-height:0!important;line-height:1.05!important;display:flex!important;align-items:baseline!important;gap:4px!important;min-width:0}
+.r17pMemberSlot .memberLine{font-size:clamp(11px,.82vw,16px)!important;line-height:1.05!important;font-weight:950!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
+.r17pMemberSlot .compactId{font-size:clamp(8px,.57vw,10px)!important;line-height:1!important;white-space:nowrap!important}
+.r17pMemberSlot .insideCompactBottom{margin:0!important;padding:0!important;min-height:0!important;display:flex!important;align-items:center!important;gap:5px!important;flex-wrap:nowrap!important;line-height:1.05!important}
+.r17pMemberSlot .insideElapsed{font-size:clamp(10px,.69vw,13px)!important;line-height:1.05!important;font-weight:950!important;white-space:nowrap!important}
+.r17pMemberSlot .insideStatus{font-size:clamp(9px,.62vw,12px)!important;line-height:1.05!important;font-weight:900!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
+
+/* 2페이지의 기존 점멸 class가 wrapper에서 그대로 작동 */
+.r17pMemberSlot.v251NeedsCheck,.r17pMemberSlot.v251IsolationBlink{animation:dangerBlink 1s infinite!important}
+.r17pMemberSlot.v251SafetyConfirmed{animation:none!important;background:#fce8e6!important}
+.r17pMemberSlot.v251SafetyConfirmed .insideStatus{background:#e8f6ec!important;color:#087a37!important;border:1px solid #9bd3ad!important;border-radius:999px!important;padding:3px 7px!important}
+
+/* 중앙 경고 — 레이아웃을 전혀 밀지 않음 */
+.r17pAlert{display:none;position:fixed;z-index:9999;left:50%;top:50%;transform:translate(-50%,-50%) scale(.94);width:min(1040px,72vw);min-height:94px;padding:15px 22px;box-sizing:border-box;border:1px solid rgba(255,216,211,.8);border-radius:18px;background:rgba(132,18,14,.60);color:#fff;box-shadow:0 20px 54px rgba(72,12,10,.22);backdrop-filter:blur(1px);pointer-events:none;align-items:center;justify-content:center;gap:15px;text-align:center}
+.r17pAlert.show{display:flex;animation:r17pAlertIn .35s ease-out,r17pAlertGlow 1.9s ease-in-out .4s infinite}
+.r17pAlertIcon{font-size:38px}.r17pAlertText b{display:block;font-size:27px;font-weight:950}.r17pAlertText small{display:block;margin-top:5px;font-size:13px;font-weight:850;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@keyframes r17pAlertIn{from{opacity:0;transform:translate(-50%,-50%) scale(.9)}to{opacity:1;transform:translate(-50%,-50%) scale(1)}}
+@keyframes r17pAlertGlow{50%{box-shadow:0 22px 60px rgba(115,17,13,.34),0 0 0 4px rgba(226,78,67,.11)}}
+
+/* 기존 팀 색 class를 새 행에서도 시각적으로 이어받음 */
+.r17pTeamRow.teamC1,.r17pTeamName.teamC1{--team:#2563eb}.r17pTeamRow.teamC2,.r17pTeamName.teamC2{--team:#f28705}.r17pTeamRow.teamC3,.r17pTeamName.teamC3{--team:#8b46d8}.r17pTeamRow.teamC4,.r17pTeamName.teamC4{--team:#0f9588}.r17pTeamRow.teamC5,.r17pTeamName.teamC5{--team:#d64c72}.r17pTeamRow.teamC6,.r17pTeamName.teamC6{--team:#607c18}.r17pTeamRow.teamC7,.r17pTeamName.teamC7{--team:#6d42d8}.r17pTeamRow.teamC8,.r17pTeamName.teamC8{--team:#08758d}
+
+/* 조가 많아질 때만 한 단계씩 축소 */
+.r17pBoard.compact1 .r17pTeamTable{gap:3px}.r17pBoard.compact1 .r17pTeamRow{padding:3px}.r17pBoard.compact1 .r17pMemberSlot .v16PCommonMemberCard{padding:4px 6px!important}
+.r17pBoard.compact2 .r17pTeamTable{gap:2px;padding-top:3px;padding-bottom:3px}.r17pBoard.compact2 .r17pTeamRow{padding:2px}.r17pBoard.compact2 .r17pTeamHead{padding:2px 5px}.r17pBoard.compact2 .r17pMemberSlot .v16PCommonMemberCard{padding:3px 5px!important}
 </style>
 
-<script id="r17i-final-board-logic">
+<script id="r17p-clean-personnel-board-logic">
 (function(){
-  function esc(v){return escapeHtml(String(v??''));}
-  function norm(v){const s=String(v??'').trim();return s||'미지정';}
-  function clean(m){return (typeof v29CleanName==='function'?v29CleanName(m):String(m.memberName||'').trim())||'-';}
+  function E(v){return escapeHtml(String(v??''));}
   function syncStation(){
-    const dst=document.getElementById('r17iStationLogo');
-    const src=document.querySelector('#dashboardPage .v17StationBanner img, .v17StationBanner img');
+    const dst=document.getElementById('r17pStationLogo');
+    const src=document.querySelector('#dashboardPage .v17StationBanner img,.v17StationBanner img');
     if(dst&&src&&src.src)dst.src=src.src;
     if(typeof v17ApplyStationName==='function'){try{v17ApplyStationName();}catch(e){}}
   }
+  function detail(v){
+    const s=String(v??'').trim();
+    return (!s||s==='미지정'||/세부\s*장소\s*미지정/i.test(s))?'-':s;
+  }
+  function currentState(m){
+    return typeof v251GetMemberState==='function'
+      ? v251GetMemberState(m)
+      : {mins:Number(m&&m.currentMinutes)||0,due:false,confirmed:false,isolated:false,icon:'',text:''};
+  }
 
-  /* 중요: R16H가 정의된 뒤 여기서 최종 덮어써 실제 실행 함수 자체를 교체 */
+  /* 3페이지 인원현황도 2페이지 현재 활동대원 배열 + 동일 안전상태 함수만 사용 */
   window.v29UpdateLiveBoardMetrics=function(){
-    const list=window.__dashboardInsideMembers||[],dash=window.__v29Dashboard||{},teams=v29GroupTeams(list);
-    let g=0,o=0,r=0,c=0;const urgent=[];
+    const list=window.__dashboardInsideMembers||[];
+    const dash=window.__v29Dashboard||{};
+    const teams=typeof v29GroupTeams==='function'?v29GroupTeams(list):[];
+    let g=0,o=0,r=0,c=0; const urgent=[];
     list.forEach(m=>{
-      const st=(typeof v251R16HImmediateState==='function'?v251R16HImmediateState(m):{mins:v29MemberMinutes(m),due:v29MemberMinutes(m)>30});
-      const min=Number(st.mins)||0;
-      if(min<=20)g++;else if(min<=25)o++;else if(min<=30)r++;else c++;
-      if(st.due)urgent.push({m,st});
+      const st=currentState(m),min=Number(st.mins)||0;
+      if(min<=20)g++; else if(min<=25)o++; else if(min<30)r++; else c++;
+      if(st.due||st.isolated)urgent.push({m,st});
     });
     const stats=document.getElementById('cmdPeopleStats');
     if(stats){
       const rows=[
         ['현장 참여',Number(dash.uniqueMemberCount||list.length),''],
-        ['현재 내부',list.length,'inside'],['0~20분',g,'green'],['21~25분',o,'orange'],
-        ['26~30분',r,'red'],['31분 이상',c,'over31'],['철수완료',Number(dash.exitedCount||0),'exited']
+        ['현재 내부',list.length,'inside'],
+        ['0~20분',g,'green'],['21~25분',o,'orange'],['26~29분',r,'red'],
+        ['30분 이상',c,'critical'],['철수완료',Number(dash.exitedCount||0),'exited']
       ];
-      stats.innerHTML=rows.map(x=>'<div class="cmdStat '+x[2]+(Number(x[1])===0?' zero':'')+'"><div class="cmdStatLabel">'+x[0]+'</div><div class="cmdStatValue">'+x[1]+'명</div></div>').join('');
+      stats.innerHTML=rows.map(x=>'<div class="r17pStat '+x[2]+'"><div class="r17pStatLabel">'+x[0]+'</div><div class="r17pStatValue">'+x[1]+'명</div></div>').join('');
     }
-
-    const alert=document.getElementById('cmdAlertBar');
-    if(alert){
-      if(!urgent.length){
-        alert.className='cmdAlertBar r17iOverlay';
-        alert.style.display='none';alert.innerHTML='';
-      }else{
-        const names=urgent.slice(0,7).map(x=>{
-          const mt=(typeof v23LoadMeta==='function'?v23LoadMeta():{})[String(x.m.memberId)]||{};
-          return (mt.teamName?mt.teamName+' ':'')+clean(x.m)+(x.st.isolated?' · 고립':'');
-        });
-        alert.className='cmdAlertBar r17iOverlay r17iShow';
-        alert.innerHTML='<span class="r17iAlertIcon">⚠</span><span class="r17iAlertBody"><b>즉시확인 대상 '+urgent.length+'명</b><small>'+esc(names.join('　·　'))+(urgent.length>7?'　외 '+(urgent.length-7)+'명':'')+'</small></span>';
-        alert.style.display='flex';
-      }
-    }
-
     const ov=document.getElementById('cmdTeamOverview');
     if(ov){
       const total=teams.reduce((a,t)=>a+t.count,0);
-      ov.innerHTML='<div class="cmdOverviewBox"><span>활동조</span><b>'+teams.length+'개 조</b></div>'+
-      '<div class="cmdOverviewBox"><span>총 조원</span><b>'+total+'명</b></div>'+
-      '<div class="cmdOverviewBox"><span>현재 활동요약</span><span class="cmdOverviewText">'+esc(v29BuildActivitySummary(teams))+'</span></div>';
+      ov.innerHTML='<div class="r17pOverviewBox"><span>활동조</span><b>'+teams.length+'개 조</b></div>'+
+        '<div class="r17pOverviewBox"><span>총 조원</span><b>'+total+'명</b></div>'+
+        '<div class="r17pOverviewBox"><span>현재 활동요약</span><span class="r17pOverviewText">'+E(v29BuildActivitySummary(teams))+'</span></div>';
     }
-  };
-
-  window.v29DrawCommandTeamTable=function(teams){
-    const area=document.getElementById('cmdTeamTable');if(!area)return;
-    if(!teams.length){area.innerHTML='<div class="cmdFloorEmpty">현재 활동 중인 조가 없습니다.</div>';return;}
-    area.innerHTML=teams.map(t=>{
-      const floor=norm(t.floor),dir=norm(t.direction);
-      const detail=(!t.detail||t.detail==='미지정'||/세부\s*장소\s*미지정/i.test(t.detail))?'-':t.detail;
-      const css=(typeof v29TeamCss==='function'?v29TeamCss(t.team):'')||'';
-      const cards=(t.members||[]).map(m=>{
-        const mm=Object.assign({},m,{team:t.team,activityNo:Number(t.activityNo||1),direction:dir,floor:floor,detail:detail});
-        return '<div class="r17iMember '+css+'">'+v16NMemberCardHtml(mm)+'</div>';
-      }).join('');
-      return '<div class="r17iTeamRow '+css+'"><div class="r17iTeamInfo">'+
-        '<span class="r17iTeamBadge">'+esc(t.team)+'</span>'+
-        '<span class="r17iMeta">'+Number(t.activityNo||1)+'차</span>'+
-        '<span class="r17iMeta">'+esc(floor)+'</span>'+
-        '<span class="r17iMeta">'+esc(dir)+'</span>'+
-        '<span class="r17iCount">'+t.count+'명</span></div>'+
-        '<div class="r17iMembers">'+cards+'</div></div>';
-    }).join('');
-  };
-
-  const oldOpen=window.openTeamBoardV29;
-  if(typeof oldOpen==='function'){
-    window.openTeamBoardV29=function(){
-      const r=oldOpen.apply(this,arguments);
-      setTimeout(function(){syncStation(); if(typeof drawTeamBoardV29==='function')drawTeamBoardV29();},0);
-      return r;
-    };
-  }
-  document.addEventListener('DOMContentLoaded',syncStation);
-})();
-</script>
-
-
-<style id="r17k-personnel-control-style">
-/* R17K — 3페이지의 목적: 인원 관제
-   원본 카드 구조/내용은 2페이지의 v16NMemberCardHtml()을 그대로 사용하고,
-   3페이지에서는 배치와 진입시각 줄 숨김만 담당한다. */
-
-/* 기존 3페이지의 층별/화점층 활동대원 관련 영역은 사용하지 않음 */
-#teamBoardPageV29 .cmdLocationSection,
-#teamBoardPageV29 #cmdMemberDetailSection,
-#teamBoardPageV29 #v33FloorPanel,
-#teamBoardPageV29 #v29LocationBoard,
-#teamBoardPageV29 #v33SummaryPanel,
-#teamBoardPageV29 #v34FloorMembers{display:none!important}
-
-/* 즉시확인 대상은 평상시 공간을 차지하지 않고 화면 정중앙에만 출현 */
-#teamBoardPageV29 #cmdAlertBar.r17iOverlay{
-  position:fixed!important;
-  z-index:9999!important;
-  left:50%!important;
-  top:50%!important;
-  width:min(1050px,72vw)!important;
-  min-height:96px!important;
-  margin:0!important;
-  padding:16px 24px!important;
-  transform:translate(-50%,-50%) scale(.96)!important;
-  background:rgba(132,18,14,.62)!important;
-  border:1px solid rgba(255,211,207,.76)!important;
-  border-radius:18px!important;
-  color:#fff!important;
-  box-shadow:0 20px 54px rgba(72,12,10,.22)!important;
-  backdrop-filter:blur(1.5px)!important;
-  -webkit-backdrop-filter:blur(1.5px)!important;
-  pointer-events:none!important;
-  opacity:0;
-}
-#teamBoardPageV29 #cmdAlertBar.r17iOverlay.r17iShow{
-  display:flex!important;
-  align-items:center!important;
-  justify-content:center!important;
-  gap:16px!important;
-  opacity:1!important;
-  transform:translate(-50%,-50%) scale(1)!important;
-  animation:r17kAlertIn .38s cubic-bezier(.2,.9,.25,1),r17kAlertGlow 1.9s ease-in-out .4s infinite!important;
-}
-#teamBoardPageV29 .r17iAlertIcon{font-size:38px!important}
-#teamBoardPageV29 .r17iAlertBody b{font-size:27px!important}
-#teamBoardPageV29 .r17iAlertBody small{font-size:13px!important}
-@keyframes r17kAlertIn{
-  from{opacity:0;transform:translate(-50%,-50%) scale(.90)}
-  to{opacity:1;transform:translate(-50%,-50%) scale(1)}
-}
-@keyframes r17kAlertGlow{
-  50%{box-shadow:0 22px 60px rgba(115,17,13,.34),0 0 0 4px rgba(226,78,67,.11)!important}
-}
-
-/* 조별현황: 세로 = 조 순서 / 가로 = 실제 2페이지 카드, 최대 6명 후 자동 줄바꿈 */
-#teamBoardPageV29 #cmdTeamTable{
-  display:flex!important;
-  flex-direction:column!important;
-  gap:9px!important;
-  padding:8px 12px 14px!important;
-}
-#teamBoardPageV29 .r17kTeamRow{
-  --team:#64748b;
-  display:grid!important;
-  grid-template-columns:78px minmax(0,1fr)!important;
-  align-items:stretch!important;
-  gap:9px!important;
-  border:1px solid #dfe6ec!important;
-  border-left:6px solid var(--team)!important;
-  border-radius:11px!important;
-  background:#fff!important;
-  padding:8px!important;
-  box-sizing:border-box!important;
-}
-#teamBoardPageV29 .r17kTeamName{
-  display:flex!important;
-  align-items:center!important;
-  justify-content:center!important;
-  background:#f5f7f9!important;
-  border-radius:8px!important;
-  font-size:16px!important;
-  font-weight:950!important;
-  color:#173d67!important;
-  white-space:nowrap!important;
-}
-#teamBoardPageV29 .r17kMembers{
-  display:grid!important;
-  grid-template-columns:repeat(6,minmax(0,1fr))!important;
-  gap:7px!important;
-  min-width:0!important;
-  align-items:stretch!important;
-}
-
-/* 카드 자체는 2페이지 원본 HTML 그대로.
-   별도의 3페이지 카드 HTML/정보 재구성은 하지 않는다. */
-#teamBoardPageV29 .r17kMemberSlot{
-  --team:#64748b;
-  min-width:0!important;
-  overflow:hidden!important;
-  border-top:4px solid var(--team)!important;
-  border-radius:8px!important;
-}
-#teamBoardPageV29 .r17kMemberSlot .v16PCommonMemberCard{
-  width:100%!important;
-  min-width:0!important;
-  height:100%!important;
-  box-sizing:border-box!important;
-  padding:9px 9px!important;
-  background:#fff!important;
-}
-
-/* 3페이지 인원관제에서는 진입시각·회차 줄만 숨겨 2줄 카드로 사용 */
-#teamBoardPageV29 .r17kMemberSlot .v251EntryInfo{display:none!important}
-#teamBoardPageV29 .r17kMemberSlot .insideCompactBottom{
-  margin-top:5px!important;
-  min-height:18px!important;
-}
-
-/* 6개가 한 줄에 보이도록 카드 원본의 글자만 가용폭에 맞춤.
-   데이터/항목/상태 표현은 2페이지와 동일하게 유지 */
-#teamBoardPageV29 .r17kMemberSlot .v16PIdentityLine .memberLine{
-  font-size:clamp(10px,.82vw,14px)!important;
-}
-#teamBoardPageV29 .r17kMemberSlot .compactId{
-  font-size:clamp(8px,.62vw,10px)!important;
-}
-#teamBoardPageV29 .r17kMemberSlot .insideCompactLocation{
-  font-size:clamp(9px,.7vw,11px)!important;
-  margin-top:4px!important;
-  white-space:nowrap!important;
-  overflow:hidden!important;
-}
-#teamBoardPageV29 .r17kMemberSlot .insideLocText{
-  overflow:hidden!important;
-  text-overflow:ellipsis!important;
-  white-space:nowrap!important;
-}
-#teamBoardPageV29 .r17kMemberSlot .insideCompactBottom{
-  font-size:clamp(9px,.68vw,11px)!important;
-  gap:4px!important;
-}
-#teamBoardPageV29 .r17kMemberSlot .floorMini{
-  font-size:clamp(8px,.58vw,10px)!important;
-  padding:2px 4px!important;
-}
-
-/* 기존 조 색상 그대로 */
-#teamBoardPageV29 .r17kTeamRow.teamC1,#teamBoardPageV29 .r17kMemberSlot.teamC1{--team:#2563eb}
-#teamBoardPageV29 .r17kTeamRow.teamC2,#teamBoardPageV29 .r17kMemberSlot.teamC2{--team:#f28705}
-#teamBoardPageV29 .r17kTeamRow.teamC3,#teamBoardPageV29 .r17kMemberSlot.teamC3{--team:#8b46d8}
-#teamBoardPageV29 .r17kTeamRow.teamC4,#teamBoardPageV29 .r17kMemberSlot.teamC4{--team:#0f9588}
-#teamBoardPageV29 .r17kTeamRow.teamC5,#teamBoardPageV29 .r17kMemberSlot.teamC5{--team:#d64c72}
-#teamBoardPageV29 .r17kTeamRow.teamC6,#teamBoardPageV29 .r17kMemberSlot.teamC6{--team:#607c18}
-#teamBoardPageV29 .r17kTeamRow.teamC7,#teamBoardPageV29 .r17kMemberSlot.teamC7{--team:#6d42d8}
-#teamBoardPageV29 .r17kTeamRow.teamC8,#teamBoardPageV29 .r17kMemberSlot.teamC8{--team:#08758d}
-</style>
-
-<script id="r17k-personnel-control-logic">
-(function(){
-  function esc(v){return escapeHtml(String(v??''));}
-
-  /* 조별현황 전용 레이아웃.
-     카드 내용은 반드시 2페이지에서 쓰는 v16NMemberCardHtml() 한 함수만 호출한다. */
-  window.v29DrawCommandTeamTable=function(teams){
-    const area=document.getElementById('cmdTeamTable');
-    if(!area)return;
-    if(!teams.length){
-      area.innerHTML='<div class="cmdFloorEmpty">현재 활동 중인 조가 없습니다.</div>';
-      return;
-    }
-
-    area.innerHTML=teams.map(t=>{
-      const css=(typeof v29TeamCss==='function'?v29TeamCss(t.team):'')||'';
-      const floor=String(t.floor||'미지정').trim()||'미지정';
-      const direction=String(t.direction||'미지정').trim()||'미지정';
-      const detail=(!t.detail||t.detail==='미지정'||/세부\s*장소\s*미지정/i.test(t.detail))?'-':t.detail;
-
-      const cards=(t.members||[]).map(m=>{
-        /* 2페이지 카드 렌더러에 동일한 대원 원본 + 현재 조 메타만 전달 */
-        const cardMember=Object.assign({},m,{
-          team:t.team,
-          activityNo:Number(t.activityNo||1),
-          direction:direction,
-          floor:floor,
-          detail:detail
+    const alert=document.getElementById('cmdAlertBar');
+    if(alert){
+      if(!urgent.length){alert.className='r17pAlert';alert.innerHTML='';}
+      else{
+        const meta=typeof v23LoadMeta==='function'?v23LoadMeta():{};
+        const names=urgent.slice(0,7).map(x=>{
+          const vm=meta[String(x.m.memberId)]||{};
+          return (vm.teamName?vm.teamName+' ':'')+v29CleanName(x.m)+(x.st.isolated?' · 고립':'');
         });
-        return '<div class="r17kMemberSlot '+css+'">'+v16NMemberCardHtml(cardMember)+'</div>';
-      }).join('');
-
-      /* 왼쪽에는 조 이름만. 1차/층/방면/인원수는 별도 표시하지 않음 */
-      return '<div class="r17kTeamRow '+css+'">'+
-        '<div class="r17kTeamName">'+esc(t.team)+'</div>'+
-        '<div class="r17kMembers">'+cards+'</div>'+
-      '</div>';
-    }).join('');
-  };
-
-  /* 3페이지는 인원현황 + 조별현황만 갱신 */
-  window.drawTeamBoardV29=function(){
-    const site=document.getElementById('v29BoardSite');
-    if(site){
-      const ds=document.getElementById('dashboardSiteName');
-      if(ds)site.textContent=ds.textContent||'-';
-    }
-    if(typeof v29UpdateLiveBoardMetrics==='function')v29UpdateLiveBoardMetrics();
-
-    const teams=(typeof v29GroupTeams==='function')
-      ? v29GroupTeams(window.__dashboardInsideMembers||[])
-      : [];
-    if(typeof v29DrawCommandTeamTable==='function')v29DrawCommandTeamTable(teams);
-
-    const rt=document.getElementById('v29BoardRefreshTime');
-    if(rt)rt.textContent=new Date().toLocaleTimeString('ko-KR',{hour12:false});
-  };
-
-  /* 삭제된 3페이지 층별 전용 렌더는 실행하지 않음 */
-  window.v33RenderFloorPanel=function(){};
-  window.v34RenderFloorMembers=function(){};
-})();
-</script>
-
-
-<style id="r17l-personnel-control-final">
-/* R17L
-   3페이지는 카드 HTML/상태/점멸을 새로 만들지 않는다.
-   2페이지 공통 카드(v16NMemberCardHtml + v16QMemberRowClass)를 그대로 사용하고
-   3페이지에서는 위치정보/진입정보만 숨긴다. */
-
-/* 3페이지 자체 스크롤 금지 */
-#teamBoardPageV29{
-  height:100vh!important;
-  max-height:100vh!important;
-  overflow:hidden!important;
-  box-sizing:border-box!important;
-}
-#teamBoardPageV29 .cmdBoardMain{
-  height:calc(100vh - 82px)!important;
-  max-height:calc(100vh - 82px)!important;
-  overflow:hidden!important;
-  box-sizing:border-box!important;
-}
-
-/* 중앙 즉시확인 오버레이 */
-#teamBoardPageV29 #cmdAlertBar.r17iOverlay{
-  left:50%!important;top:50%!important;
-  transform:translate(-50%,-50%) scale(.96)!important;
-  background:rgba(132,18,14,.60)!important;
-  border-color:rgba(255,216,211,.78)!important;
-  backdrop-filter:blur(1px)!important;
-  -webkit-backdrop-filter:blur(1px)!important;
-}
-#teamBoardPageV29 #cmdAlertBar.r17iOverlay.r17iShow{
-  transform:translate(-50%,-50%) scale(1)!important;
-}
-
-/* 조 행: 대표 조 정보 + 오른쪽 실제 2페이지 카드 */
-#teamBoardPageV29 .r17lTeamRow{
-  --team:#64748b;
-  display:grid!important;
-  grid-template-columns:150px minmax(0,1fr)!important;
-  gap:8px!important;
-  align-items:stretch!important;
-  border:1px solid #dfe6ec!important;
-  border-left:6px solid var(--team)!important;
-  border-radius:10px!important;
-  background:#fff!important;
-  padding:6px!important;
-  box-sizing:border-box!important;
-  min-height:0!important;
-}
-#teamBoardPageV29 .r17lTeamHead{
-  display:flex!important;
-  flex-direction:column!important;
-  justify-content:center!important;
-  align-items:center!important;
-  gap:5px!important;
-  padding:5px!important;
-  border-radius:8px!important;
-  background:#f5f7f9!important;
-  text-align:center!important;
-  min-width:0!important;
-}
-#teamBoardPageV29 .r17lTeamName{
-  min-width:52px;padding:6px 10px;border-radius:7px;
-  background:var(--team);color:#fff;font-size:15px;font-weight:950;line-height:1;
-}
-#teamBoardPageV29 .r17lLocBadges{
-  display:flex;align-items:center;justify-content:center;gap:4px;flex-wrap:wrap;
-}
-#teamBoardPageV29 .r17lLocBadge{
-  padding:3px 6px;border:1px solid #d5e0e8;border-radius:6px;background:#fff;
-  color:#334e68;font-size:10px;font-weight:900;white-space:nowrap;
-}
-#teamBoardPageV29 .r17lDetail{
-  width:100%;font-size:10px;font-weight:800;color:#66798b;
-  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
-}
-
-/* 최대 6명 한 줄, 7명부터 같은 조의 다음 줄 */
-#teamBoardPageV29 .r17lMembers{
-  display:grid!important;
-  grid-template-columns:repeat(6,minmax(0,1fr))!important;
-  gap:6px!important;
-  align-items:stretch!important;
-  min-width:0!important;
-}
-
-/* 핵심: wrapper에도 2페이지와 동일한 v16QMemberRowClass를 부여하므로
-   30분 즉시확인/재확인/고립 점멸 상태가 2페이지와 동일하게 작동 */
-#teamBoardPageV29 .r17lMemberSlot{
-  min-width:0!important;
-  margin:0!important;
-  padding:0!important;
-  border-radius:8px!important;
-  overflow:hidden!important;
-}
-#teamBoardPageV29 .r17lMemberSlot .v16PCommonMemberCard{
-  width:100%!important;
-  min-width:0!important;
-  height:100%!important;
-  box-sizing:border-box!important;
-}
-
-/* 3페이지에서만 불필요한 두 정보줄 제거 */
-#teamBoardPageV29 .r17lMemberSlot .insideCompactLocation{display:none!important}
-#teamBoardPageV29 .r17lMemberSlot .v251EntryInfo{display:none!important}
-
-/* 원본 카드의 나머지 모양/상태는 유지.
-   한 화면 6열 수용을 위해 크기만 화면폭에 맞춰 유동 축소 */
-#teamBoardPageV29 .r17lMemberSlot .v16PCommonMemberCard{padding:7px 8px!important}
-#teamBoardPageV29 .r17lMemberSlot .v16PIdentityLine{gap:4px!important;min-width:0!important}
-#teamBoardPageV29 .r17lMemberSlot .memberLine{
-  font-size:clamp(10px,.72vw,14px)!important;
-  overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important;
-}
-#teamBoardPageV29 .r17lMemberSlot .compactId{
-  font-size:clamp(8px,.55vw,10px)!important;white-space:nowrap!important;
-}
-#teamBoardPageV29 .r17lMemberSlot .insideCompactBottom{
-  margin-top:5px!important;gap:4px!important;flex-wrap:nowrap!important;
-}
-#teamBoardPageV29 .r17lMemberSlot .insideElapsed,
-#teamBoardPageV29 .r17lMemberSlot .insideStatus{
-  font-size:clamp(9px,.58vw,11px)!important;white-space:nowrap!important;
-}
-
-/* 조가 많아져도 화면 높이를 넘기지 않도록 조별 영역이 남은 높이를 균등 사용 */
-#teamBoardPageV29 #cmdTeamTable{
-  display:grid!important;
-  grid-template-rows:repeat(var(--r17l-team-count,1),minmax(0,1fr))!important;
-  gap:6px!important;
-  padding:7px 12px 10px!important;
-  overflow:hidden!important;
-  min-height:0!important;
-  height:var(--r17l-team-area-height,auto)!important;
-  box-sizing:border-box!important;
-}
-#teamBoardPageV29 .cmdSection:has(#cmdTeamTable){
-  overflow:hidden!important;
-  min-height:0!important;
-}
-
-/* 팀 색 */
-#teamBoardPageV29 .r17lTeamRow.teamC1,#teamBoardPageV29 .r17lTeamName.teamC1{--team:#2563eb}
-#teamBoardPageV29 .r17lTeamRow.teamC2,#teamBoardPageV29 .r17lTeamName.teamC2{--team:#f28705}
-#teamBoardPageV29 .r17lTeamRow.teamC3,#teamBoardPageV29 .r17lTeamName.teamC3{--team:#8b46d8}
-#teamBoardPageV29 .r17lTeamRow.teamC4,#teamBoardPageV29 .r17lTeamName.teamC4{--team:#0f9588}
-#teamBoardPageV29 .r17lTeamRow.teamC5,#teamBoardPageV29 .r17lTeamName.teamC5{--team:#d64c72}
-#teamBoardPageV29 .r17lTeamRow.teamC6,#teamBoardPageV29 .r17lTeamName.teamC6{--team:#607c18}
-#teamBoardPageV29 .r17lTeamRow.teamC7,#teamBoardPageV29 .r17lTeamName.teamC7{--team:#6d42d8}
-#teamBoardPageV29 .r17lTeamRow.teamC8,#teamBoardPageV29 .r17lTeamName.teamC8{--team:#08758d}
-</style>
-
-<script id="r17l-personnel-control-logic">
-(function(){
-  function esc(v){return escapeHtml(String(v??''));}
-  function cleanDetail(v){
-    const s=String(v??'').trim();
-    return (!s||s==='미지정'||/세부\s*장소\s*미지정/i.test(s))?'-':s;
-  }
-
-  /* 30분 '이상'부터 기존 2페이지 안전상태가 작동하도록 공통 상태함수의 경계만 통일 */
-  const oldState=window.v251GetMemberState;
-  if(typeof oldState==='function'){
-    window.v251GetMemberState=function(m){
-      const s=oldState(m);
-      const mins=(s&&Number.isFinite(Number(s.mins)))?Number(s.mins):
-        (typeof v29MemberMinutes==='function'?v29MemberMinutes(m):Number(m&&m.currentMinutes||0));
-      /* 기존 함수가 정확히 30분을 아직 due로 보지 않는 경우만 30분 즉시확인으로 보정 */
-      if(mins===30 && s && !s.isolated && !s.confirmed && !s.due){
-        return Object.assign({},s,{icon:'🚨',text:'즉시확인',due:true,confirmed:false,mins:mins});
+        alert.className='r17pAlert show';
+        alert.innerHTML='<span class="r17pAlertIcon">⚠</span><span class="r17pAlertText"><b>즉시확인 대상 '+urgent.length+'명</b><small>'+E(names.join('　·　'))+(urgent.length>7?'　외 '+(urgent.length-7)+'명':'')+'</small></span>';
       }
-      return s;
-    };
-  }
-
-  window.v29DrawCommandTeamTable=function(teams){
-    const area=document.getElementById('cmdTeamTable');
-    if(!area)return;
-
-    if(!teams.length){
-      area.style.setProperty('--r17l-team-count','1');
-      area.innerHTML='<div class="cmdFloorEmpty">현재 활동 중인 조가 없습니다.</div>';
-      return;
     }
+  };
 
-    area.style.setProperty('--r17l-team-count',String(teams.length));
-
+  /* 조별 배치만 3페이지가 담당. 카드 HTML/상태 class는 2페이지 원본 그대로 호출 */
+  window.v29DrawCommandTeamTable=function(teams){
+    const area=document.getElementById('cmdTeamTable'); if(!area)return;
+    if(!teams.length){area.innerHTML='<div class="cmdFloorEmpty">현재 활동 중인 조가 없습니다.</div>';return;}
     area.innerHTML=teams.map(t=>{
       const css=(typeof v29TeamCss==='function'?v29TeamCss(t.team):'')||'';
       const floor=String(t.floor||'미지정').trim()||'미지정';
       const dir=String(t.direction||'미지정').trim()||'미지정';
-      const detail=cleanDetail(t.detail);
-
+      const det=detail(t.detail);
       const cards=(t.members||[]).map(m=>{
-        const cardMember=Object.assign({},m,{
-          team:t.team,
-          activityNo:Number(t.activityNo||1),
-          direction:dir,
-          floor:floor,
-          detail:detail
-        });
-
-        /* 2페이지와 동일:
-           1) v16QMemberRowClass() = 상태/점멸 class
-           2) v16NMemberCardHtml() = 카드 본문 */
-        const rowClass=(typeof v16QMemberRowClass==='function')
-          ? v16QMemberRowClass(cardMember)
-          : 'memberRow';
-
-        return '<div class="r17lMemberSlot '+rowClass+'">'+
-          v16NMemberCardHtml(cardMember)+
-        '</div>';
+        const cm=Object.assign({},m,{team:t.team,activityNo:Number(t.activityNo||1),direction:dir,floor:floor,detail:det});
+        const rowClass=typeof v16QMemberRowClass==='function'?v16QMemberRowClass(cm):'memberRow';
+        return '<div class="r17pMemberSlot '+rowClass+'">'+v16NMemberCardHtml(cm)+'</div>';
       }).join('');
-
-      return '<div class="r17lTeamRow '+css+'">'+
-        '<div class="r17lTeamHead">'+
-          '<div class="r17lTeamName '+css+'">'+esc(t.team)+'</div>'+
-          '<div class="r17lLocBadges">'+
-            '<span class="r17lLocBadge">'+esc(dir)+'</span>'+
-            '<span class="r17lLocBadge">'+esc(floor)+'</span>'+
-          '</div>'+
-          '<div class="r17lDetail">'+esc(detail)+'</div>'+
-        '</div>'+
-        '<div class="r17lMembers">'+cards+'</div>'+
-      '</div>';
+      return '<div class="r17pTeamRow '+css+'"><div class="r17pTeamHead">'+
+        '<span class="r17pTeamName '+css+'">'+E(t.team)+'</span>'+
+        '<span class="r17pLocs"><span class="r17pLoc">'+E(dir)+'</span><span class="r17pLoc">'+E(floor)+'</span></span>'+
+        '<span class="r17pDetail">세부장소　'+E(det)+'</span></div>'+
+        '<div class="r17pMembers">'+cards+'</div></div>';
     }).join('');
-
-    requestAnimationFrame(r17lFitTeamArea);
+    fitBoard();
   };
 
-  function r17lFitTeamArea(){
-    const page=document.getElementById('teamBoardPageV29');
-    const table=document.getElementById('cmdTeamTable');
-    if(!page||!table||page.classList.contains('hidden'))return;
-
-    const section=table.closest('.cmdSection');
-    if(!section)return;
-
-    const top=section.getBoundingClientRect().top;
-    const viewport=window.innerHeight;
-    const available=Math.max(180,viewport-top-12);
-    section.style.height=available+'px';
-    section.style.maxHeight=available+'px';
-
-    /* section 제목/overview 높이를 제외한 실제 조 카드 영역 */
-    const tableTop=table.getBoundingClientRect().top;
-    table.style.setProperty('--r17l-team-area-height',Math.max(120,viewport-tableTop-12)+'px');
-  }
-
-  const oldDraw=window.drawTeamBoardV29;
-  window.drawTeamBoardV29=function(){
-    /* R17K의 인원관제 draw를 그대로 수행 */
-    if(typeof oldDraw==='function')oldDraw.apply(this,arguments);
-    requestAnimationFrame(r17lFitTeamArea);
-  };
-
-  window.addEventListener('resize',r17lFitTeamArea);
-})();
-</script>
-
-
-<style id="r17m-personnel-layout">
-/* R17M: 현재 카드 크기를 기본값으로 유지. 화면이 부족할 때만 조별영역 축소 */
-
-/* 인원현황은 3페이지 상단에서 항상 표시 */
-#teamBoardPageV29 .cmdOverviewSection{
-  display:block!important;
-  flex:0 0 auto!important;
-}
-
-/* 조 대표영역: 가로형 2줄 */
-#teamBoardPageV29 .r17lTeamRow{
-  grid-template-columns:190px minmax(0,1fr)!important;
-}
-#teamBoardPageV29 .r17lTeamHead{
-  display:grid!important;
-  grid-template-columns:auto 1fr!important;
-  grid-template-rows:auto auto!important;
-  column-gap:8px!important;
-  row-gap:5px!important;
-  align-content:center!important;
-  justify-items:start!important;
-  padding:6px 9px!important;
-  text-align:left!important;
-}
-#teamBoardPageV29 .r17lTeamName{
-  grid-column:1!important;
-  grid-row:1!important;
-  align-self:center!important;
-}
-#teamBoardPageV29 .r17lLocBadges{
-  grid-column:2!important;
-  grid-row:1!important;
-  justify-content:flex-start!important;
-  flex-wrap:nowrap!important;
-}
-#teamBoardPageV29 .r17lDetail{
-  grid-column:1 / -1!important;
-  grid-row:2!important;
-  width:100%!important;
-  padding-left:1px!important;
-  text-align:left!important;
-}
-#teamBoardPageV29 .r17lDetail::before{
-  content:"세부장소  ";
-  color:#8190a0;
-  font-weight:800;
-}
-
-/* 대원카드: R17L에서 확인한 현재 크기를 기본값으로 그대로 유지 */
-#teamBoardPageV29 .r17lMemberSlot{
-  transform-origin:left center;
-}
-
-/* 화면 부족 시에만 적용되는 단계적 축소 */
-#teamBoardPageV29.r17mCompact1 #cmdTeamTable{gap:5px!important}
-#teamBoardPageV29.r17mCompact1 .r17lTeamRow{padding:5px!important}
-#teamBoardPageV29.r17mCompact1 .r17lMemberSlot{font-size:96%!important}
-#teamBoardPageV29.r17mCompact1 .r17lMemberSlot .v16PCommonMemberCard{padding:6px 7px!important}
-
-#teamBoardPageV29.r17mCompact2 #cmdTeamTable{gap:4px!important;padding-top:5px!important;padding-bottom:6px!important}
-#teamBoardPageV29.r17mCompact2 .r17lTeamRow{padding:4px!important;gap:6px!important}
-#teamBoardPageV29.r17mCompact2 .r17lTeamHead{padding:4px 7px!important;row-gap:3px!important}
-#teamBoardPageV29.r17mCompact2 .r17lMemberSlot{font-size:91%!important}
-#teamBoardPageV29.r17mCompact2 .r17lMemberSlot .v16PCommonMemberCard{padding:5px 6px!important}
-#teamBoardPageV29.r17mCompact2 .r17lLocBadge,
-#teamBoardPageV29.r17mCompact2 .r17lDetail{font-size:9px!important}
-
-#teamBoardPageV29.r17mCompact3 #cmdTeamTable{gap:3px!important;padding-top:4px!important;padding-bottom:4px!important}
-#teamBoardPageV29.r17mCompact3 .r17lTeamRow{padding:3px!important;gap:5px!important}
-#teamBoardPageV29.r17mCompact3 .r17lTeamHead{padding:3px 6px!important;row-gap:2px!important}
-#teamBoardPageV29.r17mCompact3 .r17lMemberSlot{font-size:86%!important}
-#teamBoardPageV29.r17mCompact3 .r17lMemberSlot .v16PCommonMemberCard{padding:4px 5px!important}
-#teamBoardPageV29.r17mCompact3 .r17lTeamName{font-size:13px!important;padding:5px 8px!important}
-#teamBoardPageV29.r17mCompact3 .r17lLocBadge,
-#teamBoardPageV29.r17mCompact3 .r17lDetail{font-size:8px!important}
-</style>
-
-<script id="r17m-personnel-layout-logic">
-(function(){
-  function restoreOverview(){
-    const page=document.getElementById('teamBoardPageV29');
-    if(!page)return;
-    /* 기존 인원현황 DOM을 숨기는 후속 스타일/상태가 있어도 다시 표시 */
-    const candidates=[
-      page.querySelector('.cmdOverviewSection'),
-      page.querySelector('#cmdOverview'),
-      page.querySelector('.cmdPeopleSection')
-    ].filter(Boolean);
-    candidates.forEach(el=>{
-      el.style.removeProperty('display');
-      el.style.removeProperty('height');
-      el.style.removeProperty('max-height');
-      el.style.removeProperty('overflow');
-    });
-  }
-
-  function fitPersonnelBoard(){
-    const page=document.getElementById('teamBoardPageV29');
-    const table=document.getElementById('cmdTeamTable');
-    if(!page||!table||page.classList.contains('hidden'))return;
-
-    restoreOverview();
-
-    page.classList.remove('r17mCompact1','r17mCompact2','r17mCompact3');
-
-    /* 실제 행 수: 조별 대원 6명마다 한 행으로 계산 */
-    let requiredRows=0;
-    page.querySelectorAll('.r17lMembers').forEach(box=>{
-      const n=box.children.length;
-      requiredRows+=Math.max(1,Math.ceil(n/6));
-    });
-
-    /* 현재 기본 크기가 들어가면 절대 축소하지 않는다.
-       조/대원이 늘어나 남은 화면을 초과할 때만 단계적으로 축소 */
-    const rect=table.getBoundingClientRect();
-    const available=Math.max(100,window.innerHeight-rect.top-10);
-    const needed=table.scrollHeight;
-
-    if(needed>available){
-      page.classList.add('r17mCompact1');
-      void table.offsetHeight;
-    }
-    if(table.scrollHeight>available){
-      page.classList.remove('r17mCompact1');
-      page.classList.add('r17mCompact2');
-      void table.offsetHeight;
-    }
-    if(table.scrollHeight>available){
-      page.classList.remove('r17mCompact2');
-      page.classList.add('r17mCompact3');
-    }
-
-    /* 스크롤은 계속 만들지 않음 */
-    const section=table.closest('.cmdSection');
-    if(section){
-      section.style.maxHeight=available+'px';
-      section.style.overflow='hidden';
-    }
-  }
-
-  const prevDraw=window.drawTeamBoardV29;
-  window.drawTeamBoardV29=function(){
-    if(typeof prevDraw==='function')prevDraw.apply(this,arguments);
+  function fitBoard(){
+    const page=document.getElementById('teamBoardPageV29'),table=document.getElementById('cmdTeamTable');
+    if(!page||!table||page.style.display==='none')return;
+    page.classList.remove('compact1','compact2');
     requestAnimationFrame(()=>{
-      restoreOverview();
-      fitPersonnelBoard();
+      if(table.scrollHeight>table.clientHeight+2){
+        page.classList.add('compact1');
+        requestAnimationFrame(()=>{
+          if(table.scrollHeight>table.clientHeight+2){page.classList.remove('compact1');page.classList.add('compact2');}
+        });
+      }
     });
-  };
+  }
 
-  window.addEventListener('resize',()=>requestAnimationFrame(fitPersonnelBoard));
-
-  /* 페이지 진입 직후에도 인원현황/크기 재확인 */
-  document.addEventListener('click',function(e){
-    if(e.target.closest && e.target.closest('[data-page="teamBoardPageV29"],#btnTeamBoardV29,.goTeamBoard')){
-      setTimeout(()=>{restoreOverview();fitPersonnelBoard();},50);
-    }
-  });
-})();
-</script>
-
-
-<style id="r17n-density-typography">
-/* R17N: 틀 크기는 유지하고 내부 공간을 글자에 최대한 배분 */
-
-/* 1) 조별현황 상단 요약배너 — 높이/틀 유지, 글자만 확대 */
-#teamBoardPageV29 .cmdTeamSectionHead,
-#teamBoardPageV29 .cmdTeamSummary,
-#teamBoardPageV29 .cmdTeamSummaryRow{
-  min-height:0!important;
-}
-#teamBoardPageV29 .cmdSectionTitle,
-#teamBoardPageV29 .cmdTeamTitle{
-  font-size:20px!important;
-  font-weight:950!important;
-  line-height:1.05!important;
-}
-#teamBoardPageV29 .cmdTeamStat,
-#teamBoardPageV29 .cmdSummaryBox{
-  padding-top:5px!important;
-  padding-bottom:5px!important;
-}
-#teamBoardPageV29 .cmdTeamStat .label,
-#teamBoardPageV29 .cmdSummaryBox .label{
-  font-size:11px!important;
-  line-height:1!important;
-}
-#teamBoardPageV29 .cmdTeamStat b,
-#teamBoardPageV29 .cmdSummaryBox b{
-  font-size:20px!important;
-  line-height:1!important;
-  font-weight:950!important;
-}
-#teamBoardPageV29 .cmdTeamActivitySummary,
-#teamBoardPageV29 .cmdActivitySummary{
-  font-size:14px!important;
-  font-weight:850!important;
-  line-height:1.15!important;
-  white-space:nowrap!important;
-  overflow:hidden!important;
-  text-overflow:ellipsis!important;
-}
-
-/* 실제 현재 DOM에서 쓰는 요약칸도 같은 원칙 */
-#teamBoardPageV29 #cmdTeamOverview{
-  font-size:14px!important;
-  font-weight:850!important;
-}
-#teamBoardPageV29 #cmdTeamOverview b{font-size:16px!important;font-weight:950!important}
-
-/* 2) 조 대표부 — 정확한 2줄, 공간 활용 */
-#teamBoardPageV29 .r17lTeamRow{
-  grid-template-columns:205px minmax(0,1fr)!important;
-}
-#teamBoardPageV29 .r17lTeamHead{
-  grid-template-columns:auto 1fr!important;
-  grid-template-rows:1fr 1fr!important;
-  padding:4px 8px!important;
-  column-gap:7px!important;
-  row-gap:1px!important;
-}
-#teamBoardPageV29 .r17lTeamName{
-  font-size:16px!important;
-  font-weight:950!important;
-  padding:6px 10px!important;
-}
-#teamBoardPageV29 .r17lLocBadge{
-  font-size:11px!important;
-  font-weight:950!important;
-  padding:3px 6px!important;
-}
-#teamBoardPageV29 .r17lDetail{
-  font-size:11px!important;
-  line-height:1.05!important;
-}
-
-/* 3) 대원카드 — 원본 기능/상태/점멸은 그대로.
-      숨긴 두 줄의 빈 공간까지 제거해서 '실제 2줄 높이'로 압축 */
-#teamBoardPageV29 .r17lMemberSlot .insideCompactLocation,
-#teamBoardPageV29 .r17lMemberSlot .v251EntryInfo{
-  display:none!important;
-  height:0!important;
-  min-height:0!important;
-  margin:0!important;
-  padding:0!important;
-}
-#teamBoardPageV29 .r17lMemberSlot .v16PCommonMemberCard{
-  padding:6px 9px!important;
-  min-height:0!important;
-  height:auto!important;
-  display:flex!important;
-  flex-direction:column!important;
-  justify-content:center!important;
-  gap:4px!important;
-}
-#teamBoardPageV29 .r17lMemberSlot .v16PIdentityLine{
-  min-height:0!important;
-  margin:0!important;
-  line-height:1.08!important;
-  align-items:baseline!important;
-}
-#teamBoardPageV29 .r17lMemberSlot .memberLine{
-  font-size:clamp(12px,.83vw,16px)!important;
-  line-height:1.08!important;
-  font-weight:950!important;
-}
-#teamBoardPageV29 .r17lMemberSlot .compactId{
-  font-size:clamp(9px,.60vw,11px)!important;
-  line-height:1!important;
-}
-#teamBoardPageV29 .r17lMemberSlot .insideCompactBottom{
-  min-height:0!important;
-  margin:0!important;
-  padding:0!important;
-  line-height:1.05!important;
-  gap:6px!important;
-}
-#teamBoardPageV29 .r17lMemberSlot .insideElapsed{
-  font-size:clamp(11px,.72vw,14px)!important;
-  line-height:1.05!important;
-  font-weight:950!important;
-}
-#teamBoardPageV29 .r17lMemberSlot .insideStatus{
-  font-size:clamp(10px,.66vw,13px)!important;
-  line-height:1.05!important;
-  font-weight:850!important;
-}
-
-/* 조 사이 세로 여백만 줄여 6개 조 기본크기를 한 화면에 우선 수용 */
-#teamBoardPageV29 #cmdTeamTable{
-  gap:4px!important;
-  padding-top:5px!important;
-  padding-bottom:5px!important;
-}
-#teamBoardPageV29 .r17lTeamRow{
-  padding:4px!important;
-  gap:6px!important;
-}
-
-/* 축소단계에서도 글자 가독성을 최대한 보존 */
-#teamBoardPageV29.r17mCompact1 .r17lMemberSlot{font-size:100%!important}
-#teamBoardPageV29.r17mCompact1 .r17lMemberSlot .v16PCommonMemberCard{padding:5px 8px!important}
-#teamBoardPageV29.r17mCompact2 .r17lMemberSlot{font-size:97%!important}
-#teamBoardPageV29.r17mCompact3 .r17lMemberSlot{font-size:93%!important}
-</style>
-
-<script id="r17n-fit-after-fonts">
-(function(){
-  /* R17M의 화면맞춤 로직은 유지하되,
-     새 2줄 카드 높이가 적용된 뒤 다시 한 번 계산 */
-  const previousDraw=window.drawTeamBoardV29;
   window.drawTeamBoardV29=function(){
-    if(typeof previousDraw==='function')previousDraw.apply(this,arguments);
-    requestAnimationFrame(()=>{
-      requestAnimationFrame(()=>{
-        if(typeof fitPersonnelBoard==='function') fitPersonnelBoard();
-      });
-    });
+    const list=window.__dashboardInsideMembers||[];
+    const teams=typeof v29GroupTeams==='function'?v29GroupTeams(list):[];
+    v29UpdateLiveBoardMetrics();
+    v29DrawCommandTeamTable(teams);
+    const rt=document.getElementById('v29BoardRefreshTime');
+    if(rt)rt.textContent=new Date().toLocaleTimeString('ko-KR',{hour12:false});
   };
+
+  window.openTeamBoardV29=function(){
+    const dashboard=document.getElementById('dashboardPage'),board=document.getElementById('teamBoardPageV29');
+    if(!board)return;
+    if(dashboard)dashboard.style.display='none';
+    board.style.display='block';
+    if(typeof v249NavPush==='function')v249NavPush('teamBoard');
+    const site=document.getElementById('v29BoardSite'),dashSite=document.getElementById('dashboardSiteName');
+    if(site)site.textContent=dashSite?dashSite.textContent:'-';
+    syncStation();
+    drawTeamBoardV29();
+  };
+
+  window.closeTeamBoardV29=function(){
+    const dashboard=document.getElementById('dashboardPage'),board=document.getElementById('teamBoardPageV29');
+    if(board)board.style.display='none';
+    if(dashboard)dashboard.style.display='block';
+  };
+
+  window.refreshTeamBoardV29=async function(){
+    const b=document.getElementById('v29BoardRefreshBtn'),m=b&&b.querySelector('.cmdRefreshMain');
+    if(b)b.disabled=true;if(m)m.textContent='⏳ 처리중...';
+    try{
+      if(typeof loadDashboard==='function')await loadDashboard(false);
+      drawTeamBoardV29();
+    }finally{
+      if(b)b.disabled=false;if(m)m.textContent='↻ 새로고침';
+    }
+  };
+
+  window.addEventListener('resize',fitBoard);
+  document.addEventListener('DOMContentLoaded',syncStation);
 })();
 </script>
 
