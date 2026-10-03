@@ -1986,7 +1986,7 @@ function v17ApplyStationName(){
   const status=document.getElementById("v17StationNameStatus");
   if(status)status.textContent=name?("현재 설정: "+name):"소방서명을 입력해 주세요.";
 }
-const V17_APP_VERSION = "R17R";
+const V17_APP_VERSION = "R17S";
 function v17RenderAppInfo(){
   const el=document.getElementById("v17AppVersionText");
   if(el) el.textContent=V17_APP_VERSION;
@@ -6824,7 +6824,7 @@ async function loadDashboard(
     /* R16F: 큰 화면 상황판은 데이터 변화 때만 구조를 다시 그려 깜빡임을 억제 */
     const v29BoardPage=document.getElementById("teamBoardPageV29");
     if(v29BoardPage && v29BoardPage.style.display!=="none"){
-      v29UpdateRefreshClock();
+      
       if(!isAutoRefresh || v251PrevSignature!==v251NextSignature){
         drawTeamBoardV29();
       }else{
@@ -7038,22 +7038,7 @@ function v29DirectionKey(value){
   return m?m[1]+"방면":"";
 }
 
-function showTeamBoardDetailV29(teamName){
-  const detail=document.getElementById("v29BoardDetail");
-  if(!detail)return;
-  const t=v29GroupTeams(window.__dashboardInsideMembers||[]).find(x=>x.team===teamName);
-  if(!t)return;
-  const st=v29StayState(t.minutes);
-  detail.innerHTML=
-    '<div class="v29DetailTop">'+
-      '<div class="v29DetailTeam">'+escapeHtml(t.team)+' · '+Number(t.activityNo)+'차 진입</div>'+
-      '<div class="v29DetailStatus">'+st.icon+' '+st.text+' · '+Number(t.minutes)+'분</div>'+
-    '</div>'+
-    '<div class="v29DetailLocation">📍 '+escapeHtml(t.floor)+' · '+escapeHtml(t.direction)+
-      ' · '+escapeHtml((t.detail&&t.detail!=="미지정"&&!/세부\s*장소\s*미지정/i.test(t.detail))?t.detail:'-')+
-    '</div>'+
-    '<div class="v29DetailMeta"><span>현재 활동 '+Number(t.count)+'명</span><span>체류시간은 조 내 최장 체류 기준</span></div>';
-}
+
 
 
 
@@ -8496,6 +8481,15 @@ function v29BuildActivitySummary(teams){
     const [f,d]=k.split('|');return (f==='화점층'?'🔥 ':'')+f+(d?' '+d:'')+' '+map[k]+'개조';
   }).join(' · ')||'현재 활동조 없음';
 }
+</script>
+
+
+<script id="r17s-safe-compat">
+/* R17S: 남아 있을 수 있는 과거 호출은 오류를 내지 않고 새 3페이지로 위임 */
+window.v29UpdateRefreshClock=function(){
+  const el=document.getElementById('v29BoardRefreshTime');
+  if(el)el.textContent=new Date().toLocaleTimeString('ko-KR',{hour12:false});
+};
 </script>
 
 <style id="r17p-clean-personnel-board">
