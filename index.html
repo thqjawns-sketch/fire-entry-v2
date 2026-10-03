@@ -1451,6 +1451,30 @@ button:disabled{
 @media(max-width:430px){.dashboardTeamActions{gap:4px}.dashboardTeamMoveBtn,.dashboardTeamSafetyBtn{padding:5px 6px!important;font-size:9.5px!important}.teamLocationV20{font-size:9.5px!important}}
 </style>
 
+<style id="r16fCommandBoard">
+/* R16F - 3페이지: 1920x1080 기준 지휘관용 실시간 상황판. 일반 PC/대형TV 반응형 */
+#teamBoardPageV29{display:none;position:fixed;inset:0;z-index:5000;background:#eef2f6;overflow:auto;color:#16283a;font-family:inherit}
+.cmdBoardShell{min-height:100vh;background:linear-gradient(180deg,#f8fafc 0,#edf2f6 100%)}
+.cmdBoardHeader{height:84px;box-sizing:border-box;display:grid;grid-template-columns:minmax(360px,1fr) 260px minmax(360px,1fr);align-items:center;padding:10px 24px;background:#173d67;color:#fff;box-shadow:0 2px 12px rgba(10,34,59,.18);position:sticky;top:0;z-index:5}
+.cmdBoardHeadLeft{min-width:0}.cmdBoardTitle{font-size:27px;font-weight:950;letter-spacing:-.7px;line-height:1.05}.cmdBoardSite{margin-top:6px;font-size:15px;font-weight:800;opacity:.92;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cmdBoardBrand{text-align:center}.cmdBoardBrand img{height:55px;max-width:220px;object-fit:contain;filter:brightness(0) invert(1);opacity:.96}
+.cmdBoardHeadActions{display:flex;justify-content:flex-end;align-items:center;gap:10px}.cmdRefreshMini{width:92px!important;height:60px!important;margin:0!important;padding:5px!important;border:1px solid rgba(255,255,255,.45)!important;border-radius:9px!important;background:rgba(255,255,255,.1)!important;color:#fff!important;display:flex!important;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:10px!important;font-weight:850!important;line-height:1.05;box-shadow:none!important}.cmdRefreshMini .cmdRefreshMain{font-size:12px;font-weight:950}.cmdBoardBack{width:auto!important;margin:0!important;padding:12px 16px!important;border:1px solid rgba(255,255,255,.35)!important;border-radius:9px!important;background:#fff!important;color:#173d67!important;font-size:13px!important;font-weight:950!important;white-space:nowrap;box-shadow:none!important}
+.cmdBoardMain{max-width:1880px;margin:0 auto;padding:14px 18px 20px;display:grid;gap:12px}.cmdSection{background:#fff;border:1px solid #d8e1ea;border-radius:13px;box-shadow:0 2px 8px rgba(29,54,80,.055);overflow:hidden}.cmdSectionTitleRow{display:flex;align-items:center;gap:16px;padding:11px 14px 8px;border-bottom:1px solid #e4eaf0}.cmdSectionTitle{padding:11px 14px 8px;font-size:18px;font-weight:950;color:#183a5b;letter-spacing:-.3px}.cmdSectionTitleRow .cmdSectionTitle{padding:0;white-space:nowrap}.cmdSectionNo{display:inline-flex;width:25px;height:25px;align-items:center;justify-content:center;border-radius:7px;background:#173d67;color:#fff;font-size:14px;margin-right:5px}.cmdSectionHint{font-size:11px;color:#7a8997;font-weight:800;margin-left:6px}
+.cmdPeopleStats{display:grid;grid-template-columns:repeat(8,minmax(100px,1fr));gap:7px;padding:0 12px 10px}.cmdStat{min-height:69px;border:1px solid #dce4ec;border-radius:10px;background:#f8fafc;display:flex;flex-direction:column;align-items:center;justify-content:center}.cmdStatLabel{font-size:11px;font-weight:900;color:#687a8c}.cmdStatValue{margin-top:3px;font-size:25px;line-height:1;font-weight:950;color:#183a5b}.cmdStat.inside{background:#eef5fb;border-color:#aac4db}.cmdStat.green .cmdStatValue{color:#18834c}.cmdStat.orange .cmdStatValue{color:#d97600}.cmdStat.red .cmdStatValue{color:#c83a32}.cmdStat.critical{background:#fff6f5;border-color:#efb0aa}.cmdStat.critical .cmdStatValue{color:#c52620}.cmdStat.exited .cmdStatValue{color:#277447}
+.cmdAlertBar{margin:0 12px 11px;border-radius:9px;padding:8px 12px;font-size:13px;font-weight:950;text-align:center;border:1px solid #b7dfc5;background:#effaf3;color:#197342}.cmdAlertBar.danger{background:#fff0ef;border-color:#ee8e87;color:#b51f19;animation:cmdPulse 1.8s ease-in-out infinite}@keyframes cmdPulse{50%{box-shadow:0 0 0 3px rgba(213,49,41,.08)}}
+.cmdTeamOverview{min-width:0;flex:1;display:grid;grid-template-columns:135px 145px minmax(360px,1fr);gap:7px}.cmdOverviewBox{min-height:42px;border:1px solid #dce4ec;border-radius:9px;background:#f7f9fb;padding:5px 10px;display:flex;align-items:center;gap:7px}.cmdOverviewBox b{font-size:18px;color:#173d67;white-space:nowrap}.cmdOverviewBox span{font-size:10px;color:#738395;font-weight:850;white-space:nowrap}.cmdOverviewText{font-size:12px!important;color:#334c63!important;white-space:nowrap!important;overflow:hidden;text-overflow:ellipsis}.cmdTeamTable{padding:8px 12px 11px}.cmdTeamHead,.cmdTeamRow{display:grid;grid-template-columns:72px 52px 90px 115px 82px minmax(290px,1fr) 88px;align-items:center;gap:4px}.cmdTeamHead{min-height:29px;color:#748494;font-size:10px;font-weight:900;text-align:center}.cmdTeamRow{--team:#64748b;min-height:46px;border-top:1px solid #e5eaf0;border-left:5px solid var(--team);padding:0 7px;background:#fff;font-size:12px;font-weight:850}.cmdTeamRow:first-of-type{border-top:1px solid #dce3ea}.cmdTeamCell{text-align:center;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.cmdTeamBadge{display:inline-flex;min-width:45px;justify-content:center;padding:6px 8px;border-radius:8px;background:var(--team);color:#fff;font-weight:950}.cmdMini{display:inline-block;max-width:100%;padding:4px 7px;border:1px solid #cbd5df;border-radius:7px;background:#f7f9fb;color:#354b60;font-size:11px;font-weight:900;overflow:hidden;text-overflow:ellipsis;vertical-align:middle}.cmdTeamPeople{text-align:left!important;padding-left:8px}.cmdTeamPeople b{font-size:13px;color:#172b3d;margin-right:8px}.cmdTeamNames{font-size:12px;color:#42586d;font-weight:850}.cmdEntry{font-size:11px;color:#6f7f8e}.cmdTeamRow.teamC1{--team:#2563eb}.cmdTeamRow.teamC2{--team:#f28705}.cmdTeamRow.teamC3{--team:#8b46d8}.cmdTeamRow.teamC4{--team:#0f9588}.cmdTeamRow.teamC5{--team:#d64c72}.cmdTeamRow.teamC6{--team:#607c18}.cmdTeamRow.teamC7{--team:#6d42d8}.cmdTeamRow.teamC8{--team:#08758d}
+.cmdSelectedFloorSummary{margin-left:auto;font-size:12px;font-weight:900;color:#53697d}.cmdLocationGrid{display:grid;grid-template-columns:155px minmax(520px,1fr) 290px;gap:12px;padding:10px 12px 8px}.cmdFloorPanel,.cmdFloorSummary,.cmdPlanPanel{border:1px solid #dce4ec;border-radius:11px;background:#f9fbfc;min-height:330px}.cmdFloorPanel{padding:9px}.cmdFloorPanel .v33PanelTitle,.cmdFloorSummary .v33PanelTitle{font-size:13px;font-weight:950;color:#173d67;margin-bottom:8px}.cmdFloorPanel .v33FloorBtn{width:100%!important;margin:0 0 5px!important;padding:8px 9px!important;min-height:35px!important;border:1px solid #d3dde7!important;border-radius:8px!important;background:#fff!important;color:#314b63!important;font-size:11px!important;font-weight:900!important;display:flex!important;justify-content:space-between;align-items:center;box-shadow:none!important}.cmdFloorPanel .v33FloorBtn.active{background:#173d67!important;color:#fff!important;border-color:#173d67!important}.cmdFloorPanel .v33FloorBtn.fire:not(.active){color:#c72922!important;border-color:#e6a39e!important;background:#fff5f4!important}.cmdFloorSummary{padding:9px}.cmdFloorSummary .v33SummaryRow{display:flex;align-items:center;gap:7px;min-height:37px;border-bottom:1px solid #e5eaf0;font-size:11px}.cmdFloorSummary .v33SummaryRow:last-child{border-bottom:0}.cmdFloorSummary .v33SummaryLoc{min-width:0;flex:1}.cmdFloorSummary .v33SummaryBadge{display:inline-block;padding:3px 6px;border-radius:6px;font-weight:950}.cmdFloorSummary .v33Unresolved{margin-top:8px;padding:7px;border-radius:7px;background:#fff4e8;color:#9b5a00;font-size:10px;font-weight:900}
+.cmdPlanPanel{background:#fff;display:flex;align-items:center;justify-content:center;padding:8px}.cmdPlanPanel .v33Plan{width:min(560px,92%);height:290px}.cmdPlanPanel .v33FaceChip{font-size:12px!important;padding:6px 9px!important;box-shadow:0 1px 4px rgba(0,0,0,.08)}.cmdPlanPanel .v33FloorCenter{font-size:22px!important;font-weight:950!important}.cmdPlanPanel .v33DirLabel{font-size:12px!important;font-weight:950!important}
+.cmdFloorMembers{margin:0 12px 11px;border:1px solid #dce4ec;border-radius:10px;background:#fff;overflow:hidden}.cmdFloorMembers .cmdFloorMemberHead{padding:8px 11px;background:#eef5fb;color:#173d67;font-size:13px;font-weight:950}.cmdFloorMemberList{display:flex;flex-wrap:wrap;gap:6px;padding:8px 10px}.cmdFloorMemberChip{--team:#64748b;display:inline-flex;align-items:center;gap:6px;padding:6px 9px;border:1px solid #d8e1e9;border-left:4px solid var(--team);border-radius:8px;background:#fff;font-size:11px;font-weight:900}.cmdFloorMemberChip b{color:#173d67}.cmdFloorEmpty{padding:12px;text-align:center;color:#7a8998;font-size:11px;font-weight:850}
+@media(min-width:2200px){.cmdBoardMain{max-width:2300px}.cmdBoardTitle{font-size:31px}.cmdPeopleStats{gap:10px}.cmdStat{min-height:80px}.cmdStatValue{font-size:31px}.cmdTeamRow{min-height:54px;font-size:14px}.cmdTeamNames{font-size:14px}.cmdLocationGrid{grid-template-columns:185px minmax(700px,1fr) 350px}.cmdFloorPanel,.cmdFloorSummary,.cmdPlanPanel{min-height:390px}.cmdPlanPanel .v33Plan{height:340px;width:min(680px,94%)}}
+@media(max-width:1200px){.cmdBoardHeader{grid-template-columns:minmax(260px,1fr) 170px minmax(280px,1fr);padding:8px 12px}.cmdBoardBrand img{max-width:150px;height:44px}.cmdBoardTitle{font-size:22px}.cmdPeopleStats{grid-template-columns:repeat(4,1fr)}.cmdTeamOverview{grid-template-columns:110px 120px minmax(250px,1fr)}.cmdTeamHead,.cmdTeamRow{grid-template-columns:60px 46px 78px 96px 72px minmax(230px,1fr) 76px}.cmdLocationGrid{grid-template-columns:135px minmax(430px,1fr) 230px}}
+@media(max-width:850px){#teamBoardPageV29{position:fixed}.cmdBoardHeader{height:auto;min-height:76px;grid-template-columns:1fr auto}.cmdBoardBrand{display:none}.cmdBoardHeadActions{gap:5px}.cmdBoardBack{padding:9px 8px!important;font-size:10px!important}.cmdRefreshMini{width:76px!important;height:54px!important}.cmdBoardMain{min-width:780px;padding:9px}.cmdPeopleStats{grid-template-columns:repeat(8,minmax(84px,1fr))}.cmdTeamOverview{grid-template-columns:105px 115px minmax(300px,1fr)}.cmdLocationGrid{grid-template-columns:125px minmax(400px,1fr) 220px}}
+
+/* 1·2·3페이지 조 색상 완전 통일 */
+.cmdPlanPanel .v33FaceChip.teamC1,.cmdFloorSummary .teamC1{background:#2563eb;color:#fff}.cmdPlanPanel .v33FaceChip.teamC2,.cmdFloorSummary .teamC2{background:#f28705;color:#fff}.cmdPlanPanel .v33FaceChip.teamC3,.cmdFloorSummary .teamC3{background:#8b46d8;color:#fff}.cmdPlanPanel .v33FaceChip.teamC4,.cmdFloorSummary .teamC4{background:#0f9588;color:#fff}.cmdPlanPanel .v33FaceChip.teamC5,.cmdFloorSummary .teamC5{background:#d64c72;color:#fff}.cmdPlanPanel .v33FaceChip.teamC6,.cmdFloorSummary .teamC6{background:#607c18;color:#fff}.cmdPlanPanel .v33FaceChip.teamC7,.cmdFloorSummary .teamC7{background:#6d42d8;color:#fff}.cmdPlanPanel .v33FaceChip.teamC8,.cmdFloorSummary .teamC8{background:#08758d;color:#fff}
+.cmdFloorMemberChip.teamC1{--team:#2563eb}.cmdFloorMemberChip.teamC2{--team:#f28705}.cmdFloorMemberChip.teamC3{--team:#8b46d8}.cmdFloorMemberChip.teamC4{--team:#0f9588}.cmdFloorMemberChip.teamC5{--team:#d64c72}.cmdFloorMemberChip.teamC6{--team:#607c18}.cmdFloorMemberChip.teamC7{--team:#6d42d8}.cmdFloorMemberChip.teamC8{--team:#08758d}
+</style>
+
 <style id="r17d-ui-refine">
 /* R17D UI 정리: 핵심 데이터/투입·철수 로직은 유지하고 표시만 단순화 */
 .mainStationBanner{position:relative!important;padding-right:116px!important}
@@ -1474,19 +1498,6 @@ button:disabled{
 </head>
 
 <body>
-
-<script id="r17r-stay-policy">
-/* R17R 단일 체류시간 정책
-   향후 서버가 설정시트 값을 내려주게 되면 이 객체만 갱신하면 전체 화면이 같은 기준을 사용한다. */
-window.V17_STAY_POLICY=Object.freeze({
-  refreshSeconds:10,
-  cautionStart:21,
-  warningStart:26,
-  criticalStart:30,
-  recheckMinutes:10
-});
-</script>
-
 <div class="container">
 
 <!-- =====================================================
@@ -1986,7 +1997,7 @@ function v17ApplyStationName(){
   const status=document.getElementById("v17StationNameStatus");
   if(status)status.textContent=name?("현재 설정: "+name):"소방서명을 입력해 주세요.";
 }
-const V17_APP_VERSION = "R17S";
+const V17_APP_VERSION = "R17T";
 function v17RenderAppInfo(){
   const el=document.getElementById("v17AppVersionText");
   if(el) el.textContent=V17_APP_VERSION;
@@ -5308,14 +5319,91 @@ async function batchEntryMembers(){
 체류시간 색상
 ===================================================== */
 
-function getStayStatus(minutes){
-  minutes=Number(minutes)||0;
-  const p=window.V17_STAY_POLICY||{cautionStart:21,warningStart:26,criticalStart:30};
-  if(minutes<p.cautionStart)return {className:"stayNormal",icon:"🟢",text:"정상"};
-  if(minutes<p.warningStart)return {className:"stayCaution",icon:"🟠",text:"주의"};
-  if(minutes<p.criticalStart)return {className:"stayWarning",icon:"🔴",text:"경고"};
-  return {className:"stayCritical",icon:"⚠️",text:"장시간 체류 - 즉시 확인"};
+function getStayStatus(
+  minutes
+){
+
+  minutes =
+    Number(
+      minutes
+    ) || 0;
+
+
+  if(
+    minutes <= 20
+  ){
+
+    return{
+
+      className:
+        "stayNormal",
+
+      icon:
+        "🟢",
+
+      text:
+        "정상"
+
+    };
+
+  }
+
+
+  if(
+    minutes <= 25
+  ){
+
+    return{
+
+      className:
+        "stayCaution",
+
+      icon:
+        "🟠",
+
+      text:
+        "주의"
+
+    };
+
+  }
+
+
+  if(
+    minutes <30
+  ){
+
+    return{
+
+      className:
+        "stayWarning",
+
+      icon:
+        "🔴",
+
+      text:
+        "경고"
+
+    };
+
+  }
+
+
+  return{
+
+    className:
+      "stayCritical",
+
+    icon:
+      "⚠️",
+
+    text:
+      "장시간 체류 - 즉시 확인"
+
+  };
+
 }
+
 
 /* =====================================================
 현재 내부대원
@@ -6824,7 +6912,7 @@ async function loadDashboard(
     /* R16F: 큰 화면 상황판은 데이터 변화 때만 구조를 다시 그려 깜빡임을 억제 */
     const v29BoardPage=document.getElementById("teamBoardPageV29");
     if(v29BoardPage && v29BoardPage.style.display!=="none"){
-      
+      v29UpdateRefreshClock();
       if(!isAutoRefresh || v251PrevSignature!==v251NextSignature){
         drawTeamBoardV29();
       }else{
@@ -7017,9 +7105,42 @@ function v28DrawTeamStatus(list){
   out+='</div></div>';
   area.innerHTML=out;
 }
+function v29StayState(minutes){
+  const n=Number(minutes)||0;
+  if(n<=20)return {cls:"normal",icon:"🟢",text:"정상"};
+  if(n<=25)return {cls:"caution",icon:"🟠",text:"주의"};
+  if(n<=30)return {cls:"warning",icon:"🔴",text:"경고"};
+  return {cls:"critical",icon:"🚨",text:"즉시확인"};
+}
 
+function v29GroupTeams(list){
+  const meta=v23LoadMeta(), groups={};
+  (list||[]).forEach(m=>{
+    const vm=meta[String(m.memberId)]||{};
+    const team=vm.teamName||"조 미지정";
+    (groups[team]||(groups[team]=[])).push({m,vm});
+  });
 
-
+  return Object.keys(groups).sort((a,b)=>v28TeamNo(a)-v28TeamNo(b)).map(team=>{
+    const g=groups[team];
+    const unique=(key,fallback)=>[...new Set(g.map(x=>String(x.vm[key]||fallback)))];
+    const dirs=unique("entryDirection","미지정");
+    const floors=unique("activityFloor","미지정");
+    const details=[...new Set(g.map(x=>{const v=String(x.vm.detailLocation||"").trim();return (!v||v==="미지정"||/세부\s*장소\s*미지정/i.test(v))?"-":v;}))];
+    const maxMin=Math.max(...g.map(x=>Number(x.m.currentMinutes)||0));
+    const actNo=Math.max(...g.map(x=>Number(x.vm.teamActivityNo)||1));
+    return {
+      team,
+      count:g.length,
+      activityNo:actNo,
+      minutes:maxMin,
+      direction:dirs.length===1?dirs[0]:"위치 분산",
+      floor:floors.length===1?floors[0]:"위치 분산",
+      detail:details.length===1?details[0]:"위치 분산",
+      dispersed:dirs.length>1||floors.length>1||details.length>1
+    };
+  });
+}
 
 function v29FloorKey(value){
   const v=String(value||"");
@@ -7038,13 +7159,231 @@ function v29DirectionKey(value){
   return m?m[1]+"방면":"";
 }
 
+let v33SelectedFloor="화점층";
+
+function v33TeamClass(team){
+  const n=v28TeamNo(team);
+  if(!Number.isFinite(n)||n>=999999)return "v33C0";
+  return "v33C"+(((n-1)%6)+1);
+}
+
+function v33FloorTeams(teams,floor){
+  return teams.filter(t=>!t.dispersed && v29FloorKey(t.floor)===floor && v29DirectionKey(t.direction));
+}
+
+function selectTeamBoardFloorV33(floor){
+  v33SelectedFloor=floor;
+  drawTeamBoardV29();
+}
 
 
+function drawTeamBoardV29(){
+  const board=document.getElementById("v29LocationBoard");
+  const detail=document.getElementById("v29BoardDetail");
+  const floorPanel=document.getElementById("v33FloorPanel");
+  const summary=document.getElementById("v33SummaryPanel");
+  const stats=document.getElementById("v33BoardStats");
+  const memberArea=document.getElementById("v34FloorMembers");
+  if(!board||!floorPanel||!summary)return;
 
+  const members=window.__dashboardInsideMembers||[];
+  const teams=v29GroupTeams(members);
+  const floors=["옥상","상층","직상층","화점층","직하층","하층","지하층"];
+  const occupied=floors.filter(f=>v33FloorTeams(teams,f).length);
 
+  if(!floors.includes(v33SelectedFloor))v33SelectedFloor="화점층";
+  const selected=v33FloorTeams(teams,v33SelectedFloor);
 
+  floorPanel.innerHTML='<div class="v33PanelTitle">층 선택</div>'+
+    floors.map(f=>{
+      const cnt=v33FloorTeams(teams,f).length;
+      return '<button type="button" class="v33FloorBtn '+(f===v33SelectedFloor?'active ':'')+(f==="화점층"?'fire':'')+
+        '" onclick="selectTeamBoardFloorV33(\''+f+'\')">'+(f==="화점층"?'🔥 ':'')+f+
+        (cnt?'<span class="v33FloorCount">'+cnt+'개조</span>':'')+'</button>';
+    }).join("");
 
-async 
+  function faceHtml(dir,cls){
+    const here=selected.filter(t=>v29DirectionKey(t.direction)===dir);
+    return '<div class="v33Face '+cls+'">'+here.map(t=>{
+      const st=v29StayState(t.minutes);
+      return '<div class="v33FaceChip '+v33TeamClass(t.team)+'" onclick="showTeamBoardDetailV29(\''+escapeAttr(t.team)+'\')" title="'+escapeAttr(st.text+' '+t.minutes+'분')+'">'+
+        escapeHtml(t.team)+' <span>'+Number(t.activityNo)+'차</span>'+
+      '</div>';
+    }).join("")+'</div>';
+  }
+
+  /* 방면 배치: 맨 아래 A, 시계방향 B(왼쪽) → C(위) → D(오른쪽) */
+  board.innerHTML=
+    '<div class="v33Plan">'+
+      '<div class="v33DirLabel v33DirA">C 방면</div>'+
+      '<div class="v33DirLabel v33DirB">D 방면</div>'+
+      '<div class="v33DirLabel v33DirC">A 방면</div>'+
+      '<div class="v33DirLabel v33DirD">B 방면</div>'+
+      faceHtml("C방면","v33FaceA")+
+      faceHtml("D방면","v33FaceB")+
+      faceHtml("A방면","v33FaceC")+
+      faceHtml("B방면","v33FaceD")+
+      '<div class="v33PlanInner"><div class="v33FloorCenter '+(v33SelectedFloor==="화점층"?'fire':'')+'">'+
+        (v33SelectedFloor==="화점층"?'🔥 ':'')+escapeHtml(v33SelectedFloor)+'</div></div>'+
+    '</div>';
+
+  summary.innerHTML='<div class="v33PanelTitle">층별 요약 (현재 위치)</div>'+
+    floors.map(f=>{
+      const here=v33FloorTeams(teams,f);
+      return '<div class="v33SummaryRow"><b style="min-width:42px">'+(f==="화점층"?'🔥 ':'')+escapeHtml(f)+'</b>'+
+        '<div class="v33SummaryLoc">'+(here.length?here.map(t=>
+          '<span class="v33SummaryBadge '+v29TeamCss(t.team)+'">'+escapeHtml(t.team)+'</span> '+escapeHtml(v29DirectionKey(t.direction))
+        ).join('　'):'-')+'</div></div>';
+    }).join("");
+
+  const unresolved=teams.filter(t=>t.dispersed || !v29FloorKey(t.floor) || !v29DirectionKey(t.direction));
+  if(unresolved.length){
+    summary.innerHTML+='<div class="v33Unresolved">⚠ 위치 확인 필요<br>'+unresolved.map(t=>escapeHtml(t.team)).join(", ")+'</div>';
+  }
+
+  if(stats){
+    const total=teams.reduce((s,t)=>s+Number(t.count||0),0);
+    const maxMin=teams.length?Math.max(...teams.map(t=>Number(t.minutes)||0)):0;
+    stats.innerHTML='<span>현재 활동 '+teams.length+'개조 · '+total+'명</span><span>선택 층 '+escapeHtml(v33SelectedFloor)+' · '+selected.length+'개조</span><span>최장 체류 '+maxMin+'분</span>';
+  }
+
+  if(detail){
+    detail.innerHTML='<div class="v29DetailEmpty">조를 누르면 현재 위치 상세정보가 표시됩니다.</div>';
+  }
+
+  /* 선택한 층의 대원목록 - 기존 3. 현장 활동대원 렌더링과 동일한 형태 */
+  if(memberArea){
+    const meta=v23LoadMeta();
+    const floorMembers=members.filter(m=>{
+      const vm=meta[String(m.memberId)]||{};
+      return v29FloorKey(vm.activityFloor)===v33SelectedFloor;
+    });
+
+    memberArea.innerHTML=
+      '<div class="v34FloorMembersHead">'+
+        (v33SelectedFloor==="화점층"?'🔥 ':'')+escapeHtml(v33SelectedFloor)+' 활동대원 '+floorMembers.length+'명'+
+        '<div class="v34FloorMembersSub">현재 선택한 층에서 활동 중인 대원</div>'+
+      '</div>';
+
+    if(!floorMembers.length){
+      memberArea.innerHTML+='<div class="v34FloorMemberEmpty">현재 이 층에서 활동 중인 대원이 없습니다.</div>';
+    }else{
+      const roster=document.createElement("div");
+      roster.className="dashboardRoster";
+      memberArea.appendChild(roster);
+
+      const sorted=[...floorMembers].sort((a,b)=>{
+        const an=v19TeamNumber(v19TeamInfo(a).team);
+        const bn=v19TeamNumber(v19TeamInfo(b).team);
+        return an-bn;
+      });
+
+      const counts={};
+      sorted.forEach(m=>{
+        const ti=v19TeamInfo(m);
+        counts[ti.team]=(counts[ti.team]||0)+1;
+      });
+
+      let lastTeam=null;
+      sorted.forEach(member=>{
+        const info=v19TeamInfo(member);
+
+        if(info.team!==lastTeam){
+          lastTeam=info.team;
+          v19AddTeamDivider(
+            roster,
+            info.team,
+            info.activityNo,
+            counts[info.team],
+            v20TeamLocation(sorted,info.team)
+          );
+        }
+
+        const row=document.createElement("div");
+        const stay=getStayStatus(member.currentMinutes);
+        row.className=v16QMemberRowClass(member);
+
+        row.innerHTML=
+          '<div class="memberDetail">'+
+            '<div class="memberLine">'+
+              escapeHtml(getMemberDisplay(member.memberId,member.memberName))+
+            '</div>'+
+            '<span class="memberId compactId">'+escapeHtml(member.memberId)+'</span>'+
+            (function(){
+              const vm=meta[String(member.memberId)]||{};
+              const floor=vm.activityFloor||"미지정";
+              const team=vm.teamName||"미지정";
+              const dir=vm.entryDirection||"미지정";
+              const detailLoc=(!vm.detailLocation||vm.detailLocation==="미지정"||/세부\s*장소\s*미지정/i.test(vm.detailLocation))?"-":vm.detailLocation;
+              return '<div class="insideCompactLocation">'+
+                '<span class="insideLocText">'+escapeHtml(team)+' · '+activityNo+'차 · '+escapeHtml(dir)+' / </span>'+
+                '<span class="floorMini '+v23FloorClass(floor)+'">'+escapeHtml(floor)+'</span>'+
+                '<span class="insideLocText"> / '+escapeHtml(detailLoc)+'</span>'+
+              '</div>';
+            })()+
+            '<div class="insideCompactBottom">'+
+              '<span>진입 '+escapeHtml(member.entryTime)+' · 현재 '+Number(member.currentMinutes)+'분 · '+Number(member.entryCount)+'회차</span>'+
+              '<span class="insideStatus '+stay.className+'">'+stay.icon+' '+stay.text+'</span>'+
+            '</div>'+
+          '</div>';
+
+        
+        roster.appendChild(row);
+      });
+    }
+  }
+}
+function showTeamBoardDetailV29(teamName){
+  const detail=document.getElementById("v29BoardDetail");
+  if(!detail)return;
+  const t=v29GroupTeams(window.__dashboardInsideMembers||[]).find(x=>x.team===teamName);
+  if(!t)return;
+  const st=v29StayState(t.minutes);
+  detail.innerHTML=
+    '<div class="v29DetailTop">'+
+      '<div class="v29DetailTeam">'+escapeHtml(t.team)+' · '+Number(t.activityNo)+'차 진입</div>'+
+      '<div class="v29DetailStatus">'+st.icon+' '+st.text+' · '+Number(t.minutes)+'분</div>'+
+    '</div>'+
+    '<div class="v29DetailLocation">📍 '+escapeHtml(t.floor)+' · '+escapeHtml(t.direction)+
+      ' · '+escapeHtml((t.detail&&t.detail!=="미지정"&&!/세부\s*장소\s*미지정/i.test(t.detail))?t.detail:'-')+
+    '</div>'+
+    '<div class="v29DetailMeta"><span>현재 활동 '+Number(t.count)+'명</span><span>체류시간은 조 내 최장 체류 기준</span></div>';
+}
+
+function openTeamBoardV29(){
+  const dashboard=document.getElementById("dashboardPage");
+  const board=document.getElementById("teamBoardPageV29");
+  if(!board)return;
+  if(dashboard)dashboard.style.display="none";
+  board.style.display="block";
+  v249NavPush("teamBoard");
+
+  const site=document.getElementById("v29BoardSite");
+  const dashSite=document.getElementById("dashboardSiteName");
+  if(site)site.textContent=dashSite?dashSite.textContent:"";
+
+  drawTeamBoardV29();
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+function closeTeamBoardV29(){
+  const dashboard=document.getElementById("dashboardPage");
+  const board=document.getElementById("teamBoardPageV29");
+  if(board)board.style.display="none";
+  if(dashboard)dashboard.style.display="block";
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+async function refreshTeamBoardV29(){
+  // 기존 안정화된 현황 조회 함수를 그대로 사용
+  await loadDashboard(false);
+  // loadDashboard가 dashboardPage 표시를 건드리지 않으므로 상태판을 다시 표시
+  const dashboard=document.getElementById("dashboardPage");
+  const board=document.getElementById("teamBoardPageV29");
+  if(dashboard)dashboard.style.display="none";
+  if(board)board.style.display="block";
+  drawTeamBoardV29();
+}
 
 
 function v28NextTeamName(){
@@ -8099,7 +8438,7 @@ document.addEventListener("focusin",v249L22DetailQuickEdit);
 </style>
 <script>
 (function(){
-const RECHECK=(window.V17_STAY_POLICY&&window.V17_STAY_POLICY.recheckMinutes)||10;
+const RECHECK=10;
 function esc(v){return typeof escapeHtml==='function'?escapeHtml(String(v??'')):String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
 function attr(v){return esc(v).replace(/`/g,'&#96;');}
 function siteId(){const raw=((document.getElementById('site')||{}).value||'');return typeof v2SiteId==='function'?v2SiteId(raw):raw;}
@@ -8110,7 +8449,7 @@ function teamName(m){try{return v19TeamInfo(m).team||m.team||'미지정';}catch(
 function info(m){try{return v19TeamInfo(m);}catch(e){return {team:m.team||'',activityNo:m.activityNo||m.entryCount||1,direction:m.direction||'',floor:m.floor||'',detail:m.detail||''};}}
 function find(id){return (window.__dashboardInsideMembers||[]).find(m=>String(m.memberId)===String(id));}
 function liveMinutes(m){const server=Number(m&&m.currentMinutes)||0,t=parseTime(m&&m.entryTime);if(!Number.isFinite(t))return server;return Math.max(server,Math.floor(Math.max(0,Date.now()-t)/60000));}
-function state(m){const mins=liveMinutes(m),p=window.V17_STAY_POLICY||{cautionStart:21,warningStart:26,criticalStart:30,recheckMinutes:10};if(m&&m.isolated)return {icon:'🚨',text:'고립대원',due:true,isolated:true,confirmed:false,mins:mins};if(mins<p.criticalStart)return {icon:mins<p.cautionStart?'🟢':mins<p.warningStart?'🟠':'🔴',text:mins<p.cautionStart?'정상':mins<p.warningStart?'주의':'경고',due:false,confirmed:false,mins:mins};const t=parseTime(m&&m.safetyCheckedAt);if(Number.isFinite(t)){const elapsed=Math.max(0,(Date.now()-t)/60000);if(elapsed<RECHECK){const remain=Math.max(1,Math.ceil(RECHECK-elapsed));return {icon:'✓',text:'안전확인 '+hm(m.safetyCheckedAt)+' · 재확인 '+remain+'분 후',due:false,confirmed:true,remain:remain,mins:mins};}return {icon:'🚨',text:'재확인 필요',due:true,recheck:true,confirmed:false,mins:mins};}return {icon:'🚨',text:'즉시확인',due:true,confirmed:false,mins:mins};}
+function state(m){const mins=liveMinutes(m);if(m&&m.isolated)return {icon:'🚨',text:'고립대원',due:true,isolated:true,confirmed:false,mins:mins};if(mins<30)return {icon:mins<=20?'🟢':mins<=25?'🟠':'🔴',text:mins<=20?'정상':mins<=25?'주의':'경고',due:false,confirmed:false,mins:mins};const t=parseTime(m&&m.safetyCheckedAt);if(Number.isFinite(t)){const elapsed=Math.max(0,(Date.now()-t)/60000);if(elapsed<RECHECK){const remain=Math.max(1,Math.ceil(RECHECK-elapsed));return {icon:'✓',text:'안전확인 '+hm(m.safetyCheckedAt)+' · 재확인 '+remain+'분 후',due:false,confirmed:true,remain:remain,mins:mins};}return {icon:'🚨',text:'재확인 필요',due:true,recheck:true,confirmed:false,mins:mins};}return {icon:'🚨',text:'즉시확인',due:true,confirmed:false,mins:mins};}
 window.v251GetMemberState=state;
 
 /* R16R: 서버 변경 성공 직후 1·2·3페이지가 같은 활동대원 상태를 즉시 공유 */
@@ -8218,7 +8557,7 @@ function applyTeamSafetyButtons(){document.querySelectorAll('#dashboardInside .t
 window.v251TeamSafety=async function(team,btn){const ms=(window.__dashboardInsideMembers||[]).filter(m=>teamName(m)===team);if(!ms.length)return;const old=btn?btn.textContent:'🛡 조 안전확인';if(btn){btn.disabled=true;btn.textContent='⏳ 처리중...';}const d=await post('setSafetyCheck',ms.map(m=>m.memberId),{},null);if(d){const now=new Date().toISOString();ms.forEach(m=>{m.safetyCheckedAt=(d.succeeded||[]).find(x=>String(x.id)===String(m.memberId))?.checkedAt||now;});if(btn){btn.classList.add('isConfirmed');btn.textContent='✓ 안전확인';}}else if(btn){btn.textContent=old;}if(btn)btn.disabled=false;applyTeamSafetyButtons();};
 function renderTargets(){const box=document.getElementById('v251SafetyTargets');if(box)box.remove();}
 function applyRows(){['dashboardInside','insideList'].forEach(rootId=>{const root=document.getElementById(rootId);if(!root)return;const source=(window.__dashboardInsideMembers||[]);root.querySelectorAll('.memberRow').forEach(row=>{const idEl=row.querySelector('.compactId');if(!idEl)return;const id=idEl.textContent.trim();const m=source.find(x=>String(x.memberId)===String(id));if(!m)return;const s=state(m);row.classList.remove('v251NeedsCheck','v251SafetyConfirmed','v251IsolationBlink');if(s.isolated)row.classList.add('v251IsolationBlink');else if(s.due)row.classList.add('v251NeedsCheck');else if(s.confirmed)row.classList.add('v251SafetyConfirmed');const elapsed=row.querySelector('.insideElapsed');if(elapsed)elapsed.textContent=(s.mins>=30?'🔴 ':'')+s.mins+'분 경과';const st=row.querySelector('.insideStatus');if(st){st.classList.remove('v251NeedsCheck','v251SafetyConfirmed','v251IsolationBlink');if(s.isolated)st.classList.add('v251IsolationBlink');else if(s.due)st.classList.add('v251NeedsCheck');else if(s.confirmed)st.classList.add('v251SafetyConfirmed');st.textContent=s.icon+' '+s.text;}});});}
-function summary(){const box=document.getElementById('criticalSummary');if(!box)return;const targets=(window.__dashboardInsideMembers||[]).filter(m=>m.isolated||liveMinutes(m)>=((window.V17_STAY_POLICY&&window.V17_STAY_POLICY.criticalStart)||30)),due=targets.filter(m=>state(m).due).length,confirmed=targets.filter(m=>state(m).confirmed).length;box.classList.remove('v251StableCritical');if(due){box.classList.add('hasCritical');box.textContent='⚠️ 30분 이상 또는 고립대원 확인대상 '+due+'명';}else if(confirmed){box.classList.remove('hasCritical');box.classList.add('v251StableCritical');box.textContent='🔴 30분 이상 '+confirmed+'명 · ✓ 안전확인 완료';}else{box.classList.remove('hasCritical');box.textContent='✅ 30분 이상 또는 고립대원 확인대상 0명';}}
+function summary(){const box=document.getElementById('criticalSummary');if(!box)return;const targets=(window.__dashboardInsideMembers||[]).filter(m=>m.isolated||liveMinutes(m)>=30),due=targets.filter(m=>state(m).due).length,confirmed=targets.filter(m=>state(m).confirmed).length;box.classList.remove('v251StableCritical');if(due){box.classList.add('hasCritical');box.textContent='⚠️ 30분 이상 또는 고립대원 확인대상 '+due+'명';}else if(confirmed){box.classList.remove('hasCritical');box.classList.add('v251StableCritical');box.textContent='🔴 30분 이상 '+confirmed+'명 · ✓ 안전확인 완료';}else{box.classList.remove('hasCritical');box.textContent='✅ 30분 이상 또는 고립대원 확인대상 0명';}}
 function refresh(){ensureUI();renderTargets();applyRows();applyTeamSafetyButtons();summary();}
 function overlay(){let o=document.getElementById('dashboardDetailOverlay');if(!o){o=document.createElement('div');o.id='dashboardDetailOverlay';o.className='dashboardDetailOverlay';document.body.appendChild(o);}return o;}
 function directionOptions(cur){const base=['A방면','B방면','C방면','D방면'];const vals=(cur&&!base.includes(cur)?[cur]:[]).concat(base);return vals.map(v=>'<option value="'+attr(v)+'" '+(v===cur?'selected':'')+'>'+esc(v)+'</option>').join('');}
@@ -8334,8 +8673,296 @@ document.addEventListener('DOMContentLoaded',()=>setTimeout(refresh,0));setInter
 </script>
 
 
+<script id="r16fCommandBoardLogic">
+/* R16F 지휘관용 종합현황 - 기존 서버/위치 데이터 재사용 */
+function v29CleanName(m){
+  const raw=String((m&&m.memberName)||"").trim();
+  if(raw)return raw.replace(/\s+(소방사|소방교|소방장|소방위|소방경|소방령|소방정).*$/,'');
+  const d=String(getMemberDisplay((m&&m.memberId)||"",raw)||"").trim();
+  return d.split(/\s+/)[0]||"-";
+}
+function v29MemberMinutes(m){
+  try{ if(typeof liveMinutes==='function') return Number(liveMinutes(m))||0; }catch(e){}
+  return Number(m&&m.currentMinutes)||0;
+}
+function v29GroupTeams(list){
+  const meta=v23LoadMeta(), groups={};
+  (list||[]).forEach(m=>{
+    const vm=meta[String(m.memberId)]||{};
+    const team=vm.teamName||"조 미지정";
+    (groups[team]||(groups[team]=[])).push({m,vm});
+  });
+  return Object.keys(groups).sort((a,b)=>v28TeamNo(a)-v28TeamNo(b)).map(team=>{
+    const g=groups[team];
+    const unique=(key,fallback)=>[...new Set(g.map(x=>String(x.vm[key]||fallback)))];
+    const dirs=unique("entryDirection","미지정"), floors=unique("activityFloor","미지정"), details=[...new Set(g.map(x=>{const v=String(x.vm.detailLocation||"").trim();return (!v||v==="미지정"||/세부\s*장소\s*미지정/i.test(v))?"-":v;}))];
+    const maxMin=Math.max(0,...g.map(x=>v29MemberMinutes(x.m)));
+    const actNo=Math.max(1,...g.map(x=>Number(x.vm.teamActivityNo)||1));
+    const times=g.map(x=>String(x.m.entryTime||"")).filter(Boolean).sort();
+    const raw=times[0]||"-", mt=raw.match(/(\d{2}:\d{2}:\d{2})/);
+    return {team,count:g.length,activityNo:actNo,minutes:maxMin,
+      direction:dirs.length===1?dirs[0]:"위치 분산",floor:floors.length===1?floors[0]:"위치 분산",detail:details.length===1?details[0]:"위치 분산",
+      dispersed:dirs.length>1||floors.length>1||details.length>1,
+      names:g.map(x=>v29CleanName(x.m)).filter(Boolean),members:g.map(x=>x.m),entryTime:mt?mt[1]:raw};
+  });
+}
+function v29TeamCss(team){ return (typeof v19TeamColorClass==='function'?v19TeamColorClass(team):'')||''; }
+function v29UpdateRefreshClock(){ if(window.v29UpdateSyncState) window.v29UpdateSyncState(); }
+function v29BuildActivitySummary(teams){
+  const map={};
+  (teams||[]).forEach(t=>{
+    const f=v29FloorKey(t.floor)||'위치미지정'; const d=v29DirectionKey(t.direction)||'';
+    const k=f+'|'+d; map[k]=(map[k]||0)+1;
+  });
+  const order=['화점층','직상층','직하층','상층','하층','지하층','옥상','위치미지정'];
+  return Object.keys(map).sort((a,b)=>order.indexOf(a.split('|')[0])-order.indexOf(b.split('|')[0])).map(k=>{
+    const [f,d]=k.split('|'); return (f==='화점층'?'🔥 ':'')+f+(d?' '+d:'')+' '+map[k]+'개조';
+  }).join(' · ')||'현재 활동조 없음';
+}
+function v29UpdateLiveBoardMetrics(){
+  const list=window.__dashboardInsideMembers||[], dash=window.__v29Dashboard||{}, teams=v29GroupTeams(list);
+  let g=0,o=0,r=0,c=0; const urgent=[];
+  list.forEach(m=>{
+    const min=v29MemberMinutes(m); if(min<=20)g++; else if(min<=25)o++; else if(min<30)r++; else c++;
+    if(min>=30 || m.isolated) urgent.push({m,min});
+  });
+  const uniqueUrgent=[...new Map(urgent.map(x=>[String(x.m.memberId),x])).values()];
+  const stats=document.getElementById('cmdPeopleStats');
+  if(stats)stats.innerHTML=[
+    ['현장 참여',Number(dash.uniqueMemberCount||list.length),''],['현재 내부',list.length,'inside'],['0~20분',g,'green'],['21~25분',o,'orange'],['26~29분',r,'red'],['30분 이상',c,'critical'],['즉시확인',uniqueUrgent.length,'critical'],['철수완료',Number(dash.exitedCount||0),'exited']
+  ].map(x=>'<div class="cmdStat '+x[2]+'"><div class="cmdStatLabel">'+x[0]+'</div><div class="cmdStatValue">'+x[1]+'명</div></div>').join('');
+  const alert=document.getElementById('cmdAlertBar');
+  if(alert){
+    if(!uniqueUrgent.length){alert.className='cmdAlertBar ok';alert.textContent='✓ 현재 즉시확인 대상 없음';}
+    else{
+      const txt=uniqueUrgent.slice(0,5).map(x=>{const meta=v23LoadMeta()[String(x.m.memberId)]||{};return (meta.teamName?meta.teamName+' ':'')+v29CleanName(x.m)+(x.m.isolated?' 고립':' '+x.min+'분');}).join('　│　');
+      alert.className='cmdAlertBar danger'; alert.textContent='⚠ 즉시확인 '+uniqueUrgent.length+'명　│　'+txt+(uniqueUrgent.length>5?' 외 '+(uniqueUrgent.length-5)+'명':'');
+    }
+  }
+  const ov=document.getElementById('cmdTeamOverview');
+  if(ov){const total=teams.reduce((a,t)=>a+t.count,0);ov.innerHTML='<div class="cmdOverviewBox"><span>활동조</span><b>'+teams.length+'개 조</b></div><div class="cmdOverviewBox"><span>총 조원</span><b>'+total+'명</b></div><div class="cmdOverviewBox"><span>현재 활동요약</span><span class="cmdOverviewText">'+escapeHtml(v29BuildActivitySummary(teams))+'</span></div>';}
+  const sel=document.getElementById('cmdSelectedFloorSummary');
+  if(sel){const here=teams.filter(t=>!t.dispersed&&v29FloorKey(t.floor)===v33SelectedFloor);sel.textContent=(v33SelectedFloor==='화점층'?'🔥 ':'')+v33SelectedFloor+' · '+here.length+'개조 · '+here.reduce((a,t)=>a+t.count,0)+'명';}
+}
+function v29DrawCommandTeamTable(teams){
+  const area=document.getElementById('cmdTeamTable'); if(!area)return;
+  if(!teams.length){area.innerHTML='<div class="cmdFloorEmpty">현재 활동 중인 조가 없습니다.</div>';return;}
+  let h='<div class="cmdTeamHead"><div>조</div><div>차수</div><div>층</div><div>세부장소</div><div>방면</div><div>인원 · 대원이름</div><div>진입시간</div></div>';
+  teams.forEach(t=>{const floor=t.floor||'미지정',detail=(!t.detail||t.detail==='미지정'||/세부\s*장소\s*미지정/i.test(t.detail))?'-':t.detail,dir=t.direction||'미지정';h+='<div class="cmdTeamRow '+v29TeamCss(t.team)+'"><div class="cmdTeamCell"><span class="cmdTeamBadge">'+escapeHtml(t.team)+'</span></div><div class="cmdTeamCell">'+Number(t.activityNo||1)+'차</div><div class="cmdTeamCell"><span class="cmdMini">'+escapeHtml(floor)+'</span></div><div class="cmdTeamCell"><span class="cmdMini">'+escapeHtml(detail)+'</span></div><div class="cmdTeamCell"><span class="cmdMini">'+escapeHtml(dir)+'</span></div><div class="cmdTeamCell cmdTeamPeople"><b>'+t.count+'명</b><span class="cmdTeamNames">'+escapeHtml(t.names.join(' · '))+'</span></div><div class="cmdTeamCell cmdEntry">'+escapeHtml(t.entryTime||'-')+'</div></div>';});
+  area.innerHTML=h;
+}
+function drawTeamBoardV29(){
+  const list=window.__dashboardInsideMembers||[], teams=v29GroupTeams(list), floors=['옥상','상층','직상층','화점층','직하층','하층','지하층'];
+  v29UpdateLiveBoardMetrics(); v29DrawCommandTeamTable(teams);
+  const floorPanel=document.getElementById('v33FloorPanel'),board=document.getElementById('v29LocationBoard'),summary=document.getElementById('v33SummaryPanel'),memberArea=document.getElementById('v34FloorMembers');
+  if(!floorPanel||!board||!summary)return;
+  if(!floors.includes(v33SelectedFloor))v33SelectedFloor='화점층';
+  const floorTeams=f=>teams.filter(t=>!t.dispersed&&v29FloorKey(t.floor)===f);
+  const selected=floorTeams(v33SelectedFloor).filter(t=>v29DirectionKey(t.direction));
+  floorPanel.innerHTML='<div class="v33PanelTitle">층 선택</div>'+floors.map(f=>'<button type="button" class="v33FloorBtn '+(f===v33SelectedFloor?'active ':'')+(f==='화점층'?'fire':'')+'" onclick="selectTeamBoardFloorV33(\''+f+'\')"><span>'+(f==='화점층'?'🔥 ':'')+f+'</span><span>'+(floorTeams(f).length?floorTeams(f).length+'개조':'-')+'</span></button>').join('');
+  function face(dir,cls){const here=selected.filter(t=>v29DirectionKey(t.direction)===dir);return '<div class="v33Face '+cls+'">'+here.map(t=>'<div class="v33FaceChip '+v29TeamCss(t.team)+'" title="'+escapeAttr(t.names.join(', '))+'">'+escapeHtml(t.team)+' · '+t.count+'명</div>').join('')+'</div>';}
+  board.innerHTML='<div class="v33Plan"><div class="v33DirLabel v33DirA">C 방면</div><div class="v33DirLabel v33DirB">D 방면</div><div class="v33DirLabel v33DirC">A 방면</div><div class="v33DirLabel v33DirD">B 방면</div>'+face('C방면','v33FaceA')+face('D방면','v33FaceB')+face('A방면','v33FaceC')+face('B방면','v33FaceD')+'<div class="v33PlanInner"><div class="v33FloorCenter '+(v33SelectedFloor==='화점층'?'fire':'')+'">'+(v33SelectedFloor==='화점층'?'🔥 ':'')+escapeHtml(v33SelectedFloor)+'</div></div></div>';
+  summary.innerHTML='<div class="v33PanelTitle">층별 배치요약</div>'+floors.map(f=>{const here=floorTeams(f);return '<div class="v33SummaryRow"><b style="min-width:50px">'+(f==='화점층'?'🔥 ':'')+escapeHtml(f)+'</b><div class="v33SummaryLoc">'+(here.length?here.map(t=>'<span class="v33SummaryBadge '+v29TeamCss(t.team)+'">'+escapeHtml(t.team)+'</span> '+escapeHtml(v29DirectionKey(t.direction)||'미지정')+' '+t.count+'명').join('<br>'):'-')+'</div></div>';}).join('');
+  const unresolved=teams.filter(t=>t.dispersed||!v29FloorKey(t.floor)||!v29DirectionKey(t.direction)); if(unresolved.length)summary.innerHTML+='<div class="v33Unresolved">⚠ 위치 확인 필요 · '+unresolved.map(t=>escapeHtml(t.team)).join(', ')+'</div>';
+  if(memberArea){const meta=v23LoadMeta(), fm=list.filter(m=>v29FloorKey((meta[String(m.memberId)]||{}).activityFloor)===v33SelectedFloor);memberArea.innerHTML='<div class="cmdFloorMemberHead">'+(v33SelectedFloor==='화점층'?'🔥 ':'')+escapeHtml(v33SelectedFloor)+' 활동대원 '+fm.length+'명</div>'+(fm.length?'<div class="cmdFloorMemberList">'+fm.map(m=>{const vm=meta[String(m.memberId)]||{};return '<span class="cmdFloorMemberChip '+v29TeamCss(vm.teamName||'')+'"><b>'+escapeHtml(vm.teamName||'미지정')+'</b>'+escapeHtml(v29CleanName(m))+' · '+escapeHtml(vm.entryDirection||'미지정')+'</span>';}).join('')+'</div>':'<div class="cmdFloorEmpty">현재 이 층에서 활동 중인 대원이 없습니다.</div>');}
+  v29UpdateLiveBoardMetrics();
+}
+function selectTeamBoardFloorV33(floor){v33SelectedFloor=floor;drawTeamBoardV29();}
+function openTeamBoardV29(){
+  const dashboard=document.getElementById('dashboardPage'),board=document.getElementById('teamBoardPageV29'); if(!board)return;
+  if(dashboard)dashboard.style.display='none'; board.style.display='block'; v249NavPush('teamBoard');
+  const site=document.getElementById('v29BoardSite'),dashSite=document.getElementById('dashboardSiteName'); if(site)site.textContent=dashSite?dashSite.textContent:'-';
+  v29UpdateRefreshClock(); drawTeamBoardV29(); window.scrollTo({top:0,behavior:'auto'});
+}
+function closeTeamBoardV29(){const dashboard=document.getElementById('dashboardPage'),board=document.getElementById('teamBoardPageV29');if(board)board.style.display='none';if(dashboard)dashboard.style.display='block';window.scrollTo({top:0,behavior:'auto'});}
+async function refreshTeamBoardV29(){
+  const b=document.getElementById('v29BoardRefreshBtn'),m=b&&b.querySelector('.cmdRefreshMain'); if(b)b.disabled=true;if(m)m.textContent='⏳ 처리중...';
+  try{await loadDashboard(false);drawTeamBoardV29();v29UpdateRefreshClock();}finally{if(b)b.disabled=false;if(m)m.textContent='↻ 새로고침';}
+}
+/* 서버 10초 갱신과 별개로 체류구간/경고 숫자는 로컬시각으로 조용히 갱신 */
+setInterval(function(){const p=document.getElementById('teamBoardPageV29');if(p&&p.style.display!== 'none')v29UpdateLiveBoardMetrics();},1000);
+</script>
+
+<style id="r16gCommandBoardPremium">
+/* R16G - 대형 모니터 지휘상황판 최종 레이아웃 */
+#teamBoardPageV29{width:100vw!important;max-width:none!important;margin:0!important;background:#e9eef3!important}
+#teamBoardPageV29 .cmdBoardShell{width:100%;max-width:none!important;margin:0!important}
+#teamBoardPageV29 .cmdBoardHeader{height:86px;grid-template-columns:minmax(430px,1fr) 300px minmax(470px,1fr);padding:9px 1.5vw}
+#teamBoardPageV29 .cmdBoardBrand{display:flex;justify-content:center;align-items:center}
+#teamBoardPageV29 .cmdBoardBrand img{height:60px;max-width:260px;filter:none!important;opacity:1!important;object-fit:contain;background:#fff;border-radius:10px;padding:5px 12px;box-sizing:border-box}
+#teamBoardPageV29 .cmdBoardHeadActions{gap:12px}
+#teamBoardPageV29 .cmdRefreshMini{width:132px!important;height:64px!important;font-size:11px!important}
+#teamBoardPageV29 .cmdRefreshMini .cmdRefreshMain{font-size:14px}
+#teamBoardPageV29 .cmdBoardBack{font-size:14px!important;padding:13px 18px!important}
+#teamBoardPageV29 .cmdBoardMain{width:97vw!important;max-width:none!important;margin:0 auto!important;padding:12px 0 28px!important;gap:10px!important}
+#teamBoardPageV29 .cmdSection{border-radius:12px}
+#teamBoardPageV29 .cmdSectionTitle{font-size:19px}
+#teamBoardPageV29 .cmdPeopleStats{gap:8px;padding:0 12px 8px}
+#teamBoardPageV29 .cmdStat{min-height:64px}.cmdStatLabel{font-size:12px}.cmdStatValue{font-size:27px}
+#teamBoardPageV29 .cmdAlertBar{margin-bottom:9px;padding:7px 12px}
+#teamBoardPageV29 .cmdTeamRow{min-height:43px;font-size:13px}
+#teamBoardPageV29 .cmdTeamNames{font-size:13px}
+#teamBoardPageV29 .cmdOverviewText{font-size:13px!important}
+#teamBoardPageV29 .cmdLocationGrid{grid-template-columns:180px minmax(760px,1fr) 340px;gap:14px;padding:9px 12px 12px}
+#teamBoardPageV29 .cmdFloorPanel,#teamBoardPageV29 .cmdFloorSummary,#teamBoardPageV29 .cmdPlanPanel{min-height:315px}
+#teamBoardPageV29 .cmdFloorPanel .v33FloorBtn{min-height:36px!important;font-size:12px!important}
+#teamBoardPageV29 .cmdPlanPanel .v33Plan{width:min(760px,96%)!important;height:295px!important}
+#teamBoardPageV29 .cmdPlanPanel .v33FaceChip{font-size:14px!important;padding:7px 11px!important}
+#teamBoardPageV29 .cmdPlanPanel .v33FloorCenter{font-size:26px!important}
+#teamBoardPageV29 .cmdPlanPanel .v33DirLabel{font-size:14px!important}
+#teamBoardPageV29 .cmdFloorSummary{padding:12px!important}
+#teamBoardPageV29 .cmdFloorSummary .v33PanelTitle{font-size:15px!important}
+.cmdSelectedTeamBox{border:1px solid #dce4ec;border-left:5px solid var(--team,#64748b);border-radius:10px;background:#fff;padding:10px 11px;margin-bottom:8px}
+.cmdSelectedTeamTop{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:13px;font-weight:950}.cmdSelectedNames{margin-top:7px;font-size:12px;font-weight:850;color:#42586d;line-height:1.5}.cmdSelectedMeta{margin-top:5px;color:#6a7d8f;font-size:11px;font-weight:850}
+.cmdFloorWarning{color:#b42318;font-weight:950}
+/* 상세 대원은 첫 화면 아래, 선택층 기준 / 조별 묶음 / 3열 */
+#teamBoardPageV29 .cmdMemberDetailSection{margin-top:4px;overflow:visible}
+#teamBoardPageV29 .cmdFloorMembers{margin:0!important;border:0!important;border-radius:0!important;overflow:visible!important}
+#teamBoardPageV29 .cmdFloorMemberHead{padding:14px 16px!important;background:#173d67!important;color:#fff!important;font-size:20px!important;display:flex;align-items:center;justify-content:space-between}
+.cmdMonitorTeamGroup{padding:14px 16px 18px;border-top:1px solid #e1e7ed}.cmdMonitorTeamTitle{--team:#64748b;display:flex;align-items:center;gap:10px;border-left:6px solid var(--team);padding:7px 10px;margin-bottom:10px;background:#f5f8fa;border-radius:8px;font-size:15px;font-weight:950;color:#183a5b}.cmdMonitorTeamTitle .loc{margin-left:auto;color:#5b7083;font-size:12px}
+.cmdMonitorMemberGrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.cmdMonitorMemberCard{--team:#64748b;border:1px solid #d8e1e9;border-top:5px solid var(--team);border-radius:11px;background:#fff;padding:12px 13px;min-height:118px;box-shadow:0 2px 6px rgba(20,45,70,.05)}
+.cmdMonitorMemberCard.due{border-color:#e16b63;background:#fff7f6}.cmdMonitorMemberCard.confirmed{background:#f5fbf7}.cmdMonitorMemberCard.isolated{border-color:#d32820;background:#fff1f0;animation:cmdPulse 1.8s ease-in-out infinite}
+.cmdMonitorMemberName{font-size:18px;font-weight:950;color:#142b40}.cmdMonitorMemberDept{font-size:12px;font-weight:800;color:#718294;margin-left:7px}.cmdMonitorMemberLoc{margin-top:8px;font-size:13px;font-weight:900;color:#334e68}.cmdMonitorMemberBottom{margin-top:10px;display:flex;flex-wrap:wrap;gap:6px;align-items:center}.cmdMonitorPill{padding:5px 8px;border-radius:999px;background:#edf2f6;color:#40576c;font-size:12px;font-weight:900}.cmdMonitorPill.elapsed.warn{background:#fff0ef;color:#b42318}.cmdMonitorPill.safety{background:#eaf8ef;color:#087a37}.cmdMonitorPill.safety.due{background:#fff0ef;color:#b42318}
+.cmdNoMembers{padding:28px;text-align:center;color:#718294;font-size:15px;font-weight:850}
+/* 통신상태 */
+.cmdSyncState{font-weight:950}.cmdSyncState.ok{color:#d9ffe7}.cmdSyncState.loading{color:#fff0ad}.cmdSyncState.delay{color:#ffd0cc}
+/* 조 색상 공통 */
+.cmdSelectedTeamBox.teamC1,.cmdMonitorTeamTitle.teamC1,.cmdMonitorMemberCard.teamC1{--team:#2563eb}.cmdSelectedTeamBox.teamC2,.cmdMonitorTeamTitle.teamC2,.cmdMonitorMemberCard.teamC2{--team:#f28705}.cmdSelectedTeamBox.teamC3,.cmdMonitorTeamTitle.teamC3,.cmdMonitorMemberCard.teamC3{--team:#8b46d8}.cmdSelectedTeamBox.teamC4,.cmdMonitorTeamTitle.teamC4,.cmdMonitorMemberCard.teamC4{--team:#0f9588}.cmdSelectedTeamBox.teamC5,.cmdMonitorTeamTitle.teamC5,.cmdMonitorMemberCard.teamC5{--team:#d64c72}.cmdSelectedTeamBox.teamC6,.cmdMonitorTeamTitle.teamC6,.cmdMonitorMemberCard.teamC6{--team:#607c18}.cmdSelectedTeamBox.teamC7,.cmdMonitorTeamTitle.teamC7,.cmdMonitorMemberCard.teamC7{--team:#6d42d8}.cmdSelectedTeamBox.teamC8,.cmdMonitorTeamTitle.teamC8,.cmdMonitorMemberCard.teamC8{--team:#08758d}
+@media(max-width:1500px){#teamBoardPageV29 .cmdLocationGrid{grid-template-columns:155px minmax(600px,1fr) 300px}.cmdMonitorMemberGrid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:1050px){#teamBoardPageV29 .cmdBoardMain{width:98vw!important;min-width:900px}.cmdMonitorMemberGrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:760px){.cmdMonitorMemberGrid{grid-template-columns:1fr}}
+</style>
+<script id="r16gCommandBoardLogic">
+(function(){
+  const RECHECK_MIN=10;
+  function parseT(v){if(!v)return NaN;return Date.parse(String(v).includes('T')?String(v):String(v).replace(' ','T'));}
+  function liveMin(m){const server=Number(m&&m.currentMinutes)||0,t=parseT(m&&m.entryTime);return Number.isFinite(t)?Math.max(server,Math.floor(Math.max(0,Date.now()-t)/60000)):server;}
+  function safeState(m){const mins=liveMin(m);if(m&&m.isolated)return {due:true,isolated:true,confirmed:false,text:'🚨 고립대원',mins};if(mins<30)return {due:false,confirmed:false,text:(mins<=20?'🟢 정상':mins<=25?'🟠 주의':'🔴 경고'),mins};const t=parseT(m&&m.safetyCheckedAt);if(Number.isFinite(t)){const e=(Date.now()-t)/60000;if(e<RECHECK_MIN){const r=Math.max(1,Math.ceil(RECHECK_MIN-e));return {due:false,confirmed:true,text:'✓ 안전확인 · 재확인 '+r+'분',remain:r,mins};}return {due:true,confirmed:false,text:'🚨 재확인 필요',mins};}return {due:true,confirmed:false,text:'🚨 즉시확인',mins};}
+  function teamInfo(m){try{return v19TeamInfo(m)}catch(e){return {team:m.team||'미지정',activityNo:m.activityNo||m.entryCount||1,direction:m.direction||'',floor:m.floor||'',detail:m.detail||''}}}
+  function cleanName(m){return v29CleanName(m)||m.memberName||'-'}
+  function dept(m){const d=typeof getMemberDisplay==='function'?String(getMemberDisplay(m.memberId,m.memberName)||''):'';const a=d.split(' / ');return a.length>=3?a.slice(2).join(' / '):'';}
+  function esc(v){return escapeHtml(String(v??''));}
+  function css(team){return v29TeamCss(team)||'';}
+  function memberFloor(m){const vm=(typeof v23LoadMeta==='function'?v23LoadMeta():{})[String(m.memberId)]||{};const ti=teamInfo(m);return vm.activityFloor||ti.floor||'미지정';}
+  function memberDirection(m){const vm=(typeof v23LoadMeta==='function'?v23LoadMeta():{})[String(m.memberId)]||{};const ti=teamInfo(m);return vm.entryDirection||ti.direction||'미지정';}
+  function memberDetail(m){const vm=(typeof v23LoadMeta==='function'?v23LoadMeta():{})[String(m.memberId)]||{};const ti=teamInfo(m);return vm.detailLocation||ti.detail||'-';}
+  function memberTeam(m){const vm=(typeof v23LoadMeta==='function'?v23LoadMeta():{})[String(m.memberId)]||{};return vm.teamName||teamInfo(m).team||'미지정';}
+  function memberAct(m){const vm=(typeof v23LoadMeta==='function'?v23LoadMeta():{})[String(m.memberId)]||{};return Number(vm.teamActivityNo||teamInfo(m).activityNo||m.entryCount||1)||1;}
+  window.v29RenderSelectedFloorPremium=function(){
+    const area=document.getElementById('v34FloorMembers'), summary=document.getElementById('v33SummaryPanel'); if(!area||!summary)return;
+    const list=window.__dashboardInsideMembers||[];
+    const fm=list.filter(m=>v29FloorKey(memberFloor(m))===v33SelectedFloor);
+    const groups={};fm.forEach(m=>{const t=memberTeam(m);(groups[t]||(groups[t]=[])).push(m);});
+    const teams=Object.keys(groups).sort((a,b)=>v19TeamNumber(a)-v19TeamNumber(b));
+    const floorPanel=document.getElementById('v33FloorPanel');
+    if(floorPanel){
+      const floors=['옥상','상층','직상층','화점층','직하층','하층','지하층'];
+      floorPanel.innerHTML='<div class="v33PanelTitle">층 선택</div>'+floors.map(f=>{const ms=list.filter(m=>v29FloorKey(memberFloor(m))===f),warn=ms.filter(m=>safeState(m).due).length;return '<button type="button" class="v33FloorBtn '+(f===v33SelectedFloor?'active ':'')+(f==='화점층'?'fire':'')+'" onclick="selectTeamBoardFloorV33(\''+f+'\')"><span>'+(f==='화점층'?'🔥 ':'')+f+'</span><span>'+ms.length+'명'+(warn?' · ⚠'+warn:'')+'</span></button>';}).join('');
+    }
+    summary.innerHTML='<div class="v33PanelTitle">선택층 활동요약</div>'+(teams.length?teams.map(t=>{const ms=groups[t], warn=ms.filter(m=>safeState(m).due).length;return '<div class="cmdSelectedTeamBox '+css(t)+'"><div class="cmdSelectedTeamTop"><span>'+esc(t)+' · '+ms.length+'명</span>'+(warn?'<span class="cmdFloorWarning">⚠ '+warn+'명</span>':'<span>정상</span>')+'</div><div class="cmdSelectedNames">'+ms.map(cleanName).map(esc).join(' · ')+'</div><div class="cmdSelectedMeta">'+esc(memberDirection(ms[0]))+' · '+esc(memberDetail(ms[0]))+'</div></div>';}).join(''):'<div class="cmdNoMembers">현재 선택한 층에 활동대원이 없습니다.</div>');
+    let html='<div class="cmdFloorMemberHead"><span>'+(v33SelectedFloor==='화점층'?'🔥 ':'')+esc(v33SelectedFloor)+' 현장 활동대원 '+fm.length+'명</span><span style="font-size:12px;opacity:.85">2페이지와 동일 상태기준</span></div>';
+    if(!fm.length){area.innerHTML=html+'<div class="cmdNoMembers">현재 이 층에서 활동 중인 대원이 없습니다.</div>';return;}
+    teams.forEach(t=>{const ms=groups[t], first=ms[0];html+='<div class="cmdMonitorTeamGroup"><div class="cmdMonitorTeamTitle '+css(t)+'"><span>'+esc(t)+' · '+memberAct(first)+'차 · '+ms.length+'명</span><span class="loc">'+esc(memberDirection(first))+' · '+esc(memberDetail(first))+'</span></div><div class="cmdMonitorMemberGrid">';ms.forEach(m=>{const st=safeState(m), cls=st.isolated?'isolated':st.due?'due':st.confirmed?'confirmed':'';html+='<div class="cmdMonitorMemberCard '+css(t)+' '+cls+'"><div><span class="cmdMonitorMemberName">'+esc(cleanName(m))+'</span>'+(dept(m)?'<span class="cmdMonitorMemberDept">'+esc(dept(m))+'</span>':'')+'</div><div class="cmdMonitorMemberLoc">'+esc(memberTeam(m))+' · '+memberAct(m)+'차 · '+esc(memberFloor(m))+' · '+esc(memberDirection(m))+' · '+esc(memberDetail(m))+'</div><div class="cmdMonitorMemberBottom"><span class="cmdMonitorPill">진입 '+esc(m.entryTime||'-')+'</span><span class="cmdMonitorPill elapsed '+(st.mins>=30?'warn':'')+'">'+(st.mins>=30?'🔴 ':'')+st.mins+'분 경과</span><span class="cmdMonitorPill safety '+(st.due?'due':'')+'">'+esc(st.text)+'</span></div></div>';});html+='</div></div>';});area.innerHTML=html;
+  };
+  const oldDraw=window.drawTeamBoardV29;
+  window.drawTeamBoardV29=function(){
+    if(typeof oldDraw==='function')oldDraw();
+    /* 기존 오른쪽 전체층 요약을 선택층 활동요약으로 교체하고 아래 상세카드를 3열로 렌더 */
+    window.v29RenderSelectedFloorPremium();
+    window.v29UpdateSyncState&&window.v29UpdateSyncState();
+  };
+  window.v29UpdateSyncState=function(){
+    const e=document.getElementById('v29BoardRefreshTime');if(!e)return;
+    const last=Number(window.__v29LastSuccessAt||0), age=last?(Date.now()-last):Infinity;
+    let cls='loading',txt='● 연결 확인중';
+    if(last&&age<=25000){cls='ok';txt='● 정상 · 최종 반영 '+new Date(last).toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false});}
+    else if(last){cls='delay';txt='⚠ 갱신 지연 · 마지막 성공 '+new Date(last).toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false});}
+    e.className='cmdSyncState '+cls;e.textContent=txt;
+  };
+  /* 1초 로컬 시간 갱신: 서버 호출 없이 체류/재확인/경고와 선택층 상세만 최신화 */
+  setInterval(function(){const p=document.getElementById('teamBoardPageV29');if(!p||p.style.display==='none')return;v29UpdateLiveBoardMetrics();window.v29RenderSelectedFloorPremium();window.v29UpdateSyncState();},1000);
+})();
+</script>
+
+
+
 <!-- R16H : 안전판정 통합 + 조별정보 강화 + 층별현황 2영역 재설계 -->
 <!-- R16I : 층=세로축 / 방면=가로축, 층선택+활동정보 좌우배치 -->
+<style id="r16i-floor-axis-style">
+/* 전체: 왼쪽 35%는 층+사람, 오른쪽 65%는 방면 배치도 */
+#teamBoardPageV29 .cmdLocationGrid{grid-template-columns:minmax(560px,35%) minmax(760px,65%)!important;gap:14px!important;align-items:stretch}
+#teamBoardPageV29 .cmdFloorPanel{min-height:390px!important;padding:12px!important;background:#f8fafc!important}
+#teamBoardPageV29 .r16iLeftGrid{display:grid;grid-template-columns:minmax(185px,38%) minmax(300px,62%);gap:12px;height:100%;min-height:364px}
+#teamBoardPageV29 .r16iFloorNav{border-right:1px solid #dbe4ec;padding-right:11px;min-width:0}
+#teamBoardPageV29 .r16iFloorInfo{min-width:0;padding-left:1px;display:flex;flex-direction:column}
+#teamBoardPageV29 .r16iFloorNav .v33PanelTitle,#teamBoardPageV29 .r16iFloorInfo .v33PanelTitle{font-size:14px;font-weight:950;color:#173d67;margin:0 0 9px}
+/* 층은 건물의 세로축: 반드시 한 줄씩 세로 배열 */
+#teamBoardPageV29 .r16iFloorButtons{display:flex;flex-direction:column;gap:6px}
+#teamBoardPageV29 .r16iFloorButtons .v33FloorBtn{width:100%!important;margin:0!important;min-height:42px!important;padding:7px 9px!important;font-size:12px!important;display:flex!important;align-items:center!important;justify-content:flex-start!important;gap:8px!important}
+#teamBoardPageV29 .r16iFloorName{flex:0 0 62px;text-align:left;font-weight:950}
+#teamBoardPageV29 .r16iFloorTeams{display:flex;align-items:center;flex-wrap:wrap;gap:4px;min-width:0}
+#teamBoardPageV29 .r16iTeamChip{--chip:#64748b;display:inline-flex;align-items:center;justify-content:center;min-width:34px;padding:3px 6px;border-radius:6px;background:var(--chip);color:#fff;font-size:10px;font-weight:950;line-height:1.15;box-shadow:0 1px 3px rgba(20,45,70,.12)}
+#teamBoardPageV29 .r16iTeamChip.due{outline:2px solid #dc4037;outline-offset:1px;animation:r16hTextPulse 1.35s ease-in-out infinite}
+#teamBoardPageV29 .r16iTeamChip.teamC1{--chip:#2563eb}#teamBoardPageV29 .r16iTeamChip.teamC2{--chip:#f28705}#teamBoardPageV29 .r16iTeamChip.teamC3{--chip:#8b46d8}#teamBoardPageV29 .r16iTeamChip.teamC4{--chip:#0f9588}#teamBoardPageV29 .r16iTeamChip.teamC5{--chip:#d64c72}#teamBoardPageV29 .r16iTeamChip.teamC6{--chip:#607c18}#teamBoardPageV29 .r16iTeamChip.teamC7{--chip:#6d42d8}#teamBoardPageV29 .r16iTeamChip.teamC8{--chip:#08758d}
+/* 선택층 활동정보는 층 선택 바로 옆 */
+#teamBoardPageV29 .r16iInfoHead{display:flex;align-items:center;justify-content:space-between;gap:8px;padding-bottom:8px;border-bottom:1px solid #dbe4ec;margin-bottom:7px}
+#teamBoardPageV29 .r16iInfoHead b{font-size:17px;color:#173d67}
+#teamBoardPageV29 .r16iInfoState{font-size:11px;font-weight:950;color:#63778a}.r16iInfoState.due{color:#b42318;animation:r16hTextPulse 1.35s ease-in-out infinite}
+#teamBoardPageV29 .r16iTeamInfo{--team:#64748b;border-left:5px solid var(--team);background:#fff;border-radius:9px;padding:9px 10px;margin-top:7px;box-shadow:0 1px 4px rgba(20,45,70,.06)}
+#teamBoardPageV29 .r16iTeamInfoTop{display:flex;align-items:center;gap:7px;flex-wrap:wrap;font-size:12px;font-weight:900;color:#2d465d}
+#teamBoardPageV29 .r16iTeamInfoTop .badge{background:var(--team);color:#fff;padding:4px 8px;border-radius:6px;font-weight:950}
+#teamBoardPageV29 .r16iTeamInfoPeople{display:flex;align-items:center;flex-wrap:wrap;margin-top:7px;row-gap:4px}
+#teamBoardPageV29 .r16iTeamInfoPerson{display:inline-flex;align-items:baseline;gap:4px;padding:0 8px;border-left:1px solid #d6dfe7}.r16iTeamInfoPerson:first-child{border-left:0;padding-left:0}
+#teamBoardPageV29 .r16iTeamInfoPerson b{font-size:12px;color:#17344e}.r16iTeamInfoPerson small{font-size:9px;font-weight:800;color:#728395}
+#teamBoardPageV29 .r16iTeamInfoSafety{margin-top:7px;font-size:10px;font-weight:900;color:#617487}.r16iTeamInfoSafety.due{color:#b42318}
+#teamBoardPageV29 .r16iTeamInfo.teamC1{--team:#2563eb}#teamBoardPageV29 .r16iTeamInfo.teamC2{--team:#f28705}#teamBoardPageV29 .r16iTeamInfo.teamC3{--team:#8b46d8}#teamBoardPageV29 .r16iTeamInfo.teamC4{--team:#0f9588}#teamBoardPageV29 .r16iTeamInfo.teamC5{--team:#d64c72}#teamBoardPageV29 .r16iTeamInfo.teamC6{--team:#607c18}#teamBoardPageV29 .r16iTeamInfo.teamC7{--team:#6d42d8}#teamBoardPageV29 .r16iTeamInfo.teamC8{--team:#08758d}
+/* 오른쪽은 방면의 가로 개념이 주인공: 실제 도형 비중 확대 */
+#teamBoardPageV29 .cmdPlanPanel{min-height:390px!important;padding:6px!important;overflow:hidden}
+#teamBoardPageV29 .cmdPlanPanel .v33Plan{width:min(940px,97%)!important;height:360px!important;max-width:none!important}
+#teamBoardPageV29 .cmdPlanPanel .v33PlanInner{inset:28px!important}
+#teamBoardPageV29 .cmdPlanPanel .v33FloorCenter{font-size:28px!important}
+#teamBoardPageV29 .cmdPlanPanel .v33DirLabel{font-size:17px!important;font-weight:950!important}
+#teamBoardPageV29 .cmdPlanPanel .v33FaceChip{font-size:15px!important;padding:7px 12px!important;border-radius:8px!important}
+@media(max-width:1500px){#teamBoardPageV29 .cmdLocationGrid{grid-template-columns:minmax(500px,37%) minmax(650px,63%)!important}#teamBoardPageV29 .r16iLeftGrid{grid-template-columns:minmax(165px,38%) minmax(280px,62%)}#teamBoardPageV29 .cmdPlanPanel .v33Plan{width:96%!important;height:340px!important}}
+</style>
+<script id="r16i-floor-axis-logic">
+(function(){
+  function esc(v){return escapeHtml(String(v??''));}
+  function norm(v){let s=String(v??'').trim();if(!s)return '미지정';return s;}
+  function detailText(v){let s=String(v??'').trim();if(!s)return '-';s=s.replace(/세부\s*장소\s*미지정/gi,'-').replace(/세부장소미지정/gi,'-');return s==='미지정'?'-':s;}
+  function state(m){return (window.v251R16HImmediateState?window.v251R16HImmediateState(m):{due:false,confirmed:false,isolated:false});}
+  function meta(m){const vm=(typeof v23LoadMeta==='function'?v23LoadMeta():{})[String(m.memberId)]||{},ti=(typeof v19TeamInfo==='function'?v19TeamInfo(m):{});return {team:norm(vm.teamName||ti.team||'조 미지정'),act:Number(vm.teamActivityNo||ti.activityNo||m.entryCount||1)||1,floor:norm(vm.activityFloor||ti.floor),dir:norm(vm.entryDirection||ti.direction),detail:detailText(vm.detailLocation||ti.detail)};}
+  function profile(m){let i={};try{i=getMemberInfoById(m.memberId)||{};}catch(e){}const raw=String(m.memberName||i.name||'').trim(),name=(typeof v29CleanName==='function'?v29CleanName(m):raw)||'-';return {name,rank:String(i.rank||m.rank||'').trim(),dept:String(i.dept||m.dept||'').trim()};}
+  function teamCss(t){return (typeof v29TeamCss==='function'?v29TeamCss(t):'')||'';}
+  function person(m){const p=profile(m),sub=[p.rank,p.dept].filter(Boolean).join(' · ');return '<span class="r16iTeamInfoPerson"><b>'+esc(p.name)+'</b>'+(sub?'<small>'+esc(sub)+'</small>':'')+'</span>';}
+  function render(){
+    const list=window.__dashboardInsideMembers||[],panel=document.getElementById('v33FloorPanel'),area=document.getElementById('v34FloorMembers');if(!panel)return;
+    const floors=['옥상','상층','직상층','화점층','직하층','하층','지하층'],byFloor={};floors.forEach(f=>byFloor[f]=[]);
+    list.forEach(m=>{const f=v29FloorKey(meta(m).floor);if(byFloor[f])byFloor[f].push(m);});
+    if(!floors.includes(v33SelectedFloor))v33SelectedFloor='화점층';
+    const floorButtons=floors.map(f=>{
+      const ms=byFloor[f]||[],groups={};ms.forEach(m=>{const t=meta(m).team;(groups[t]||(groups[t]=[])).push(m);});
+      const teams=Object.keys(groups).sort((a,b)=>v19TeamNumber(a)-v19TeamNumber(b));
+      const chips=teams.map(t=>'<span class="r16iTeamChip '+teamCss(t)+(groups[t].some(m=>state(m).due)?' due':'')+'">'+esc(t)+'</span>').join('');
+      return '<button type="button" class="v33FloorBtn '+(f===v33SelectedFloor?'active ':'')+(f==='화점층'?'fire':'')+'" onclick="selectTeamBoardFloorV33(\''+f+'\')"><span class="r16iFloorName">'+(f==='화점층'?'🔥 ':'')+esc(f)+'</span><span class="r16iFloorTeams">'+(chips||'<span style="opacity:.45">-</span>')+'</span></button>';
+    }).join('');
+    const fm=byFloor[v33SelectedFloor]||[],groups={};fm.forEach(m=>{const t=meta(m).team;(groups[t]||(groups[t]=[])).push(m);});
+    const teams=Object.keys(groups).sort((a,b)=>v19TeamNumber(a)-v19TeamNumber(b)),warn=fm.filter(m=>state(m).due).length;
+    let info='<div class="v33PanelTitle">선택층 활동정보</div><div class="r16iInfoHead"><b>'+(v33SelectedFloor==='화점층'?'🔥 ':'')+esc(v33SelectedFloor)+'</b><span class="r16iInfoState '+(warn?'due':'')+'">'+(warn?'⚠ 즉시확인 '+warn+'명':'정상')+'</span></div>';
+    if(!teams.length)info+='<div class="cmdNoMembers">현재 이 층에서 활동 중인 대원이 없습니다.</div>';
+    teams.forEach(t=>{const ms=groups[t],mt=meta(ms[0]),w=ms.filter(m=>state(m).due).length,confirmed=ms.length&&ms.every(m=>state(m).confirmed);info+='<div class="r16iTeamInfo '+teamCss(t)+'"><div class="r16iTeamInfoTop"><span class="badge">'+esc(t)+'</span><span>'+mt.act+'차 · '+esc(mt.dir)+' · '+esc(mt.detail)+'</span></div><div class="r16iTeamInfoPeople">'+ms.map(person).join('')+'</div><div class="r16iTeamInfoSafety '+(w?'due':'')+'">'+(w?'⚠ 즉시확인 '+w+'명':confirmed?'✓ 안전확인 완료':'현재 즉시확인 대상 없음')+'</div></div>';});
+    panel.innerHTML='<div class="r16iLeftGrid"><div class="r16iFloorNav"><div class="v33PanelTitle">층 선택</div><div class="r16iFloorButtons">'+floorButtons+'</div></div><div class="r16iFloorInfo">'+info+'</div></div>';
+    /* 아래 3열 상세카드는 R16H 렌더러를 그대로 두고, 현재 선택층만 유지 */
+  }
+  const prev=window.v29RenderSelectedFloorPremium;
+  window.v29RenderSelectedFloorPremium=function(){if(typeof prev==='function')prev();render();};
+  const prevDraw=window.drawTeamBoardV29;
+  window.drawTeamBoardV29=function(){if(typeof prevDraw==='function')prevDraw();render();};
+})();
+</script>
+
+
 <style id="r16mMemberDetailStyle">
 #dashboardDetailOverlay .r16mMemberTitleRow{display:flex;align-items:center;gap:12px;justify-content:space-between;}
 #dashboardDetailOverlay .r16mMemberTitleRow #r16mMemberSafetyBtn{margin-left:auto;flex:0 0 auto;}
@@ -8436,61 +9063,6 @@ window.v251R9OpenMember=function(id,name){
 </script>
 
 
-
-
-<script id="r17r-command-shared-helpers">
-function v29CleanName(m){
-  const raw=String((m&&m.memberName)||"").trim();
-  if(raw)return raw.replace(/\s+(소방사|소방교|소방장|소방위|소방경|소방령|소방정).*$/,'');
-  const d=String(typeof getMemberDisplay==='function'?getMemberDisplay((m&&m.memberId)||"",raw):raw).trim();
-  return d.split(/\s+/)[0]||"-";
-}
-function v29MemberMinutes(m){
-  try{if(typeof liveMinutes==='function')return Number(liveMinutes(m))||0;}catch(e){}
-  return Number(m&&m.currentMinutes)||0;
-}
-function v29TeamCss(team){return (typeof v19TeamColorClass==='function'?v19TeamColorClass(team):'')||'';}
-function v29GroupTeams(list){
-  const meta=typeof v23LoadMeta==='function'?v23LoadMeta():{},groups={};
-  (list||[]).forEach(m=>{
-    const vm=meta[String(m.memberId)]||{},team=vm.teamName||m.team||"조 미지정";
-    (groups[team]||(groups[team]=[])).push({m,vm});
-  });
-  return Object.keys(groups).sort((a,b)=>v28TeamNo(a)-v28TeamNo(b)).map(team=>{
-    const g=groups[team];
-    const unique=(key,fallback)=>[...new Set(g.map(x=>String(x.vm[key]||x.m[key]||fallback)))];
-    const dirs=unique("entryDirection","미지정"),floors=unique("activityFloor","미지정");
-    const details=[...new Set(g.map(x=>{const v=String(x.vm.detailLocation||x.m.detail||"").trim();return (!v||v==="미지정"||/세부\s*장소\s*미지정/i.test(v))?"-":v;}))];
-    const maxMin=Math.max(0,...g.map(x=>v29MemberMinutes(x.m)));
-    const actNo=Math.max(1,...g.map(x=>Number(x.vm.teamActivityNo||x.m.activityNo||x.m.entryCount)||1));
-    return {team,count:g.length,activityNo:actNo,minutes:maxMin,
-      direction:dirs.length===1?dirs[0]:"위치 분산",floor:floors.length===1?floors[0]:"위치 분산",
-      detail:details.length===1?details[0]:"위치 분산",dispersed:dirs.length>1||floors.length>1||details.length>1,
-      names:g.map(x=>v29CleanName(x.m)).filter(Boolean),members:g.map(x=>x.m)};
-  });
-}
-function v29BuildActivitySummary(teams){
-  const map={};
-  (teams||[]).forEach(t=>{
-    const f=(typeof v29FloorKey==='function'?v29FloorKey(t.floor):t.floor)||'위치미지정';
-    const d=(typeof v29DirectionKey==='function'?v29DirectionKey(t.direction):t.direction)||'';
-    const k=f+'|'+d;map[k]=(map[k]||0)+1;
-  });
-  const order=['화점층','직상층','직하층','상층','하층','지하층','옥상','위치미지정'];
-  return Object.keys(map).sort((a,b)=>order.indexOf(a.split('|')[0])-order.indexOf(b.split('|')[0])).map(k=>{
-    const [f,d]=k.split('|');return (f==='화점층'?'🔥 ':'')+f+(d?' '+d:'')+' '+map[k]+'개조';
-  }).join(' · ')||'현재 활동조 없음';
-}
-</script>
-
-
-<script id="r17s-safe-compat">
-/* R17S: 남아 있을 수 있는 과거 호출은 오류를 내지 않고 새 3페이지로 위임 */
-window.v29UpdateRefreshClock=function(){
-  const el=document.getElementById('v29BoardRefreshTime');
-  if(el)el.textContent=new Date().toLocaleTimeString('ko-KR',{hour12:false});
-};
-</script>
 
 <style id="r17p-clean-personnel-board">
 /* R17P CLEAN 3PAGE — 2페이지 데이터/카드/상태를 그대로 쓰는 인원관제 View */
@@ -8595,8 +9167,8 @@ window.v29UpdateRefreshClock=function(){
     const teams=typeof v29GroupTeams==='function'?v29GroupTeams(list):[];
     let g=0,o=0,r=0,c=0; const urgent=[];
     list.forEach(m=>{
-      const st=currentState(m),min=Number(st.mins)||0,p=window.V17_STAY_POLICY||{cautionStart:21,warningStart:26,criticalStart:30};
-      if(min<p.cautionStart)g++; else if(min<p.warningStart)o++; else if(min<p.criticalStart)r++; else c++;
+      const st=currentState(m),min=Number(st.mins)||0;
+      if(min<=20)g++; else if(min<=25)o++; else if(min<30)r++; else c++;
       if(st.due||st.isolated)urgent.push({m,st});
     });
     const stats=document.getElementById('cmdPeopleStats');
@@ -8707,11 +9279,6 @@ window.v29UpdateRefreshClock=function(){
   };
 
   window.addEventListener('resize',fitBoard);
-  const refreshMs=((window.V17_STAY_POLICY&&window.V17_STAY_POLICY.refreshSeconds)||10)*1000;
-  setInterval(function(){
-    const page=document.getElementById('teamBoardPageV29');
-    if(page&&page.style.display!=='none'&&!document.hidden)refreshTeamBoardV29();
-  },refreshMs);
   document.addEventListener('DOMContentLoaded',syncStation);
 })();
 </script>
